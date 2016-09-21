@@ -34,7 +34,7 @@
 
 int mk_seekFile(mk_Writer *w, uint64_t pos)
 {
-	if (fseek(w->fp, pos, SEEK_SET))
+	if (fseeko64(w->fp, pos, SEEK_SET))
 		return -1;
 
 	w->f_pos = pos;
@@ -111,7 +111,7 @@ mk_Writer *mk_createWriter(const char *filename, int64_t timescale,
 		return NULL;
 	}
 
-	w->fp = fopen(filename, "wb");
+	w->fp = fopen64(filename, "wb");
 	if (w->fp == NULL) {
 		mk_destroyContexts(w);
 		free(w);
