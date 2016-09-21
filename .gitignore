@@ -1,0 +1,5 @@
+# Ignore dependency, object and archive files
+*.[doa]
+# Ignore generated exe files
+SRec
+SRec.debug
