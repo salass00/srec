@@ -21,7 +21,7 @@
 
 #include <exec/interfaces.h>
 
-struct Interface *OpenInterface(CONST_STRPTR name, uint32 version);
+struct Interface *OpenInterface(CONST_STRPTR name, uint32 version, CONST_STRPTR iname, uint32 iversion);
 void CloseInterface(struct Interface *interface);
 
 #endif

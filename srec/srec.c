@@ -86,8 +86,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	proc = (struct Process *)IExec->FindTask(NULL);
 	args = (struct SRecArgs *)proc->pr_Task.tc_UserData;
 
-	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53);
-	IGraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54);
+	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
+	IGraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
 	if (!IIntuition || !IGraphics)
 		goto out;
 

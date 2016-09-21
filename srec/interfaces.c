@@ -19,12 +19,12 @@
 #include "interfaces.h"
 #include <proto/exec.h>
 
-struct Interface *OpenInterface(CONST_STRPTR name, uint32 version) {
+struct Interface *OpenInterface(CONST_STRPTR name, uint32 version, CONST_STRPTR iname, uint32 iversion) {
 	struct Library *library;
 	struct Interface *interface;
 
 	library = IExec->OpenLibrary(name, version);
-	interface = IExec->GetInterface(library, "main", 1, NULL);
+	interface = IExec->GetInterface(library, iname, iversion, NULL);
 	if (interface == NULL)
 		IExec->CloseLibrary(library);
 

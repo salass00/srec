@@ -28,8 +28,8 @@
 
 struct zmbv_state {
 	uint32                width, height, fps;
-	struct GraphicsIFace *IGraphics;
-	struct ZIFace        *IZ;
+	struct GraphicsIFace *igraphics;
+	struct ZIFace        *iz;
 	z_stream              zstream;
 	uint32                pixfmt;
 	uint8                 zmbv_fmt;
@@ -49,11 +49,11 @@ struct zmbv_state {
 };
 
 static void zmbv_close_libs(struct zmbv_state *state) {
-	if (state->IZ != NULL)
-		CloseInterface((struct Interface *)state->IZ);
+	if (state->iz != NULL)
+		CloseInterface((struct Interface *)state->iz);
 
-	if (state->IGraphics != NULL)
-		CloseInterface((struct Interface *)state->IGraphics);
+	if (state->igraphics != NULL)
+		CloseInterface((struct Interface *)state->igraphics);
 }
 
 struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps) {
@@ -71,12 +71,12 @@ struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps) {
 	state->height = height;
 	state->fps    = fps;
 
-	state->IGraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54);
-	state->IZ = (struct ZIFace *)OpenInterface("z.library", 53);
-	if (state->IGraphics == NULL || state->IZ == NULL)
+	state->igraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
+	state->iz = (struct ZIFace *)OpenInterface("z.library", 53, "main", 1);
+	if (state->igraphics == NULL || state->iz == NULL)
 		goto out;
 
-	if (state->IZ->DeflateInit(&state->zstream, Z_BEST_SPEED) != Z_OK)
+	if (state->iz->DeflateInit(&state->zstream, Z_BEST_SPEED) != Z_OK)
 		goto out;
 
 	return state;
@@ -95,7 +95,7 @@ out:
 }
 
 static void zmbv_free_frame_data(struct zmbv_state *state) {
-	struct GraphicsIFace *IGraphics = state->IGraphics;
+	struct GraphicsIFace *IGraphics = state->igraphics;
 
 	if (state->inter_buffer != NULL) {
 		IExec->FreeVec(state->inter_buffer);
@@ -123,7 +123,7 @@ static void zmbv_free_frame_data(struct zmbv_state *state) {
 }
 
 BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
-	struct GraphicsIFace *IGraphics = state->IGraphics;
+	struct GraphicsIFace *IGraphics = state->igraphics;
 	uint32 pixfmt;
 	uint32 depth;
 	uint32 bm_size;
@@ -304,8 +304,8 @@ static void zmbv_endian_convert(uint32 pixfmt, void *data, uint32 byte_width, ui
 }
 
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BOOL *keyframep) {
-	struct GraphicsIFace *IGraphics = state->IGraphics;
-	struct ZIFace *IZ = state->IZ;
+	struct GraphicsIFace *IGraphics = state->igraphics;
+	struct ZIFace *IZ = state->iz;
 	uint8 *out = state->frame_buffer;
 	uint32 out_space = state->frame_buffer_size;
 
@@ -474,7 +474,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 
 void zmbv_end(struct zmbv_state *state) {
 	if (state != NULL) {
-		state->IZ->DeflateEnd(&state->zstream);
+		state->iz->DeflateEnd(&state->zstream);
 
 		zmbv_free_frame_data(state);
 
