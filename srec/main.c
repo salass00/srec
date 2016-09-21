@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (argc == 0) {
-		rc = gui_main(&loc);
+		rc = gui_main(&loc, (struct WBStartup *)argv);
 	} else {
 		rc = cli_main(&loc);
 	}

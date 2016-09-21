@@ -6,3 +6,6 @@ SRec %ld.%ld requires %s or newer!
 MSG_CTRL_C_TO_STOP (//)
 CTRL-C to stop recording.
 ;
+MSG_CX_DESCR (//)
+Screen Recorder
+;

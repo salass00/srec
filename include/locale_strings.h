@@ -28,6 +28,7 @@
 
 #define MSG_TOO_OLD_OS_VERSION 100
 #define MSG_CTRL_C_TO_STOP 101
+#define MSG_CX_DESCR 102
 
 #endif
 
@@ -35,6 +36,7 @@
 
 #define MSG_TOO_OLD_OS_VERSION_STR "SRec %ld.%ld requires %s or newer!"
 #define MSG_CTRL_C_TO_STOP_STR "CTRL-C to stop recording."
+#define MSG_CX_DESCR_STR "Screen Recorder"
 
 #endif
 
@@ -50,6 +52,7 @@ STATIC CONST struct CatCompArrayType CatCompArray[] =
 {
 	{MSG_TOO_OLD_OS_VERSION,(CONST_STRPTR)MSG_TOO_OLD_OS_VERSION_STR},
 	{MSG_CTRL_C_TO_STOP,(CONST_STRPTR)MSG_CTRL_C_TO_STOP_STR},
+	{MSG_CX_DESCR,(CONST_STRPTR)MSG_CX_DESCR_STR},
 };
 
 #endif
@@ -62,6 +65,8 @@ STATIC CONST UBYTE CatCompBlock[] =
 	MSG_TOO_OLD_OS_VERSION_STR "\x00\x00"
 	"\x00\x00\x00\x65\x00\x1A"
 	MSG_CTRL_C_TO_STOP_STR "\x00"
+	"\x00\x00\x00\x66\x00\x10"
+	MSG_CX_DESCR_STR "\x00"
 };
 
 #endif

@@ -27,7 +27,7 @@ srec/locale.o: srec/locale.h
 
 srec/cli.o: srec/cli.h srec/locale.h srec/srec.h
 
-srec/gui.o: srec/gui.h srec/locale.h srec/srec.h
+srec/gui.o: srec/gui.h srec/locale.h srec/interfaces.h srec/srec.h SRec_rev.h
 
 srec/srec.o: srec/srec.h srec/interfaces.h srec/timer.h include/libmkv.h srec/zmbv.h SRec_rev.h
 

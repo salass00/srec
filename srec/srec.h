@@ -25,8 +25,8 @@
 #define DEFAULT_HEIGHT 480
 #define DEFAULT_FPS    10
 
-#define SREC_PROCNAME  "SRec: Screen Recoder"
-#define SREC_PRIORITY  0
+#define SREC_PROCNAME  "SRec: Screen Recorder"
+#define SREC_PRIORITY  (0)
 #define SREC_STACKSIZE (64 << 10)
 
 struct SRecArgs {
