@@ -24,10 +24,48 @@
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/utility.h>
+#include <proto/intuition.h>
 #include <proto/icon.h>
 #include <proto/commodities.h>
 #include <proto/application.h>
 #include "SRec_rev.h"
+
+enum {
+	EVT_POPKEY = 1,
+	EVT_RECORDKEY,
+	EVT_STOPKEY
+};
+
+enum {
+	OID_WINDOW,
+	OID_OUTPUT_FILE,
+	OID_TABS,
+	OID_TAB_PAGES,
+	OID_FORMAT_PAGE,
+	OID_CONTAINER_FORMAT,
+	OID_VIDEO_CODEC,
+	OID_VIDEO_PARAMS,
+	OID_ASPECT_RATIO,
+	OID_VIDEO_WIDTH,
+	OID_VIDEO_HEIGHT,
+	OID_VIDEO_FPS,
+	OID_AUDIO_CODEC,
+	OID_AUDIO_PARAMS,
+	OID_SAMPLE_SIZE,
+	OID_CHANNELS,
+	OID_SAMPLE_RATE,
+	OID_POINTER_PAGE,
+	OID_ENABLE_POINTER,
+	OID_POINTER_PARAMS,
+	OID_POINTER_FILE,
+	OID_BUSY_POINTER_PARAMS,
+	OID_BUSY_POINTER_FILE,
+	OID_MISC_PAGE,
+	OID_BILINEAR_FILTER,
+	OID_RECORD,
+	OID_STOP,
+	OID_MAX
+};
 
 /* Global data structure for GUI */
 struct srec_gui {
@@ -36,6 +74,22 @@ struct srec_gui {
 	struct IconIFace        *iicon;
 	struct CommoditiesIFace *icommodities;
 	struct ApplicationIFace *iapplication;
+	struct ClassLibrary     *requesterbase;
+	Class                   *requesterclass;
+	struct ClassLibrary     *windowbase;
+	Class                   *windowclass;
+	struct ClassLibrary     *layoutbase;
+	Class                   *layoutclass;
+	struct ClassLibrary     *getfilebase;
+	Class                   *getfileclass;
+	struct ClassLibrary     *clicktabbase;
+	Class                   *clicktabclass;
+	struct ClassLibrary     *chooserbase;
+	Class                   *chooserclass;
+	struct ClassLibrary     *checkboxbase;
+	Class                   *checkboxclass;
+	struct ClassLibrary     *buttonbase;
+	Class                   *buttonclass;
 	struct DiskObject       *icon;
 	struct MsgPort          *broker_mp;
 	CxObj                   *broker;
@@ -45,26 +99,18 @@ struct srec_gui {
 	BOOL                     hidden;
 	uint32                   app_id;
 	struct MsgPort          *app_mp;
-};
-
-enum {
-	EVT_POPKEY = 1,
-	EVT_RECORDKEY,
-	EVT_STOPKEY
+	Object                  *obj[OID_MAX];
 };
 
 static BOOL gui_open_libs(struct srec_gui *gd) {
-	BOOL error;
+	BOOL error = 0;
 
-	error = 0;
 	error |= !(gd->iintuition = (struct IntuitionIFace   *)OpenInterface("intuition.library", 53, "main", 1));
 	error |= !(gd->iicon = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1));
 	error |= !(gd->icommodities = (struct CommoditiesIFace *)OpenInterface("commodities.library", 53, "main", 1));
 	error |= !(gd->iapplication = (struct ApplicationIFace *)OpenInterface("application.library", 53, "application", 2));
-	if (error != 0)
-		return FALSE;
 
-	return TRUE;
+	return (error == 0) ? TRUE : FALSE;
 }
 
 static void gui_close_libs(struct srec_gui *gd) {
@@ -79,6 +125,50 @@ static void gui_close_libs(struct srec_gui *gd) {
 
 	if (gd->iintuition != NULL)
 		CloseInterface((struct Interface *)gd->iintuition);
+}
+
+static BOOL gui_open_classes(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	BOOL error = 0;
+
+	error |= !(gd->requesterbase = IIntuition->OpenClass("requester.class", 53, &gd->requesterclass));
+	error |= !(gd->windowbase = IIntuition->OpenClass("window.class", 53, &gd->windowclass));
+	error |= !(gd->layoutbase = IIntuition->OpenClass("gadgets/layout.gadget", 53, &gd->layoutclass));
+	error |= !(gd->getfilebase = IIntuition->OpenClass("gadgets/getfile.gadget", 53, &gd->getfileclass));
+	error |= !(gd->clicktabbase = IIntuition->OpenClass("gadgets/clicktab.gadget", 53, &gd->clicktabclass));
+	error |= !(gd->chooserbase = IIntuition->OpenClass("gadgets/chooser.gadget", 53, &gd->chooserclass));
+	error |= !(gd->checkboxbase = IIntuition->OpenClass("gadgets/checkbox.gadget", 53, &gd->checkboxclass));
+	error |= !(gd->buttonbase = IIntuition->OpenClass("gadgets/button.gadget", 53, &gd->buttonclass));
+
+	return (error == 0) ? TRUE : FALSE;
+}
+
+static void gui_close_classes(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+
+	if (gd->buttonbase != NULL)
+		IIntuition->CloseClass(gd->buttonbase);
+
+	if (gd->checkboxbase != NULL)
+		IIntuition->CloseClass(gd->checkboxbase);
+
+	if (gd->chooserbase != NULL)
+		IIntuition->CloseClass(gd->chooserbase);
+
+	if (gd->clicktabbase != NULL)
+		IIntuition->CloseClass(gd->clicktabbase);
+
+	if (gd->getfilebase != NULL)
+		IIntuition->CloseClass(gd->getfilebase);
+
+	if (gd->layoutbase != NULL)
+		IIntuition->CloseClass(gd->layoutbase);
+
+	if (gd->windowbase != NULL)
+		IIntuition->CloseClass(gd->windowbase);
+
+	if (gd->requesterbase != NULL)
+		IIntuition->CloseClass(gd->requesterbase);
 }
 
 static BOOL gui_get_icon(struct srec_gui *gd, struct WBStartup *wbs) {
@@ -129,7 +219,7 @@ static BOOL gui_register_broker(struct srec_gui *gd) {
 	CONST_STRPTR tt;
 	int32 priority;
 	struct NewBroker nb;
-	BOOL error;
+	BOOL error = 0;
 
 	gd->broker_mp = IExec->AllocSysObject(ASOT_PORT, NULL);
 	if (gd->broker_mp == NULL)
@@ -159,7 +249,6 @@ static BOOL gui_register_broker(struct srec_gui *gd) {
 	gd->recordkey = IIcon->FindToolType(tta, "RECORDKEY");
 	gd->stopkey   = IIcon->FindToolType(tta, "STOPKEY");
 
-	error = 0;
 	error |= !gui_add_cx_event(gd, gd->popkey, EVT_POPKEY);
 	error |= !gui_add_cx_event(gd, gd->recordkey, EVT_RECORDKEY);
 	error |= !gui_add_cx_event(gd, gd->stopkey, EVT_STOPKEY);
@@ -230,6 +319,9 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	if (!gui_open_libs(gd))
 		goto out;
 
+	if (!gui_open_classes(gd))
+		goto out;
+
 	if (!gui_get_icon(gd, wbs))
 		goto out;
 
@@ -250,6 +342,8 @@ out:
 
 		if (gd->icon != NULL)
 			gd->iicon->FreeDiskObject(gd->icon);
+
+		gui_close_classes(gd);
 
 		gui_close_libs(gd);
 
