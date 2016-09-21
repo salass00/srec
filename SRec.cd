@@ -1,0 +1,8 @@
+; $VER: SRec 2.1 (20.9.2016)
+;
+MSG_TOO_OLD_OS_VERSION (100//)
+SRec %ld.%ld requires %s or newer!
+;
+MSG_CTRL_C_TO_STOP (//)
+CTRL-C to stop recording.
+;
