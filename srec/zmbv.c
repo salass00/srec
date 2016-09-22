@@ -100,10 +100,6 @@ static void zmbv_free_frame_data(struct zmbv_state *state) {
 	if (state->inter_buffer != NULL) {
 		IExec->FreeVec(state->inter_buffer);
 		state->inter_buffer = NULL;
-	}
-
-	if (state->frame_buffer != NULL) {
-		IExec->FreeVec(state->frame_buffer);
 		state->frame_buffer = NULL;
 	}
 
@@ -127,7 +123,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	uint32 pixfmt;
 	uint32 depth;
 	uint32 bm_size;
-	uint32 num_blk_w, num_blk_h, num_blk, blk_siz;
+	uint32 num_blk_w, num_blk_h, num_blk;
 	uint32 compare_bpr;
 	APTR lock;
 
@@ -194,22 +190,19 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	num_blk_w = (state->width  + BLKW - 1) / BLKW;
 	num_blk_h = (state->height + BLKH - 1) / BLKH;
 	num_blk = num_blk_w * num_blk_h;
-	blk_siz = BLKH * BLKW * state->frame_bpp;
 
 	state->block_info_size   = (num_blk * 2 + 3) & ~3;
-	state->inter_buffer_size = state->block_info_size + (num_blk * blk_siz);
-	state->frame_buffer_size = bm_size * 2;
+	state->inter_buffer_size = state->block_info_size + bm_size;
+	state->frame_buffer_size = state->iz->DeflateBound(&state->zstream, state->inter_buffer_size);
 
-	state->inter_buffer = IExec->AllocVecTags(state->inter_buffer_size,
-		AVT_Type, MEMF_PRIVATE,
-		AVT_Lock, TRUE,
-		TAG_END);
-	state->frame_buffer = IExec->AllocVecTags(state->frame_buffer_size,
+	state->inter_buffer = IExec->AllocVecTags(state->inter_buffer_size + state->frame_buffer_size,
 		AVT_Type, MEMF_SHARED,
 		AVT_Lock, TRUE,
 		TAG_END);
-	if (state->inter_buffer == NULL || state->frame_buffer == NULL)
+	if (state->inter_buffer == NULL)
 		goto out;
+
+	state->frame_buffer = state->inter_buffer + state->inter_buffer_size;
 
 	state->srec_bm = bm;
 
