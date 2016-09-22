@@ -222,81 +222,96 @@ out:
 	return FALSE;
 }
 
-static uint8 zmbv_xor_row(uint8 *out, uint8 *row1, uint8 *row2, uint32 row_len) {
+static inline uint8 zmbv_xor_row(uint8 *out, uint8 *row1, uint8 *row2, uint32 row_len) {
 	uint32 longs = row_len >> 2;
 	uint32 bytes = row_len & 3;
-	uint8 flag = 0;
+	uint32 result = 0;
 
 	while (longs--) {
-		if ((*(uint32 *)out = *(uint32 *)row1 ^ *(uint32 *)row2) != 0)
-			flag = 1;
+		result |= (*(uint32 *)out = *(uint32 *)row1 ^ *(uint32 *)row2);
 		row1 += 4;
 		row2 += 4;
 		out  += 4;
 	}
 
 	while (bytes--) {
-		if ((*out++ = *row1++ ^ *row2++) != 0)
-			flag = 1;
+		result |= (*out = *row1 ^ *row2);
+		out  += 1;
+		row1 += 1;
+		row2 += 1;
 	}
 
-	return flag;
+	return result;
 }
 
 static uint8 zmbv_xor_block(uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp) {
 	uint8 *out = *outp;
-	uint8 flag = 0;
+	uint32 result = 0;
 	uint32 i;
 
 	for (i = 0; i != blk_h; i++) {
-		flag |= zmbv_xor_row(out, ras1, ras2, blk_w);
-
+		result |= zmbv_xor_row(out, ras1, ras2, blk_w);
 		ras1 += bpr;
 		ras2 += bpr;
 		out  += blk_w;
 	}
 
-	if (flag) *outp = out;
-
-	return flag;
+	if (result) {
+		*outp = out;
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
-static void zmbv_endian_convert(uint32 pixfmt, void *data, uint32 byte_width, uint32 height, uint32 mod) {
-	uint32 *ras   = data;
-	uint32  width = (byte_width + 3) >> 2;
-	uint32  i, j;
-
+static void zmbv_endian_convert(uint32 pixfmt, uint8 *ras, uint32 byte_width, uint32 height, uint32 mod) {
 	switch (pixfmt) {
 		case PIXF_A8R8G8B8:
 			{
+				uint32 width = byte_width >> 2;
+				uint32 i, j;
 				for (i = 0; i != height; i++) {
 					for (j = 0; j != width; j++) {
-						uint32 x = *ras;
+						uint32 x = *(uint32 *)ras;
 						__asm__("rlwinm %0,%1,24,0,31\n\t"
 						        "rlwimi %0,%1,8,8,15\n\t"
 						        "rlwimi %0,%1,8,24,31"
 						        : "=&r" (x)
 						        : "r" (x));
-						*ras++ = x;
+						*(uint32 *)ras = x;
+						ras += 4;
 					}
-					ras = (uint32 *)((uint8 *)ras + mod);
+					ras += mod;
 				}
 			}
 			break;
 		case PIXF_R5G6B5:
 		case PIXF_R5G5B5:
 			{
+				uint32 width = byte_width >> 2;
+				uint32 odd = (width >> 1) & 1;
+				uint32 i, j;
 				for (i = 0; i != height; i++) {
 					for (j = 0; j != width; j++) {
-						uint32 x = *ras;
+						uint32 x = *(uint32 *)ras;
 						__asm__("rlwinm %0,%1,8,0,31\n\t"
 						        "rlwimi %0,%1,16,8,15\n\t"
 						        "rlwimi %0,%1,16,24,31"
 						        : "=&r" (x)
 						        : "r" (x));
-						*ras++ = x;
+						*(uint32 *)ras = x;
+						ras += 4;
 					}
-					ras = (uint32 *)((uint8 *)ras + mod);
+					if (odd) {
+						uint16 x = *(uint16 *)ras;
+						__asm__("rlwinm %0,%1,8,16,23\n\t"
+						        "rlwimi %0,%1,24,24,31"
+						        : "=&r" (x)
+						        : "r" (x));
+						*(uint16 *)ras = x;
+						ras += 2;
+					}
+					ras += mod;
 				}
 			}
 			break;
