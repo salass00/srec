@@ -79,12 +79,16 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	uint32 disp_width, disp_height;
 	vertex_t vertex_array[2 * 3];
 	uint32 frames = 0;
-	uint32 duration;
+	uint32 duration_us;
+	uint64 duration_ns;
 	uint64 timestamp = 0;
 	int rc = RETURN_ERROR;
 
 	proc = (struct Process *)IExec->FindTask(NULL);
 	args = (struct SRecArgs *)proc->pr_Task.tc_UserData;
+
+	duration_us = (uint32)lroundf(1000.0f / (float)args->fps) * 1000UL;
+	duration_ns = duration_us * 1000UL;
 
 	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
 	IGraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
@@ -117,6 +121,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	video_conf.flagDefault      = 1;
 	video_conf.flagForced       = 1;
 	video_conf.flagLacing       = 0; // Is this correct?
+	video_conf.defaultDuration  = duration_ns;
 	video_conf.codecID          = MK_VCODEC_MSVCM; // "V_MS/VFW/FOURCC"
 	video_conf.codecPrivate     = &bmih;
 	video_conf.codecPrivateSize = sizeof(bmih);
@@ -143,8 +148,6 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	timer_sig = 1UL << tr->Request.io_Message.mn_ReplyPort->mp_SigBit;
 	IExec->Signal(IExec->FindTask(NULL), timer_sig);
 
-	duration = lroundf(1000.0f / (float)args->fps);
-
 	while (TRUE) {
 		signals = IExec->Wait(SIGBREAKF_CTRL_C | timer_sig);
 
@@ -162,7 +165,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 			tr->Request.io_Command = TR_ADDREQUEST;
 			tr->Time.Seconds       = 0UL;
-			tr->Time.Microseconds  = duration * 1000UL;
+			tr->Time.Microseconds  = duration_us;
 			IExec->SendIO((struct IORequest *)tr);
 			timer_in_use = TRUE;
 
@@ -303,14 +306,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				if (!zmbv_encode(encoder, &frame, &framesize, &keyframe) ||
 					mk_startFrame(writer, video_track) != 0 ||
 					mk_addFrameData(writer, video_track, frame, framesize) != 0 ||
-					mk_setFrameFlags(writer, video_track, timestamp, keyframe, duration) != 0 ||
-					mk_flushFrame(writer, video_track) != 0)
+					mk_setFrameFlags(writer, video_track, timestamp, keyframe, duration_ns) != 0)
 				{
 					IExec->DebugPrintF("error outputting frame #%lu\n", frames);
 					goto out;
 				}
 
-				timestamp += duration;
+				timestamp += duration_ns;
 
 				frames++;
 			}
