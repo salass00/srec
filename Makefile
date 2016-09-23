@@ -10,7 +10,7 @@ CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude
 LDFLAGS := -static
 LIBS    := 
 
-SRCS := srec/main.c srec/locale.c srec/cli.o srec/gui.o srec/srec.c srec/interfaces.c srec/timer.c srec/zmbv.c
+SRCS := srec/main.c srec/locale.c srec/cli.o srec/gui.o srec/srec.c srec/interfaces.c srec/timer.c srec/zmbv.c srec/zmbv_altivec.c
 OBJS := $(SRCS:.c=.o)
 
 .PHONY: all revision clean
@@ -36,6 +36,9 @@ srec/interfaces.o: srec/interfaces.h
 srec/timer.o: srec/timer.h
 
 srec/zmbv.o: srec/zmbv.h srec/interfaces.h
+
+srec/zmbv_altivec.o: srec/zmbv.h
+srec/zmbv_altivec.o: CFLAGS += -maltivec
 
 srec/locale.h: include/locale_strings.h
 

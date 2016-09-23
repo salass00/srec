@@ -20,12 +20,44 @@
 #define ZMBV_H
 
 #include <exec/types.h>
-#include <graphics/gfx.h>
+#include <interfaces/graphics.h>
+#include <interfaces/z.h>
+
+struct zmbv_state;
+
+typedef uint8 (*xor_block_func_t)(struct zmbv_state *state, uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp);
+
+struct zmbv_state {
+	uint8                 unaligned_mask_vector[16];
+	uint32                width, height, fps;
+	struct GraphicsIFace *igraphics;
+	struct ZIFace        *iz;
+	z_stream              zstream;
+	uint32                pixfmt;
+	uint8                 zmbv_fmt;
+	struct BitMap        *srec_bm;
+	struct BitMap        *prev_frame_bm;
+	struct BitMap        *current_frame_bm;
+	void                 *prev_frame;
+	void                 *current_frame;
+	uint32                frame_bpr;
+	uint32                frame_bpp;
+	uint32                block_info_size;
+	uint32                inter_buffer_size;
+	uint32                frame_buffer_size;
+	void                 *inter_buffer;
+	void                 *frame_buffer;
+	uint32                keyframe_cnt;
+	uint32                vector_unit;
+	xor_block_func_t      xor_block_func;
+};
 
 struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps);
 BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm);
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BOOL *keyframep);
 void zmbv_end(struct zmbv_state *state);
+
+uint8 zmbv_xor_block_altivec(struct zmbv_state *state, uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp);
 
 #endif
 

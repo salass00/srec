@@ -24,10 +24,10 @@
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/utility.h>
-#include <proto/intuition.h>
-#include <proto/icon.h>
-#include <proto/commodities.h>
-#include <proto/application.h>
+#include <interfaces/intuition.h>
+#include <interfaces/icon.h>
+#include <interfaces/commodities.h>
+#include <interfaces/application.h>
 #include "SRec_rev.h"
 
 enum {

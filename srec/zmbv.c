@@ -20,33 +20,9 @@
 #include "interfaces.h"
 #include <proto/exec.h>
 #include <proto/utility.h>
-#include <proto/graphics.h>
-#include <proto/z.h>
 
 #define BLKW 16
 #define BLKH 16
-
-struct zmbv_state {
-	uint32                width, height, fps;
-	struct GraphicsIFace *igraphics;
-	struct ZIFace        *iz;
-	z_stream              zstream;
-	uint32                pixfmt;
-	uint8                 zmbv_fmt;
-	struct BitMap        *srec_bm;
-	struct BitMap        *prev_frame_bm;
-	struct BitMap        *current_frame_bm;
-	void                 *prev_frame;
-	void                 *current_frame;
-	uint32                frame_bpr;
-	uint32                frame_bpp;
-	uint32                block_info_size;
-	uint32                inter_buffer_size;
-	uint32                frame_buffer_size;
-	void                 *inter_buffer;
-	void                 *frame_buffer;
-	uint32                keyframe_cnt;
-};
 
 static void zmbv_close_libs(struct zmbv_state *state) {
 	if (state->iz != NULL)
@@ -56,6 +32,48 @@ static void zmbv_close_libs(struct zmbv_state *state) {
 		CloseInterface((struct Interface *)state->igraphics);
 }
 
+static inline uint32 zmbv_xor_row_generic(struct zmbv_state *state, uint8 *out, uint8 *row1, uint8 *row2, uint32 row_len) {
+	uint32 longs = row_len >> 2;
+	uint32 bytes = row_len & 3;
+	uint32 result = 0;
+
+	while (longs--) {
+		result |= (*(uint32 *)out = *(uint32 *)row1 ^ *(uint32 *)row2);
+		row1 += 4;
+		row2 += 4;
+		out  += 4;
+	}
+
+	while (bytes--) {
+		result |= (*out = *row1 ^ *row2);
+		out  += 1;
+		row1 += 1;
+		row2 += 1;
+	}
+
+	return result;
+}
+
+static uint8 zmbv_xor_block_generic(struct zmbv_state *state, uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp) {
+	uint8 *out = *outp;
+	uint32 result = 0;
+	uint32 i;
+
+	for (i = 0; i != blk_h; i++) {
+		result |= zmbv_xor_row_generic(state, out, ras1, ras2, blk_w);
+		ras1 += bpr;
+		ras2 += bpr;
+		out  += blk_w;
+	}
+
+	if (result) {
+		*outp = out;
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps) {
 	struct zmbv_state *state;
 
@@ -63,6 +81,7 @@ struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps) {
 		AVT_Type,           MEMF_PRIVATE,
 		AVT_Lock,           TRUE,
 		AVT_ClearWithValue, 0,
+		AVT_Alignment,      16,
 		TAG_END);
 	if (state == NULL)
 		goto out;
@@ -70,6 +89,19 @@ struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps) {
 	state->width  = width;
 	state->height = height;
 	state->fps    = fps;
+
+	state->vector_unit = VECTORTYPE_NONE;
+
+	state->xor_block_func = zmbv_xor_block_generic;
+
+	IExec->GetCPUInfoTags(
+		GCIT_VectorUnit, &state->vector_unit,
+		TAG_END);
+
+	if (state->vector_unit == VECTORTYPE_ALTIVEC) {
+		IExec->DebugPrintF("altivec unit detected\n");
+		state->xor_block_func = zmbv_xor_block_altivec;
+	}
 
 	state->igraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
 	state->iz = (struct ZIFace *)OpenInterface("z.library", 53, "main", 1);
@@ -157,10 +189,12 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	state->current_frame_bm = IGraphics->AllocBitMapTags(state->width, state->height, depth,
 		BMATags_Friend,      bm,
 		BMATags_UserPrivate, TRUE,
+		BMATags_Alignment,   16,
 		TAG_END);
 	state->prev_frame_bm = IGraphics->AllocBitMapTags(state->width, state->height, depth,
 		BMATags_Friend,      bm,
 		BMATags_UserPrivate, TRUE,
+		BMATags_Alignment,   16,
 		TAG_END);
 	if (state->current_frame_bm == NULL || state->prev_frame_bm == NULL)
 		goto out;
@@ -185,19 +219,31 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	}
 
 	state->frame_bpp = IGraphics->GetBitMapAttr(bm, BMA_BYTESPERPIXEL);
-	bm_size = state->width * state->height * state->frame_bpp;
+	bm_size = (state->width * state->frame_bpp) * state->height;
 
 	num_blk_w = (state->width  + BLKW - 1) / BLKW;
 	num_blk_h = (state->height + BLKH - 1) / BLKH;
 	num_blk = num_blk_w * num_blk_h;
 
 	state->block_info_size   = (num_blk * 2 + 3) & ~3;
-	state->inter_buffer_size = state->block_info_size + bm_size;
+	state->inter_buffer_size = state->block_info_size + ((bm_size + 15) & ~15);
 	state->frame_buffer_size = state->iz->DeflateBound(&state->zstream, state->inter_buffer_size);
 
+	if (state->vector_unit == VECTORTYPE_ALTIVEC) {
+		uint32 last_bytes = (state->width * state->frame_bpp) & 15;
+		uint32 i;
+
+		for (i = 0; i != last_bytes; i++)
+			state->unaligned_mask_vector[i] = 0xff;
+
+		for (; i != 16; i++)
+			state->unaligned_mask_vector[i] = 0x00;
+	}
+
 	state->inter_buffer = IExec->AllocVecTags(state->inter_buffer_size + state->frame_buffer_size,
-		AVT_Type, MEMF_SHARED,
-		AVT_Lock, TRUE,
+		AVT_Type,      MEMF_SHARED,
+		AVT_Lock,      TRUE,
+		AVT_Alignment, 16,
 		TAG_END);
 	if (state->inter_buffer == NULL)
 		goto out;
@@ -213,48 +259,6 @@ out:
 	zmbv_free_frame_data(state);
 
 	return FALSE;
-}
-
-static inline uint8 zmbv_xor_row(uint8 *out, uint8 *row1, uint8 *row2, uint32 row_len) {
-	uint32 longs = row_len >> 2;
-	uint32 bytes = row_len & 3;
-	uint32 result = 0;
-
-	while (longs--) {
-		result |= (*(uint32 *)out = *(uint32 *)row1 ^ *(uint32 *)row2);
-		row1 += 4;
-		row2 += 4;
-		out  += 4;
-	}
-
-	while (bytes--) {
-		result |= (*out = *row1 ^ *row2);
-		out  += 1;
-		row1 += 1;
-		row2 += 1;
-	}
-
-	return result;
-}
-
-static uint8 zmbv_xor_block(uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp) {
-	uint8 *out = *outp;
-	uint32 result = 0;
-	uint32 i;
-
-	for (i = 0; i != blk_h; i++) {
-		result |= zmbv_xor_row(out, ras1, ras2, blk_w);
-		ras1 += bpr;
-		ras2 += bpr;
-		out  += blk_w;
-	}
-
-	if (result) {
-		*outp = out;
-		return 1;
-	} else {
-		return 0;
-	}
 }
 
 static void zmbv_endian_convert(uint32 pixfmt, uint8 *ras, uint32 byte_width, uint32 height, uint32 mod) {
@@ -392,6 +396,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 		*framesizep = 7 + state->zstream.total_out;
 		*keyframep = TRUE;
 	} else {
+		xor_block_func_t xor_block_func = state->xor_block_func;
 		uint8 *current_ras = state->current_frame;
 		uint8 *prev_ras    = state->prev_frame;
 		uint8 *info        = state->inter_buffer;
@@ -413,14 +418,14 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 
 		for (i = 0; i != num_blk_h; i++) {
 			for (j = 0; j != num_blk_w; j++) {
-				*info = zmbv_xor_block(current_ras, prev_ras, blk_w, blk_h, bpr, &dst);
+				*info = xor_block_func(state, current_ras, prev_ras, blk_w, blk_h, bpr, &dst);
 				info += 2;
 
 				current_ras += blk_w;
 				prev_ras    += blk_w;
 			}
 			if (last_blk_w) {
-				*info = zmbv_xor_block(current_ras, prev_ras, last_blk_w, blk_h, bpr, &dst);
+				*info = xor_block_func(state, current_ras, prev_ras, last_blk_w, blk_h, bpr, &dst);
 				info += 2;
 			}
 
@@ -429,14 +434,14 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 		}
 		if (last_blk_h) {
 			for (j = 0; j != num_blk_w; j++) {
-				*info = zmbv_xor_block(current_ras, prev_ras, blk_w, last_blk_h, bpr, &dst);
+				*info = xor_block_func(state, current_ras, prev_ras, blk_w, last_blk_h, bpr, &dst);
 				info += 2;
 
 				current_ras += blk_w;
 				prev_ras    += blk_w;
 			}
 			if (last_blk_w) {
-				*info = zmbv_xor_block(current_ras, prev_ras, last_blk_w, last_blk_h, bpr, &dst);
+				*info = xor_block_func(state, current_ras, prev_ras, last_blk_w, last_blk_h, bpr, &dst);
 				info += 2;
 			}
 		}
