@@ -35,7 +35,7 @@ srec/interfaces.o: srec/interfaces.h
 
 srec/timer.o: srec/timer.h
 
-srec/zmbv.o: srec/zmbv.h srec/interfaces.h
+srec/zmbv.o: srec/srec.h srec/zmbv.h srec/interfaces.h
 
 srec/zmbv_altivec.o: srec/zmbv.h
 srec/zmbv_altivec.o: CFLAGS += -maltivec

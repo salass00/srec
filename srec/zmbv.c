@@ -74,7 +74,7 @@ static uint8 zmbv_xor_block_generic(struct zmbv_state *state, uint8 *ras1, uint8
 	}
 }
 
-struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps) {
+struct zmbv_state *zmbv_init(const struct SRecArgs *args) {
 	struct zmbv_state *state;
 
 	state = IExec->AllocVecTags(sizeof(*state),
@@ -86,21 +86,23 @@ struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps) {
 	if (state == NULL)
 		goto out;
 
-	state->width  = width;
-	state->height = height;
-	state->fps    = fps;
+	state->width  = args->width;
+	state->height = args->height;
+	state->fps    = args->fps;
 
 	state->vector_unit = VECTORTYPE_NONE;
 
 	state->xor_block_func = zmbv_xor_block_generic;
 
-	IExec->GetCPUInfoTags(
-		GCIT_VectorUnit, &state->vector_unit,
-		TAG_END);
+	if (!args->no_altivec) {
+		IExec->GetCPUInfoTags(
+			GCIT_VectorUnit, &state->vector_unit,
+			TAG_END);
 
-	if (state->vector_unit == VECTORTYPE_ALTIVEC) {
-		IExec->DebugPrintF("altivec unit detected\n");
-		state->xor_block_func = zmbv_xor_block_altivec;
+		if (state->vector_unit == VECTORTYPE_ALTIVEC) {
+			IExec->DebugPrintF("altivec unit detected\n");
+			state->xor_block_func = zmbv_xor_block_altivec;
+		}
 	}
 
 	state->igraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);

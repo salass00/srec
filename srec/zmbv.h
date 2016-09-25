@@ -19,6 +19,7 @@
 #ifndef ZMBV_H
 #define ZMBV_H
 
+#include "srec.h"
 #include <exec/types.h>
 #include <interfaces/graphics.h>
 #include <interfaces/z.h>
@@ -52,7 +53,7 @@ struct zmbv_state {
 	xor_block_func_t      xor_block_func;
 };
 
-struct zmbv_state *zmbv_init(uint32 width, uint32 height, uint32 fps);
+struct zmbv_state *zmbv_init(const struct SRecArgs *args);
 BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm);
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BOOL *keyframep);
 void zmbv_end(struct zmbv_state *state);

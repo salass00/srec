@@ -33,7 +33,8 @@ struct SRecArgs {
 	TEXT   filename[1024];
 	uint32 width, height;
 	uint32 fps;
-	BOOL   filter;
+	BOOL   no_filter;
+	BOOL   no_altivec;
 };
 
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase);

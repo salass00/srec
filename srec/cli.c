@@ -24,14 +24,15 @@
 #include <proto/dos.h>
 #include <proto/utility.h>
 
-#define TEMPLATE "FILENAME/A,W=WIDTH/N,H=HEIGHT/N,FPS=FRAMERATE/N,F=FILTER/S"
+#define TEMPLATE "FILENAME/A,WIDTH/N,HEIGHT/N,FPS/N,NOFILTER/S,NOALTIVEC/S"
 
 enum {
 	ARG_FILENAME,
 	ARG_WIDTH,
 	ARG_HEIGHT,
 	ARG_FPS,
-	ARG_FILTER,
+	ARG_NOFILTER,
+	ARG_NOALTIVEC,
 	ARG_MAX
 };
 
@@ -77,7 +78,8 @@ int cli_main(struct LocaleInfo *loc) {
 	if ((APTR)args[ARG_FPS] != NULL)
 		srec_args->fps = *(uint32 *)args[ARG_FPS];
 
-	srec_args->filter = args[ARG_FILTER] ? TRUE : FALSE;
+	srec_args->no_filter = args[ARG_NOFILTER] ? TRUE : FALSE;
+	srec_args->no_altivec = args[ARG_NOALTIVEC] ? TRUE : FALSE;
 
 	mp = IExec->AllocSysObject(ASOT_PORT, NULL);
 	if (mp == NULL) {
