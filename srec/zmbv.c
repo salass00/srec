@@ -155,7 +155,7 @@ static void zmbv_free_frame_data(struct zmbv_state *state) {
 BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	struct GraphicsIFace *IGraphics = state->igraphics;
 	uint32 pixfmt;
-	uint32 depth;
+	uint32 bpp, padded_width, depth;
 	uint32 bm_size;
 	uint32 num_blk_w, num_blk_h, num_blk;
 	uint32 compare_bpr;
@@ -166,7 +166,6 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	state->keyframe_cnt = 0;
 
 	pixfmt = IGraphics->GetBitMapAttr(bm, BMA_PIXELFORMAT);
-	depth  = IGraphics->GetBitMapAttr(bm, BMA_DEPTH);
 	switch (pixfmt) {
 		case PIXF_A8R8G8B8:
 		case PIXF_B8G8R8A8:
@@ -186,14 +185,26 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 			return FALSE;
 	}
 
-	state->pixfmt = pixfmt;
+	bpp          = IGraphics->GetBitMapAttr(bm, BMA_BYTESPERPIXEL);
+	padded_width = IGraphics->GetBitMapAttr(bm, BMA_WIDTH);
+	depth        = IGraphics->GetBitMapAttr(bm, BMA_DEPTH);
 
-	state->current_frame_bm = IGraphics->AllocBitMapTags(state->width, state->height, depth,
+	if (bpp != 2 && bpp != 4) {
+		IExec->DebugPrintF("unsupported bytes per pixel: %lu!\n", bpp);
+		return FALSE;
+	}
+
+	state->pixfmt    = pixfmt;
+	state->frame_bpp = bpp;
+
+	padded_width = ((padded_width * bpp + 15) & ~15) / bpp;
+
+	state->current_frame_bm = IGraphics->AllocBitMapTags(padded_width, state->height, depth,
 		BMATags_Friend,      bm,
 		BMATags_UserPrivate, TRUE,
 		BMATags_Alignment,   16,
 		TAG_END);
-	state->prev_frame_bm = IGraphics->AllocBitMapTags(state->width, state->height, depth,
+	state->prev_frame_bm = IGraphics->AllocBitMapTags(padded_width, state->height, depth,
 		BMATags_Friend,      bm,
 		BMATags_UserPrivate, TRUE,
 		BMATags_Alignment,   16,
@@ -220,8 +231,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 		goto out;
 	}
 
-	state->frame_bpp = IGraphics->GetBitMapAttr(bm, BMA_BYTESPERPIXEL);
-	bm_size = (state->width * state->frame_bpp) * state->height;
+	bm_size = (state->width * bpp) * state->height;
 
 	num_blk_w = (state->width  + BLKW - 1) / BLKW;
 	num_blk_h = (state->height + BLKH - 1) / BLKH;
@@ -232,7 +242,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	state->frame_buffer_size = state->iz->DeflateBound(&state->zstream, state->inter_buffer_size);
 
 	if (state->vector_unit == VECTORTYPE_ALTIVEC) {
-		uint32 last_bytes = (state->width * state->frame_bpp) & 15;
+		uint32 last_bytes = (state->width * bpp) & 15;
 		uint32 i;
 
 		for (i = 0; i != last_bytes; i++)
