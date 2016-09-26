@@ -9,3 +9,24 @@ CTRL-C to stop recording.
 MSG_CX_DESCR (//)
 Screen Recorder
 ;
+MSG_WINDOW_TITLE (//)
+%s: Hot Key = <%s>
+;
+MSG_OUTPUT_FILE_GAD (//)
+Output
+;
+MSG_FORMAT_TAB (//)
+Format
+;
+MSG_POINTER_TAB (//)
+Pointer
+;
+MSG_MISC_TAB (//)
+Misc
+;
+MSG_RECORD_GAD (//)
+Record
+;
+MSG_STOP_GAD (//)
+Stop
+;

@@ -21,6 +21,11 @@
 #include "locale.h"
 #include "interfaces.h"
 #include "srec.h"
+#include <classes/window.h>
+#include <gadgets/layout.h>
+#include <gadgets/getfile.h>
+#include <gadgets/clicktab.h>
+#include <images/label.h>
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/utility.h>
@@ -38,19 +43,20 @@ enum {
 
 enum {
 	OID_WINDOW,
+	OID_ROOT_LAYOUT,
 	OID_OUTPUT_FILE,
 	OID_TABS,
 	OID_TAB_PAGES,
 	OID_FORMAT_PAGE,
 	OID_CONTAINER_FORMAT,
 	OID_VIDEO_CODEC,
-	OID_VIDEO_PARAMS,
+	OID_VIDEO_PARAMS_LAYOUT,
 	OID_ASPECT_RATIO,
 	OID_VIDEO_WIDTH,
 	OID_VIDEO_HEIGHT,
 	OID_VIDEO_FPS,
 	OID_AUDIO_CODEC,
-	OID_AUDIO_PARAMS,
+	OID_AUDIO_PARAMS_LAYOUT,
 	OID_SAMPLE_SIZE,
 	OID_CHANNELS,
 	OID_SAMPLE_RATE,
@@ -62,6 +68,7 @@ enum {
 	OID_BUSY_POINTER_FILE,
 	OID_MISC_PAGE,
 	OID_BILINEAR_FILTER,
+	OID_RECORD_STOP_LAYOUT,
 	OID_RECORD,
 	OID_STOP,
 	OID_MAX
@@ -90,6 +97,8 @@ struct srec_gui {
 	Class                   *checkboxclass;
 	struct ClassLibrary     *buttonbase;
 	Class                   *buttonclass;
+	struct ClassLibrary     *labelbase;
+	Class                   *labelclass;
 	struct DiskObject       *icon;
 	struct MsgPort          *broker_mp;
 	CxObj                   *broker;
@@ -99,7 +108,9 @@ struct srec_gui {
 	BOOL                     hidden;
 	uint32                   app_id;
 	struct MsgPort          *app_mp;
+	struct MsgPort          *wb_mp;
 	Object                  *obj[OID_MAX];
+	TEXT                     window_title[64];
 };
 
 static BOOL gui_open_libs(struct srec_gui *gd) {
@@ -139,12 +150,16 @@ static BOOL gui_open_classes(struct srec_gui *gd) {
 	error |= !(gd->chooserbase = IIntuition->OpenClass("gadgets/chooser.gadget", 53, &gd->chooserclass));
 	error |= !(gd->checkboxbase = IIntuition->OpenClass("gadgets/checkbox.gadget", 53, &gd->checkboxclass));
 	error |= !(gd->buttonbase = IIntuition->OpenClass("gadgets/button.gadget", 53, &gd->buttonclass));
+	error |= !(gd->labelbase = IIntuition->OpenClass("images/label.image", 53, &gd->labelclass));
 
 	return (error == 0) ? TRUE : FALSE;
 }
 
 static void gui_close_classes(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
+
+	if (gd->labelbase != NULL)
+		IIntuition->CloseClass(gd->labelbase);
 
 	if (gd->buttonbase != NULL)
 		IIntuition->CloseClass(gd->buttonbase);
@@ -183,10 +198,12 @@ static BOOL gui_get_icon(struct srec_gui *gd, struct WBStartup *wbs) {
 	if (gd->icon == NULL)
 		gd->icon = IIcon->GetDefDiskObject(WBTOOL);
 
-	if (gd->icon != NULL)
-		return TRUE;
+	if (gd->icon == NULL)
+		return FALSE;
 
-	return FALSE;
+	gd->icon->do_CurrentX = NO_ICON_POSITION;
+	gd->icon->do_CurrentY = NO_ICON_POSITION;
+	return TRUE;
 }
 
 static BOOL gui_add_cx_event(struct srec_gui *gd, CONST_STRPTR descr, uint32 id) {
@@ -302,8 +319,137 @@ static void gui_unregister_application(struct srec_gui *gd) {
 		IApplication->UnregisterApplicationA(gd->app_id, NULL);
 }
 
+static BOOL gui_create_window(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct LocaleInfo *loc = gd->locale_info;
+	CONST_STRPTR clicktab_labels[4];
+
+	IUtility->SNPrintf(gd->window_title, sizeof(gd->window_title),
+		GetString(loc, MSG_WINDOW_TITLE), gd->popkey ? gd->popkey : "none");
+
+	gd->wb_mp = IExec->AllocSysObject(ASOT_PORT, NULL);
+	if (gd->wb_mp == NULL)
+		return FALSE;
+
+	#define LABEL(id) \
+		IIntuition->NewObject(gd->labelclass, NULL, \
+			LABEL_Text, GetString(loc, id), \
+			TAG_END)
+
+	gd->obj[OID_OUTPUT_FILE] = IIntuition->NewObject(gd->getfileclass, NULL,
+		GA_ID,              OID_OUTPUT_FILE,
+		GA_RelVerify,       TRUE,
+		GETFILE_Pattern,    "#?.mkv",
+		GETFILE_DoSaveMode, TRUE,
+		TAG_END);
+
+	clicktab_labels[0] = GetString(loc, MSG_FORMAT_TAB);
+	clicktab_labels[1] = GetString(loc, MSG_POINTER_TAB);
+	clicktab_labels[2] = GetString(loc, MSG_MISC_TAB);
+	clicktab_labels[3] = NULL;
+
+	gd->obj[OID_FORMAT_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
+		TAG_END);
+
+	gd->obj[OID_POINTER_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
+		TAG_END);
+
+	gd->obj[OID_MISC_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
+		TAG_END);
+
+	gd->obj[OID_TAB_PAGES] = IIntuition->NewObject(NULL, "page.gadget",
+		GA_ID,        OID_TAB_PAGES,
+		PAGE_Add,     gd->obj[OID_FORMAT_PAGE],
+		PAGE_Add,     gd->obj[OID_POINTER_PAGE],
+		PAGE_Add,     gd->obj[OID_MISC_PAGE],
+		PAGE_Current, 0,
+		TAG_END);
+
+	gd->obj[OID_TABS] = IIntuition->NewObject(gd->clicktabclass, NULL,
+		GA_ID,              OID_TABS,
+		GA_RelVerify,       TRUE,
+		GA_Text,            clicktab_labels,
+		CLICKTAB_PageGroup, gd->obj[OID_TAB_PAGES],
+		TAG_END);
+
+	gd->obj[OID_RECORD] = IIntuition->NewObject(gd->buttonclass, NULL,
+		GA_ID,        OID_RECORD,
+		GA_RelVerify, TRUE,
+		GA_Text,      GetString(loc, MSG_RECORD_GAD),
+		TAG_END);
+
+	gd->obj[OID_STOP] = IIntuition->NewObject(gd->buttonclass, NULL,
+		GA_ID,        OID_STOP,
+		GA_RelVerify, TRUE,
+		GA_Text,      GetString(loc, MSG_STOP_GAD),
+		TAG_END);
+
+	gd->obj[OID_RECORD_STOP_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
+		GA_ID,             OID_RECORD_STOP_LAYOUT,
+		LAYOUT_BevelStyle, BVS_SBAR_VERT,
+		LAYOUT_AddChild,   gd->obj[OID_RECORD],
+		LAYOUT_AddChild,   gd->obj[OID_STOP],
+		TAG_END);
+
+	gd->obj[OID_ROOT_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
+		GA_ID,              OID_ROOT_LAYOUT,
+		LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
+		LAYOUT_AddChild,    gd->obj[OID_OUTPUT_FILE],
+		CHILD_Label,        LABEL(MSG_OUTPUT_FILE_GAD),
+		LAYOUT_AddChild,    gd->obj[OID_TABS],
+		LAYOUT_AddChild,    gd->obj[OID_RECORD_STOP_LAYOUT],
+		TAG_END);
+
+	gd->obj[OID_WINDOW] = IIntuition->NewObject(gd->windowclass, NULL,
+		WA_Title,             gd->window_title,
+		WA_CloseGadget,       TRUE,
+		WA_DragBar,           TRUE,
+		WA_DepthGadget,       TRUE,
+		WA_Activate,          TRUE,
+		WA_NoCareRefresh,     TRUE,
+		WA_IDCMP,             IDCMP_GADGETUP | IDCMP_MENUPICK | IDCMP_CLOSEWINDOW,
+		WINDOW_CharSet,       loc->li_CodeSet,
+		WINDOW_Position,      WPOS_TOPLEFT,
+		WINDOW_AppPort,       gd->wb_mp,
+		WINDOW_IconifyGadget, TRUE,
+		WINDOW_IconTitle,     "SRec",
+		WINDOW_Icon,          gd->icon,
+		WINDOW_IconNoDispose, TRUE,
+		WINDOW_Layout,        gd->obj[OID_ROOT_LAYOUT],
+		TAG_END);
+
+	if (gd->obj[OID_WINDOW] == NULL)
+		return FALSE;
+
+	return TRUE;
+}
+
+static void gui_free_window(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+
+	if (gd->obj[OID_WINDOW] != NULL)
+		IIntuition->DisposeObject(gd->obj[OID_WINDOW]);
+
+	if (gd->wb_mp != NULL)
+		IExec->FreeSysObject(ASOT_PORT, gd->wb_mp);
+}
+
+static BOOL gui_show_window(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct Window *window;
+
+	window = (struct Window *)IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_OPEN, NULL);
+	if (window == NULL)
+		return FALSE;
+
+	return TRUE;
+}
+
 int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	struct srec_gui *gd;
+	struct IntuitionIFace *IIntuition;
+	uint32 signals, window_sigs;
+	BOOL done = FALSE;
 	int rc = RETURN_ERROR;
 
 	gd = IExec->AllocVecTags(sizeof(*gd),
@@ -331,11 +477,42 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	if (!gui_register_application(gd))
 		goto out;
 
+	if (!gui_create_window(gd))
+		goto out;
+
+	if (!gd->hidden && !gui_show_window(gd))
+		goto out;
+
+	IIntuition = gd->iintuition;
+
+	while (!done) {
+		IIntuition->GetAttr(WINDOW_SigMask, gd->obj[OID_WINDOW], &window_sigs);
+		signals = IExec->Wait(SIGBREAKF_CTRL_C | window_sigs);
+
+		if (signals & SIGBREAKF_CTRL_C)
+			done = TRUE;
+
+		if (signals & window_sigs) {
+			uint32 result;
+			uint16 code;
+
+			while ((result = IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_HANDLEINPUT, &code)) != WMHI_LASTMSG) {
+				switch (result & WMHI_CLASSMASK) {
+					case WMHI_CLOSEWINDOW:
+						done = TRUE;
+						break;
+				}
+			}
+		}
+	}
+
 	rc = RETURN_OK;
 
 out:
 
 	if (gd != NULL) {
+		gui_free_window(gd);
+
 		gui_unregister_application(gd);
 
 		gui_unregister_broker(gd);
