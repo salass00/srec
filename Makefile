@@ -21,13 +21,13 @@ $(TARGET): $(OBJS) libmkv/libmkv.a
 	$(CC) $(LDFLAGS) -o $@.debug $^ $(LIBS)
 	$(STRIP) -R.comment -o $@ $@.debug
 
-src/main.o: src/locale.h src/cli.h src/gui.h SRec_rev.h
+src/main.o: src/locale.h include/locale_strings.h src/cli.h src/gui.h SRec_rev.h
 
-src/locale.o: src/locale.h
+src/locale.o: src/locale.h include/locale_strings.h
 
-src/cli.o: src/cli.h src/locale.h src/srec.h
+src/cli.o: src/cli.h src/locale.h include/locale_strings.h src/srec.h
 
-src/gui.o: src/gui.h src/locale.h src/interfaces.h src/srec.h SRec_rev.h
+src/gui.o: src/gui.h src/locale.h include/locale_strings.h src/interfaces.h src/srec.h SRec_rev.h
 
 src/srec.o: src/srec.h src/interfaces.h src/timer.h include/libmkv.h src/zmbv.h SRec_rev.h
 
@@ -39,8 +39,6 @@ src/zmbv.o: src/srec.h src/zmbv.h src/interfaces.h
 
 src/zmbv_altivec.o: src/zmbv.h
 src/zmbv_altivec.o: CFLAGS += -maltivec
-
-src/locale.h: include/locale_strings.h
 
 include/locale_strings.h: SRec.cd
 	catcomp --cfile $@ $<
