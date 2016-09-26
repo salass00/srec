@@ -44,9 +44,10 @@ struct zmbv_state {
 	uint32                frame_bpr;
 	uint32                frame_bpp;
 	uint32                block_info_size;
-	uint32                inter_buffer_size;
-	uint32                frame_buffer_size;
-	void                 *inter_buffer;
+	uint32                max_block_data_size;
+	uint32                max_frame_size;
+	void                 *block_info_buffer;
+	void                 *block_data_buffer;
 	void                 *frame_buffer;
 	uint32                keyframe_cnt;
 	uint32                vector_unit;

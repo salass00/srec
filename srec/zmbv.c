@@ -131,22 +131,23 @@ out:
 static void zmbv_free_frame_data(struct zmbv_state *state) {
 	struct GraphicsIFace *IGraphics = state->igraphics;
 
-	if (state->inter_buffer != NULL) {
-		IExec->FreeVec(state->inter_buffer);
-		state->inter_buffer = NULL;
-		state->frame_buffer = NULL;
+	if (state->block_info_buffer != NULL) {
+		IExec->FreeVec(state->block_info_buffer);
+		state->block_info_buffer = NULL;
+		state->block_data_buffer = NULL;
+		state->frame_buffer      = NULL;
 	}
 
 	if (state->prev_frame_bm != NULL) {
 		IGraphics->FreeBitMap(state->prev_frame_bm);
 		state->prev_frame_bm = NULL;
-		state->prev_frame = NULL;
+		state->prev_frame    = NULL;
 	}
 
 	if (state->current_frame_bm != NULL) {
 		IGraphics->FreeBitMap(state->current_frame_bm);
 		state->current_frame_bm = NULL;
-		state->current_frame = NULL;
+		state->current_frame    = NULL;
 	}
 
 	state->srec_bm = NULL;
@@ -159,6 +160,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	uint32 bm_size;
 	uint32 num_blk_w, num_blk_h, num_blk;
 	uint32 compare_bpr;
+	uint32 block_data_offset, frame_buffer_offset;
 	APTR lock;
 
 	zmbv_free_frame_data(state);
@@ -237,9 +239,9 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	num_blk_h = (state->height + BLKH - 1) / BLKH;
 	num_blk = num_blk_w * num_blk_h;
 
-	state->block_info_size   = (num_blk * 2 + 3) & ~3;
-	state->inter_buffer_size = state->block_info_size + ((bm_size + 15) & ~15);
-	state->frame_buffer_size = state->iz->DeflateBound(&state->zstream, state->inter_buffer_size);
+	state->block_info_size = (num_blk * 2 + 3) & ~3;
+	state->max_block_data_size = bm_size;
+	state->max_frame_size = 1 + state->iz->DeflateBound(&state->zstream, state->block_info_size + state->max_block_data_size);
 
 	if (state->vector_unit == VECTORTYPE_ALTIVEC) {
 		uint32 last_bytes = (state->width * bpp) & 15;
@@ -252,15 +254,18 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 			state->unaligned_mask_vector[i] = 0x00;
 	}
 
-	state->inter_buffer = IExec->AllocVecTags(state->inter_buffer_size + state->frame_buffer_size,
+	block_data_offset = (state->block_info_size + 15) & ~15;
+	frame_buffer_offset = block_data_offset + ((state->max_block_data_size + 15) & ~15);
+	state->block_info_buffer = IExec->AllocVecTags(frame_buffer_offset + state->max_frame_size,
 		AVT_Type,      MEMF_SHARED,
 		AVT_Lock,      TRUE,
 		AVT_Alignment, 16,
 		TAG_END);
-	if (state->inter_buffer == NULL)
+	if (state->block_info_buffer == NULL)
 		goto out;
 
-	state->frame_buffer = state->inter_buffer + state->inter_buffer_size;
+	state->block_data_buffer = state->block_info_buffer + block_data_offset;
+	state->frame_buffer = state->block_data_buffer + frame_buffer_offset;
 
 	state->srec_bm = bm;
 
@@ -331,7 +336,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 	struct GraphicsIFace *IGraphics = state->igraphics;
 	struct ZIFace *IZ = state->iz;
 	uint8 *out = state->frame_buffer;
-	uint32 out_space = state->frame_buffer_size;
+	uint32 out_space = state->max_frame_size;
 
 	if (state->srec_bm == NULL)
 		return FALSE;
@@ -411,9 +416,8 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 		xor_block_func_t xor_block_func = state->xor_block_func;
 		uint8 *current_ras = state->current_frame;
 		uint8 *prev_ras    = state->prev_frame;
-		uint8 *info        = state->inter_buffer;
-		uint8 *dst_start   = info + state->block_info_size;
-		uint8 *dst         = dst_start;
+		uint8 *info        = state->block_info_buffer;
+		uint8 *data        = state->block_data_buffer;
 		uint32 num_blk_w   = state->width / BLKW;
 		uint32 last_blk_w  = (state->width % BLKW) * state->frame_bpp;
 		uint32 num_blk_h   = state->height / BLKH;
@@ -422,6 +426,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 		uint32 blk_h       = BLKH;
 		uint32 bpr         = state->frame_bpr;
 		uint32 blk_mod     = (bpr * BLKH) - (num_blk_w * blk_w);
+		uint32 block_data_len;
 		uint32 i, j;
 
 		state->keyframe_cnt--;
@@ -430,14 +435,14 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 
 		for (i = 0; i != num_blk_h; i++) {
 			for (j = 0; j != num_blk_w; j++) {
-				*info = xor_block_func(state, current_ras, prev_ras, blk_w, blk_h, bpr, &dst);
+				*info = xor_block_func(state, current_ras, prev_ras, blk_w, blk_h, bpr, &data);
 				info += 2;
 
 				current_ras += blk_w;
 				prev_ras    += blk_w;
 			}
 			if (last_blk_w) {
-				*info = xor_block_func(state, current_ras, prev_ras, last_blk_w, blk_h, bpr, &dst);
+				*info = xor_block_func(state, current_ras, prev_ras, last_blk_w, blk_h, bpr, &data);
 				info += 2;
 			}
 
@@ -446,14 +451,14 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 		}
 		if (last_blk_h) {
 			for (j = 0; j != num_blk_w; j++) {
-				*info = xor_block_func(state, current_ras, prev_ras, blk_w, last_blk_h, bpr, &dst);
+				*info = xor_block_func(state, current_ras, prev_ras, blk_w, last_blk_h, bpr, &data);
 				info += 2;
 
 				current_ras += blk_w;
 				prev_ras    += blk_w;
 			}
 			if (last_blk_w) {
-				*info = xor_block_func(state, current_ras, prev_ras, last_blk_w, last_blk_h, bpr, &dst);
+				*info = xor_block_func(state, current_ras, prev_ras, last_blk_w, last_blk_h, bpr, &data);
 				info += 2;
 			}
 		}
@@ -466,10 +471,18 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 		state->zstream.avail_out = out_space;
 		state->zstream.total_out = 0;
 
-		zmbv_endian_convert(state->pixfmt, dst_start, dst - dst_start, 1, 0);
+		state->zstream.next_in  = state->block_info_buffer;
+		state->zstream.avail_in = state->block_info_size;
+		if (IZ->Deflate(&state->zstream, Z_NO_FLUSH) != Z_OK) {
+			IExec->DebugPrintF("deflate failed!\n");
+			return FALSE;
+		}
 
-		state->zstream.next_in  = state->inter_buffer;
-		state->zstream.avail_in = dst - (uint8 *)state->inter_buffer;
+		block_data_len = data - (uint8 *)state->block_data_buffer;
+		zmbv_endian_convert(state->pixfmt, state->block_data_buffer, block_data_len, 1, 0);
+
+		state->zstream.next_in  = state->block_data_buffer;
+		state->zstream.avail_in = block_data_len;
 		if (IZ->Deflate(&state->zstream, Z_SYNC_FLUSH) != Z_OK) {
 			IExec->DebugPrintF("deflate failed!\n");
 			return FALSE;
