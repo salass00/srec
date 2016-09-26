@@ -20,6 +20,7 @@
 #include "interfaces.h"
 #include <proto/exec.h>
 #include <proto/utility.h>
+#include <malloc.h>
 
 #define BLKW 16
 #define BLKH 16
@@ -74,6 +75,14 @@ static uint8 zmbv_xor_block_generic(struct zmbv_state *state, uint8 *ras1, uint8
 	}
 }
 
+static void *zalloc(void *opaque, uint32 items, uint32 size) {
+	return _malloc_r(opaque, items * size);
+}
+
+static void zfree(void *opaque, void *address) {
+	_free_r(opaque, address);
+}
+
 struct zmbv_state *zmbv_init(const struct SRecArgs *args) {
 	struct zmbv_state *state;
 
@@ -109,6 +118,10 @@ struct zmbv_state *zmbv_init(const struct SRecArgs *args) {
 	state->iz = (struct ZIFace *)OpenInterface("z.library", 53, "main", 1);
 	if (state->igraphics == NULL || state->iz == NULL)
 		goto out;
+
+	state->zstream.opaque = _REENT;
+	state->zstream.zalloc = zalloc;
+	state->zstream.zfree  = zfree;
 
 	if (state->iz->DeflateInit(&state->zstream, Z_BEST_SPEED) != Z_OK)
 		goto out;
