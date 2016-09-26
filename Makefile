@@ -10,7 +10,7 @@ CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude
 LDFLAGS := -static
 LIBS    := 
 
-SRCS := srec/main.c srec/locale.c srec/cli.o srec/gui.o srec/srec.c srec/interfaces.c srec/timer.c srec/zmbv.c srec/zmbv_altivec.c
+SRCS := src/main.c src/locale.c src/cli.o src/gui.o src/srec.c src/interfaces.c src/timer.c src/zmbv.c src/zmbv_altivec.c
 OBJS := $(SRCS:.c=.o)
 
 .PHONY: all revision clean
@@ -21,26 +21,26 @@ $(TARGET): $(OBJS) libmkv/libmkv.a
 	$(CC) $(LDFLAGS) -o $@.debug $^ $(LIBS)
 	$(STRIP) -R.comment -o $@ $@.debug
 
-srec/main.o: srec/locale.h srec/cli.h srec/gui.h SRec_rev.h
+src/main.o: src/locale.h src/cli.h src/gui.h SRec_rev.h
 
-srec/locale.o: srec/locale.h
+src/locale.o: src/locale.h
 
-srec/cli.o: srec/cli.h srec/locale.h srec/srec.h
+src/cli.o: src/cli.h src/locale.h src/srec.h
 
-srec/gui.o: srec/gui.h srec/locale.h srec/interfaces.h srec/srec.h SRec_rev.h
+src/gui.o: src/gui.h src/locale.h src/interfaces.h src/srec.h SRec_rev.h
 
-srec/srec.o: srec/srec.h srec/interfaces.h srec/timer.h include/libmkv.h srec/zmbv.h SRec_rev.h
+src/srec.o: src/srec.h src/interfaces.h src/timer.h include/libmkv.h src/zmbv.h SRec_rev.h
 
-srec/interfaces.o: srec/interfaces.h
+src/interfaces.o: src/interfaces.h
 
-srec/timer.o: srec/timer.h
+src/timer.o: src/timer.h
 
-srec/zmbv.o: srec/srec.h srec/zmbv.h srec/interfaces.h
+src/zmbv.o: src/srec.h src/zmbv.h src/interfaces.h
 
-srec/zmbv_altivec.o: srec/zmbv.h
-srec/zmbv_altivec.o: CFLAGS += -maltivec
+src/zmbv_altivec.o: src/zmbv.h
+src/zmbv_altivec.o: CFLAGS += -maltivec
 
-srec/locale.h: include/locale_strings.h
+src/locale.h: include/locale_strings.h
 
 include/locale_strings.h: SRec.cd
 	catcomp --cfile $@ $<
@@ -53,5 +53,5 @@ revision:
 
 clean:
 	make -C libmkv clean
-	$(RM) srec/*.o $(TARGET).debug $(TARGET)
+	$(RM) src/*.o $(TARGET).debug $(TARGET)
 
