@@ -1,9 +1,11 @@
 #include "zmbv.h"
 #include <altivec.h>
 
-typedef __vector uint8  vuint8;
+typedef __vector uint8 vuint8;
 
-static inline vuint8 zmbv_xor_row_altivec(struct zmbv_state *state, uint8 *out, uint8 *row1, uint8 *row2, uint32 row_len) {
+static inline vuint8 zmbv_xor_row_altivec(const struct zmbv_state *state, uint8 *out,
+	uint8 *row1, uint8 *row2, uint32 row_len)
+{
 	uint32 vectors = row_len >> 4;
 	uint32 remains = row_len & 15;
 	vuint8 result = vec_splat_u8(0);
@@ -33,7 +35,9 @@ static inline vuint8 zmbv_xor_row_altivec(struct zmbv_state *state, uint8 *out, 
 	return result;
 }
 
-uint8 zmbv_xor_block_altivec(struct zmbv_state *state, uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp) {
+uint8 zmbv_xor_block_altivec(const struct zmbv_state *state, uint8 *ras1, uint8 *ras2,
+	uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp)
+{
 	uint8 *out = *outp;
 	vuint8 x;
 	vuint8 result = vec_splat_u8(0);

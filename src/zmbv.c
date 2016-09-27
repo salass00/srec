@@ -33,7 +33,9 @@ static void zmbv_close_libs(struct zmbv_state *state) {
 		CloseInterface((struct Interface *)state->igraphics);
 }
 
-static inline uint32 zmbv_xor_row_generic(struct zmbv_state *state, uint8 *out, uint8 *row1, uint8 *row2, uint32 row_len) {
+static inline uint32 zmbv_xor_row_generic(const struct zmbv_state *state, uint8 *out,
+	uint8 *row1, uint8 *row2, uint32 row_len)
+{
 	uint32 longs = row_len >> 2;
 	uint32 bytes = row_len & 3;
 	uint32 result = 0;
@@ -55,7 +57,9 @@ static inline uint32 zmbv_xor_row_generic(struct zmbv_state *state, uint8 *out, 
 	return result;
 }
 
-static uint8 zmbv_xor_block_generic(struct zmbv_state *state, uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp) {
+static uint8 zmbv_xor_block_generic(const struct zmbv_state *state, uint8 *ras1, uint8 *ras2,
+	uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp)
+{
 	uint8 *out = *outp;
 	uint32 result = 0;
 	uint32 i;
@@ -72,6 +76,62 @@ static uint8 zmbv_xor_block_generic(struct zmbv_state *state, uint8 *ras1, uint8
 		return 1;
 	} else {
 		return 0;
+	}
+}
+
+static void zmbv_endian_convert(const struct zmbv_state *state, uint8 *ras,
+	uint32 byte_width, uint32 height, uint32 mod)
+{
+	switch (state->pixfmt) {
+		case PIXF_A8R8G8B8:
+			{
+				uint32 width = byte_width >> 2;
+				uint32 i, j;
+				for (i = 0; i != height; i++) {
+					for (j = 0; j != width; j++) {
+						uint32 x = *(uint32 *)ras;
+						__asm__("rlwinm %0,%1,24,0,31\n\t"
+						        "rlwimi %0,%1,8,8,15\n\t"
+						        "rlwimi %0,%1,8,24,31"
+						        : "=&r" (x)
+						        : "r" (x));
+						*(uint32 *)ras = x;
+						ras += 4;
+					}
+					ras += mod;
+				}
+			}
+			break;
+		case PIXF_R5G6B5:
+		case PIXF_R5G5B5:
+			{
+				uint32 width = byte_width >> 2;
+				uint32 odd = (width >> 1) & 1;
+				uint32 i, j;
+				for (i = 0; i != height; i++) {
+					for (j = 0; j != width; j++) {
+						uint32 x = *(uint32 *)ras;
+						__asm__("rlwinm %0,%1,8,0,31\n\t"
+						        "rlwimi %0,%1,16,8,15\n\t"
+						        "rlwimi %0,%1,16,24,31"
+						        : "=&r" (x)
+						        : "r" (x));
+						*(uint32 *)ras = x;
+						ras += 4;
+					}
+					if (odd) {
+						uint16 x = *(uint16 *)ras;
+						__asm__("rlwinm %0,%1,8,16,23\n\t"
+						        "rlwimi %0,%1,24,24,31"
+						        : "=&r" (x)
+						        : "r" (x));
+						*(uint16 *)ras = x;
+						ras += 2;
+					}
+					ras += mod;
+				}
+			}
+			break;
 	}
 }
 
@@ -101,7 +161,8 @@ struct zmbv_state *zmbv_init(const struct SRecArgs *args) {
 
 	state->vector_unit = VECTORTYPE_NONE;
 
-	state->xor_block_func = zmbv_xor_block_generic;
+	state->xor_block_func      = zmbv_xor_block_generic;
+	state->endian_convert_func = zmbv_endian_convert;
 
 	if (!args->no_altivec) {
 		IExec->GetCPUInfoTags(
@@ -291,60 +352,6 @@ out:
 	return FALSE;
 }
 
-static void zmbv_endian_convert(uint32 pixfmt, uint8 *ras, uint32 byte_width, uint32 height, uint32 mod) {
-	switch (pixfmt) {
-		case PIXF_A8R8G8B8:
-			{
-				uint32 width = byte_width >> 2;
-				uint32 i, j;
-				for (i = 0; i != height; i++) {
-					for (j = 0; j != width; j++) {
-						uint32 x = *(uint32 *)ras;
-						__asm__("rlwinm %0,%1,24,0,31\n\t"
-						        "rlwimi %0,%1,8,8,15\n\t"
-						        "rlwimi %0,%1,8,24,31"
-						        : "=&r" (x)
-						        : "r" (x));
-						*(uint32 *)ras = x;
-						ras += 4;
-					}
-					ras += mod;
-				}
-			}
-			break;
-		case PIXF_R5G6B5:
-		case PIXF_R5G5B5:
-			{
-				uint32 width = byte_width >> 2;
-				uint32 odd = (width >> 1) & 1;
-				uint32 i, j;
-				for (i = 0; i != height; i++) {
-					for (j = 0; j != width; j++) {
-						uint32 x = *(uint32 *)ras;
-						__asm__("rlwinm %0,%1,8,0,31\n\t"
-						        "rlwimi %0,%1,16,8,15\n\t"
-						        "rlwimi %0,%1,16,24,31"
-						        : "=&r" (x)
-						        : "r" (x));
-						*(uint32 *)ras = x;
-						ras += 4;
-					}
-					if (odd) {
-						uint16 x = *(uint16 *)ras;
-						__asm__("rlwinm %0,%1,8,16,23\n\t"
-						        "rlwimi %0,%1,24,24,31"
-						        : "=&r" (x)
-						        : "r" (x));
-						*(uint16 *)ras = x;
-						ras += 2;
-					}
-					ras += mod;
-				}
-			}
-			break;
-	}
-}
-
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BOOL *keyframep) {
 	struct GraphicsIFace *IGraphics = state->igraphics;
 	struct ZIFace *IZ = state->iz;
@@ -385,7 +392,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 		state->zstream.avail_out = out_space;
 		state->zstream.total_out = 0;
 
-		zmbv_endian_convert(state->pixfmt, state->current_frame, packed_bpr, state->height, mod);
+		state->endian_convert_func(state, state->current_frame, packed_bpr, state->height, mod);
 
 		if (mod == 0) {
 			state->zstream.next_in  = ras;
@@ -420,13 +427,13 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 			}
 		}
 
-		zmbv_endian_convert(state->pixfmt, state->current_frame, packed_bpr, state->height, mod);
+		state->endian_convert_func(state, state->current_frame, packed_bpr, state->height, mod);
 
 		*framep = state->frame_buffer;
 		*framesizep = 7 + state->zstream.total_out;
 		*keyframep = TRUE;
 	} else {
-		xor_block_func_t xor_block_func = state->xor_block_func;
+		zmbv_xor_block_func_t xor_block_func = state->xor_block_func;
 		uint8 *current_ras = state->current_frame;
 		uint8 *prev_ras    = state->prev_frame;
 		uint8 *info        = state->block_info_buffer;
@@ -492,7 +499,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BO
 		}
 
 		block_data_len = data - (uint8 *)state->block_data_buffer;
-		zmbv_endian_convert(state->pixfmt, state->block_data_buffer, block_data_len, 1, 0);
+		state->endian_convert_func(state, state->block_data_buffer, block_data_len, 1, 0);
 
 		state->zstream.next_in  = state->block_data_buffer;
 		state->zstream.avail_in = block_data_len;

@@ -26,32 +26,36 @@
 
 struct zmbv_state;
 
-typedef uint8 (*xor_block_func_t)(struct zmbv_state *state, uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp);
+typedef uint8 (*zmbv_xor_block_func_t)(const struct zmbv_state *state, uint8 *ras1, uint8 *ras2,
+	uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp);
+typedef void (*zmbv_endian_convert_t)(const struct zmbv_state *state, uint8 *ras,
+	uint32 byte_width, uint32 height, uint32 mod);
 
 struct zmbv_state {
-	uint8                 unaligned_mask_vector[16];
-	uint32                width, height, fps;
-	struct GraphicsIFace *igraphics;
-	struct ZIFace        *iz;
-	z_stream              zstream;
-	uint32                pixfmt;
-	uint8                 zmbv_fmt;
-	struct BitMap        *srec_bm;
-	struct BitMap        *prev_frame_bm;
-	struct BitMap        *current_frame_bm;
-	void                 *prev_frame;
-	void                 *current_frame;
-	uint32                frame_bpr;
-	uint32                frame_bpp;
-	uint32                block_info_size;
-	uint32                max_block_data_size;
-	uint32                max_frame_size;
-	void                 *block_info_buffer;
-	void                 *block_data_buffer;
-	void                 *frame_buffer;
-	uint32                keyframe_cnt;
-	uint32                vector_unit;
-	xor_block_func_t      xor_block_func;
+	uint8                  unaligned_mask_vector[16];
+	zmbv_xor_block_func_t  xor_block_func;
+	zmbv_endian_convert_t  endian_convert_func;
+	uint32                 width, height, fps;
+	struct GraphicsIFace  *igraphics;
+	struct ZIFace         *iz;
+	z_stream               zstream;
+	uint32                 pixfmt;
+	uint8                  zmbv_fmt;
+	struct BitMap         *srec_bm;
+	struct BitMap         *prev_frame_bm;
+	struct BitMap         *current_frame_bm;
+	void                  *prev_frame;
+	void                  *current_frame;
+	uint32                 frame_bpr;
+	uint32                 frame_bpp;
+	uint32                 block_info_size;
+	uint32                 max_block_data_size;
+	uint32                 max_frame_size;
+	void                  *block_info_buffer;
+	void                  *block_data_buffer;
+	void                  *frame_buffer;
+	uint32                 keyframe_cnt;
+	uint32                 vector_unit;
 };
 
 struct zmbv_state *zmbv_init(const struct SRecArgs *args);
@@ -59,7 +63,8 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm);
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BOOL *keyframep);
 void zmbv_end(struct zmbv_state *state);
 
-uint8 zmbv_xor_block_altivec(struct zmbv_state *state, uint8 *ras1, uint8 *ras2, uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp);
+uint8 zmbv_xor_block_altivec(const struct zmbv_state *state, uint8 *ras1, uint8 *ras2,
+	uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp);
 
 #endif
 
