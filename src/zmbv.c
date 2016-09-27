@@ -34,7 +34,7 @@ static void zmbv_close_libs(struct zmbv_state *state) {
 }
 
 static inline uint32 zmbv_xor_row_generic(const struct zmbv_state *state, uint8 *out,
-	uint8 *row1, uint8 *row2, uint32 row_len)
+	const uint8 *row1, const uint8 *row2, uint32 row_len)
 {
 	uint32 longs = row_len >> 2;
 	uint32 bytes = row_len & 3;
@@ -57,8 +57,9 @@ static inline uint32 zmbv_xor_row_generic(const struct zmbv_state *state, uint8 
 	return result;
 }
 
-static uint8 zmbv_xor_block_generic(const struct zmbv_state *state, uint8 *ras1, uint8 *ras2,
-	uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp)
+static uint8 zmbv_xor_block_generic(const struct zmbv_state *state,
+	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
+	uint32 bpr, uint8 **outp)
 {
 	uint8 *out = *outp;
 	uint32 result = 0;
@@ -79,8 +80,8 @@ static uint8 zmbv_xor_block_generic(const struct zmbv_state *state, uint8 *ras1,
 	}
 }
 
-static void zmbv_endian_convert(const struct zmbv_state *state, uint8 *ras,
-	uint32 byte_width, uint32 height, uint32 mod)
+static void zmbv_endian_convert(const struct zmbv_state *state,
+	uint8 *ras, uint32 byte_width, uint32 height, uint32 mod)
 {
 	switch (state->pixfmt) {
 		case PIXF_A8R8G8B8:
@@ -352,7 +353,9 @@ out:
 	return FALSE;
 }
 
-BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BOOL *keyframep) {
+BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
+	BOOL *keyframep)
+{
 	struct GraphicsIFace *IGraphics = state->igraphics;
 	struct ZIFace *IZ = state->iz;
 	uint8 *out = state->frame_buffer;

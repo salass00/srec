@@ -26,10 +26,11 @@
 
 struct zmbv_state;
 
-typedef uint8 (*zmbv_xor_block_func_t)(const struct zmbv_state *state, uint8 *ras1, uint8 *ras2,
-	uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp);
-typedef void (*zmbv_endian_convert_t)(const struct zmbv_state *state, uint8 *ras,
-	uint32 byte_width, uint32 height, uint32 mod);
+typedef uint8 (*zmbv_xor_block_func_t)(const struct zmbv_state *state,
+	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
+	uint32 bpr, uint8 **outp);
+typedef void (*zmbv_endian_convert_t)(const struct zmbv_state *state,
+	uint8 *ras, uint32 byte_width, uint32 height, uint32 mod);
 
 struct zmbv_state {
 	uint8                  unaligned_mask_vector[16];
@@ -60,11 +61,13 @@ struct zmbv_state {
 
 struct zmbv_state *zmbv_init(const struct SRecArgs *args);
 BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm);
-BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep, BOOL *keyframep);
+BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
+	BOOL *keyframep);
 void zmbv_end(struct zmbv_state *state);
 
-uint8 zmbv_xor_block_altivec(const struct zmbv_state *state, uint8 *ras1, uint8 *ras2,
-	uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp);
+uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
+	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
+	uint32 bpr, uint8 **outp);
 
 #endif
 

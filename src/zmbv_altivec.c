@@ -4,7 +4,7 @@
 typedef __vector uint8 vuint8;
 
 static inline vuint8 zmbv_xor_row_altivec(const struct zmbv_state *state, uint8 *out,
-	uint8 *row1, uint8 *row2, uint32 row_len)
+	const uint8 *row1, const uint8 *row2, uint32 row_len)
 {
 	uint32 vectors = row_len >> 4;
 	uint32 remains = row_len & 15;
@@ -35,8 +35,9 @@ static inline vuint8 zmbv_xor_row_altivec(const struct zmbv_state *state, uint8 
 	return result;
 }
 
-uint8 zmbv_xor_block_altivec(const struct zmbv_state *state, uint8 *ras1, uint8 *ras2,
-	uint32 blk_w, uint32 blk_h, uint32 bpr, uint8 **outp)
+uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
+	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
+	uint32 bpr, uint8 **outp)
 {
 	uint8 *out = *outp;
 	vuint8 x;
