@@ -40,9 +40,9 @@ uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 	uint32 bpr, uint8 **outp)
 {
 	uint8 *out = *outp;
+	uint32 i;
 	vuint8 x;
 	vuint8 result = vec_splat_u8(0);
-	uint32 i;
 
 	for (i = 0; i != blk_h; i++) {
 		x = zmbv_xor_row_altivec(state, out, ras1, ras2, blk_w);
@@ -57,6 +57,43 @@ uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 		return 1;
 	} else {
 		return 0;
+	}
+}
+
+static const vuint8 endian_swap_32bit = { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12 };
+static const vuint8 endian_swap_16bit = { 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 };
+
+void zmbv_endian_convert_altivec(const struct zmbv_state *state,
+	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr)
+{
+	uint32 width = (packed_bpr + 15) >> 4;
+	uint8 *row;
+	uint32 i, j;
+	vuint8 perm_vector;
+	vuint8 x, y;
+
+	switch (state->pixfmt) {
+		case PIXF_A8R8G8B8:
+			perm_vector = endian_swap_32bit;
+			break;
+		case PIXF_R5G6B5:
+		case PIXF_R5G5B5:
+			perm_vector = endian_swap_16bit;
+			break;
+		default:
+			/* Do nothing */
+			return;
+	}
+
+	for (i = 0; i != height; i++) {
+		row = ras;
+		for (j = 0; j != width; j++) {
+			x = vec_ld(0, row);
+			y = vec_perm(x, x, perm_vector);
+			vec_st(y, 0, row);
+			row += 16;
+		}
+		ras += padded_bpr;
 	}
 }
 
