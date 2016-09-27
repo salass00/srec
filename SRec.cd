@@ -12,6 +12,9 @@ Screen Recorder
 MSG_WINDOW_TITLE (//)
 %s: Hot Key = <%s>
 ;
+MSG_KEY_NONE (//)
+none
+;
 MSG_OUTPUT_FILE_GAD (//)
 Output
 ;
@@ -23,6 +26,39 @@ Pointer
 ;
 MSG_MISC_TAB (//)
 Misc
+;
+MSG_CONTAINER_FORMAT_GAD (//)
+Format
+;
+MSG_VIDEO_CODEC_GAD (//)
+Video Codec
+;
+MSG_ASPECT_RATIO_GAD (//)
+Aspect Ratio
+;
+MSG_ASPECT_RATIO_LIKE_WB (//)
+Like WB
+;
+MSG_ASPECT_RATIO_CUSTOM (//)
+Custom
+;
+MSG_ASPECT_RATIO_4_3 (//)
+4 : 3
+;
+MSG_ASPECT_RATIO_5_4 (//)
+5 : 4
+;
+MSG_ASPECT_RATIO_16_9 (//)
+16 : 9
+;
+MSG_ASPECT_RATIO_16_10 (//)
+16 : 10
+;
+MSG_AUDIO_CODEC_GAD (//)
+Audio Codec
+;
+MSG_AUDIO_CODEC_NONE (//)
+None
 ;
 MSG_RECORD_GAD (//)
 Record
