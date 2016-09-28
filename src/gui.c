@@ -524,7 +524,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,              OID_AUDIO_CODEC,
 		GA_RelVerify,       TRUE,
 		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   0,
+		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioCodec", 0),
 		TAG_END);
 
 	strings[0] = GetString(loc, MSG_AUDIO_SAMPLE_SIZE_8BIT);
