@@ -99,7 +99,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	struct BitMap *screen_bitmap = NULL;
 	struct BitMap *bitmap = NULL;
 	uint32 disp_width, disp_height;
-	vertex_t vertex_array[2 * 3];
+	vertex_t vertex_array[6];
 	uint32 frames = 0;
 	uint32 duration_us;
 	uint64 duration_ns;
@@ -223,7 +223,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						struct DimensionInfo diminfo;
 						float scale_x, scale_y;
 						float scaled_width, scaled_height;
-						float offset_x, offset_y;
+						float min_x, min_y, max_x, max_y;
+						float min_s, min_t, max_s, max_t;
 
 						IGraphics->InitRastPort(&temp_rp);
 						temp_rp.BitMap = bitmap;
@@ -253,43 +254,50 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						scaled_width  = roundf((float)disp_width  * scale_x);
 						scaled_height = roundf((float)disp_height * scale_y);
 
-						offset_x = floorf(((float)args->width  - scaled_width ) / 2.0f);
-						offset_y = floorf(((float)args->height - scaled_height) / 2.0f);
+						min_x = floorf(((float)args->width  - scaled_width ) / 2.0f);
+						min_y = floorf(((float)args->height - scaled_height) / 2.0f);
+						max_x = min_x + scaled_width - 1.0f;
+						max_y = min_y + scaled_height - 1.0f;
 
-						vertex_array[0].x = offset_x;
-						vertex_array[0].y = offset_y;
-						vertex_array[0].s = 0.0f;
-						vertex_array[0].t = 0.0f;
+						min_s = 0.0f;
+						min_t = 0.0f;
+						max_s = (float)disp_width - 1.0f;
+						max_t = (float)disp_height - 1.0f;
+
+						vertex_array[0].x = min_x;
+						vertex_array[0].y = min_y;
+						vertex_array[0].s = min_s;
+						vertex_array[0].t = min_t;
 						vertex_array[0].w = 1.0f;
 
-						vertex_array[1].x = offset_x + scaled_width - 1.0f;
-						vertex_array[1].y = offset_y;
-						vertex_array[1].s = (float)disp_width - 1.0f;
-						vertex_array[1].t = 0.0f;
+						vertex_array[1].x = max_x;
+						vertex_array[1].y = min_y;
+						vertex_array[1].s = max_s;
+						vertex_array[1].t = min_t;
 						vertex_array[1].w = 1.0f;
 
-						vertex_array[2].x = offset_x;
-						vertex_array[2].y = offset_y + scaled_height - 1.0f;
-						vertex_array[2].s = 0.0f;
-						vertex_array[2].t = (float)disp_height - 1.0f;
+						vertex_array[2].x = min_x;
+						vertex_array[2].y = max_y;
+						vertex_array[2].s = min_s;
+						vertex_array[2].t = max_t;
 						vertex_array[2].w = 1.0f;
 
-						vertex_array[3].x = offset_x;
-						vertex_array[3].y = offset_y + scaled_height - 1.0f;
-						vertex_array[3].s = 0.0f;
-						vertex_array[3].t = (float)disp_height - 1.0f;
+						vertex_array[3].x = min_x;
+						vertex_array[3].y = max_y;
+						vertex_array[3].s = min_s;
+						vertex_array[3].t = max_t;
 						vertex_array[3].w = 1.0f;
 
-						vertex_array[4].x = offset_x + scaled_width - 1.0f;
-						vertex_array[4].y = offset_y;
-						vertex_array[4].s = (float)disp_width - 1.0f;
-						vertex_array[4].t = 0.0f;
+						vertex_array[4].x = max_x;
+						vertex_array[4].y = min_y;
+						vertex_array[4].s = max_s;
+						vertex_array[4].t = min_t;
 						vertex_array[4].w = 1.0f;
 
-						vertex_array[5].x = offset_x + scaled_width - 1.0f;
-						vertex_array[5].y = offset_y + scaled_height - 1.0f;
-						vertex_array[5].s = (float)disp_width - 1.0f;
-						vertex_array[5].t = (float)disp_height - 1.0f;
+						vertex_array[5].x = max_x;
+						vertex_array[5].y = max_y;
+						vertex_array[5].s = max_s;
+						vertex_array[5].t = max_t;
 						vertex_array[5].w = 1.0f;
 					} else {
 						IGraphics->FreeBitMap(bitmap);
