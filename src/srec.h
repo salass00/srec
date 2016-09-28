@@ -29,6 +29,8 @@
 #define SREC_PRIORITY  (0)
 #define SREC_STACKSIZE (64 << 10)
 
+#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (64 << 10)
+
 struct SRecArgs {
 	TEXT   filename[1024];
 	uint32 width, height;

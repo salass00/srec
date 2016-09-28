@@ -353,12 +353,42 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	if (state->srec_bm == NULL)
 		return FALSE;
 
-	IGraphics->BltBitMapTags(
-		BLITA_Source, state->srec_bm,
-		BLITA_Dest,   state->current_frame_bm,
-		BLITA_Width,  state->width,
-		BLITA_Height, state->height,
-		TAG_END);
+	if ((state->frame_bpr * state->height) <= MAX_VRAM_TO_RAM_TRANSFER_SIZE) {
+		IGraphics->BltBitMapTags(
+			BLITA_Source, state->srec_bm,
+			BLITA_Dest,   state->current_frame_bm,
+			BLITA_Width,  state->width,
+			BLITA_Height, state->height,
+			TAG_END);
+	} else {
+		uint32 max_rows  = MAX_VRAM_TO_RAM_TRANSFER_SIZE / state->frame_bpr;
+		uint32 width     = state->width;
+		uint32 rows_left = state->height;
+		uint32 y         = 0;
+
+		while (rows_left > max_rows) {
+			IGraphics->BltBitMapTags(
+				BLITA_Source, state->srec_bm,
+				BLITA_Dest,   state->current_frame_bm,
+				BLITA_SrcY,   y,
+				BLITA_DestY,  y,
+				BLITA_Width,  width,
+				BLITA_Height, max_rows,
+				TAG_END);
+
+			y += max_rows;
+			rows_left -= max_rows;
+		}
+
+		IGraphics->BltBitMapTags(
+			BLITA_Source, state->srec_bm,
+			BLITA_Dest,   state->current_frame_bm,
+			BLITA_SrcY,   y,
+			BLITA_DestY,  y,
+			BLITA_Width,  width,
+			BLITA_Height, rows_left,
+			TAG_END);
+	}
 
 	if (state->keyframe_cnt == 0) {
 		uint8 *ras        = state->current_frame;
