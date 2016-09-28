@@ -24,8 +24,6 @@
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/utility.h>
-#include <interfaces/intuition.h>
-#include <interfaces/graphics.h>
 #include <sys/param.h>
 #include <math.h>
 #include "SRec_rev.h"

@@ -20,6 +20,8 @@
 #define SREC_H
 
 #include <exec/exec.h>
+#include <interfaces/intuition.h>
+#include <interfaces/graphics.h>
 
 #define DEFAULT_WIDTH  640
 #define DEFAULT_HEIGHT 480
