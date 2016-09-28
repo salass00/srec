@@ -85,8 +85,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	struct ExecIFace *IExec = (struct ExecIFace *)sysbase->MainInterface;
 	struct Process *proc;
 	const struct SRecArgs *args;
-	struct IntuitionIFace *IIntuition;
-	struct GraphicsIFace *IGraphics;
+	struct SRecGlobal gd;
 	struct zmbv_state *encoder = NULL;
 	mk_Writer *writer = NULL;
 	BITMAPINFOHEADER bmih;
@@ -111,15 +110,18 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	IExec->WaitPort(&proc->pr_MsgPort);
 	args = (const struct SRecArgs *)IExec->GetMsg(&proc->pr_MsgPort);
 
+	#define IIntuition gd.iintuition
+	#define IGraphics  gd.igraphics
+
+	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
+	IGraphics  = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
+	if (IIntuition == NULL || IGraphics == NULL)
+		goto out;
+
 	duration_us = (uint32)lroundf(1000.0f / (float)args->fps) * 1000UL;
 	duration_ns = duration_us * 1000UL;
 
-	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
-	IGraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
-	if (!IIntuition || !IGraphics)
-		goto out;
-
-	encoder = zmbv_init(args);
+	encoder = zmbv_init(&gd, args);
 	if (encoder == NULL)
 		goto out;
 

@@ -28,9 +28,6 @@
 static void zmbv_close_libs(struct zmbv_state *state) {
 	if (state->iz != NULL)
 		CloseInterface((struct Interface *)state->iz);
-
-	if (state->igraphics != NULL)
-		CloseInterface((struct Interface *)state->igraphics);
 }
 
 static inline uint32 zmbv_xor_row_generic(const struct zmbv_state *state, uint8 *out,
@@ -133,7 +130,7 @@ static void zfree(void *opaque, void *address) {
 	_free_r(opaque, address);
 }
 
-struct zmbv_state *zmbv_init(const struct SRecArgs *args) {
+struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs *args) {
 	struct zmbv_state *state;
 
 	state = IExec->AllocVecTags(sizeof(*state),
@@ -144,6 +141,8 @@ struct zmbv_state *zmbv_init(const struct SRecArgs *args) {
 		TAG_END);
 	if (state == NULL)
 		goto out;
+
+	state->igraphics = gd->igraphics;
 
 	state->width  = args->width;
 	state->height = args->height;
@@ -165,9 +164,8 @@ struct zmbv_state *zmbv_init(const struct SRecArgs *args) {
 		}
 	}
 
-	state->igraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
 	state->iz = (struct ZIFace *)OpenInterface("z.library", 53, "main", 1);
-	if (state->igraphics == NULL || state->iz == NULL)
+	if (state->iz == NULL)
 		goto out;
 
 	state->zstream.opaque = _REENT;

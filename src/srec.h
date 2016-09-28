@@ -40,6 +40,11 @@ struct SRecArgs {
 	BOOL           no_altivec;
 };
 
+struct SRecGlobal {
+	struct IntuitionIFace *iintuition;
+	struct GraphicsIFace  *igraphics;
+};
+
 BOOL safe_signal_proc(uint32 pid, uint32 sigmask);
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase);
 
