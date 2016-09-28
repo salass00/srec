@@ -26,6 +26,8 @@
 #include <gadgets/getfile.h>
 #include <gadgets/clicktab.h>
 #include <gadgets/chooser.h>
+#include <gadgets/integer.h>
+#include <gadgets/checkbox.h>
 #include <images/label.h>
 #include <proto/exec.h>
 #include <proto/dos.h>
@@ -52,20 +54,20 @@ enum {
 	OID_CONTAINER_FORMAT,
 	OID_VIDEO_CODEC,
 	OID_ASPECT_RATIO,
-	OID_VIDEO_PARAMS_LAYOUT,
+	OID_VIDEO_WIDTH_HEIGHT_LAYOUT,
 	OID_VIDEO_WIDTH,
 	OID_VIDEO_HEIGHT,
+	OID_VIDEO_FPS_LAYOUT,
 	OID_VIDEO_FPS,
 	OID_AUDIO_CODEC,
-	OID_AUDIO_PARAMS_LAYOUT,
-	OID_SAMPLE_SIZE,
-	OID_CHANNELS,
-	OID_SAMPLE_RATE,
+	OID_AUDIO_SAMPLE_SIZE,
+	OID_AUDIO_CHANNELS,
+	OID_AUDIO_SAMPLE_RATE,
 	OID_POINTER_PAGE,
 	OID_ENABLE_POINTER,
-	OID_POINTER_PARAMS,
+	OID_POINTER_FILE_LAYOUT,
 	OID_POINTER_FILE,
-	OID_BUSY_POINTER_PARAMS,
+	OID_BUSY_POINTER_FILE_LAYOUT,
 	OID_BUSY_POINTER_FILE,
 	OID_MISC_PAGE,
 	OID_BILINEAR_FILTER,
@@ -96,6 +98,8 @@ struct srec_gui {
 	Class                   *spaceclass;
 	struct ClassLibrary     *chooserbase;
 	Class                   *chooserclass;
+	struct ClassLibrary     *integerbase;
+	Class                   *integerclass;
 	struct ClassLibrary     *checkboxbase;
 	Class                   *checkboxclass;
 	struct ClassLibrary     *buttonbase;
@@ -152,6 +156,7 @@ static BOOL gui_open_classes(struct srec_gui *gd) {
 	error |= !(gd->clicktabbase = IIntuition->OpenClass("gadgets/clicktab.gadget", 53, &gd->clicktabclass));
 	error |= !(gd->spacebase = IIntuition->OpenClass("gadgets/space.gadget", 53, &gd->spaceclass));
 	error |= !(gd->chooserbase = IIntuition->OpenClass("gadgets/chooser.gadget", 53, &gd->chooserclass));
+	error |= !(gd->integerbase = IIntuition->OpenClass("gadgets/integer.gadget", 53, &gd->integerclass));
 	error |= !(gd->checkboxbase = IIntuition->OpenClass("gadgets/checkbox.gadget", 53, &gd->checkboxclass));
 	error |= !(gd->buttonbase = IIntuition->OpenClass("gadgets/button.gadget", 53, &gd->buttonclass));
 	error |= !(gd->labelbase = IIntuition->OpenClass("images/label.image", 53, &gd->labelclass));
@@ -171,11 +176,14 @@ static void gui_close_classes(struct srec_gui *gd) {
 	if (gd->checkboxbase != NULL)
 		IIntuition->CloseClass(gd->checkboxbase);
 
-	if (gd->spacebase != NULL)
-		IIntuition->CloseClass(gd->spacebase);
+	if (gd->integerbase != NULL)
+		IIntuition->CloseClass(gd->integerbase);
 
 	if (gd->chooserbase != NULL)
 		IIntuition->CloseClass(gd->chooserbase);
+
+	if (gd->spacebase != NULL)
+		IIntuition->CloseClass(gd->spacebase);
 
 	if (gd->clicktabbase != NULL)
 		IIntuition->CloseClass(gd->clicktabbase);
@@ -338,6 +346,8 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	if (gd->wb_mp == NULL)
 		return FALSE;
 
+	#define SPACE \
+		IIntuition->NewObjectA(gd->spaceclass, NULL, NULL)
 	#define LABEL(id) \
 		IIntuition->NewObject(gd->labelclass, NULL, \
 			LABEL_Text, GetString(loc, id), \
@@ -385,8 +395,46 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		CHOOSER_Selected,   0,
 		TAG_END);
 
-	gd->obj[OID_VIDEO_PARAMS_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
-		GA_ID, OID_VIDEO_PARAMS_LAYOUT,
+	gd->obj[OID_VIDEO_WIDTH] = IIntuition->NewObject(gd->integerclass, NULL,
+		GA_ID,           OID_VIDEO_WIDTH,
+		GA_TabCycle,     TRUE,
+		GA_RelVerify,    TRUE,
+		INTEGER_Minimum, 16,
+		INTEGER_Maximum, 16000,
+		INTEGER_Number,  DEFAULT_WIDTH,
+		TAG_END);
+
+	gd->obj[OID_VIDEO_HEIGHT] = IIntuition->NewObject(gd->integerclass, NULL,
+		GA_ID,           OID_VIDEO_HEIGHT,
+		GA_TabCycle,     TRUE,
+		GA_RelVerify,    TRUE,
+		INTEGER_Minimum, 16,
+		INTEGER_Maximum, 16000,
+		INTEGER_Number,  DEFAULT_HEIGHT,
+		TAG_END);
+
+	gd->obj[OID_VIDEO_WIDTH_HEIGHT_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
+		GA_ID,           OID_VIDEO_WIDTH_HEIGHT_LAYOUT,
+		LAYOUT_AddChild, gd->obj[OID_VIDEO_WIDTH],
+		CHILD_Label,     LABEL(MSG_VIDEO_WIDTH_GAD),
+		LAYOUT_AddChild, gd->obj[OID_VIDEO_HEIGHT],
+		CHILD_Label,     LABEL(MSG_VIDEO_HEIGHT_GAD),
+		TAG_END);
+
+	gd->obj[OID_VIDEO_FPS] = IIntuition->NewObject(gd->integerclass, NULL,
+		GA_ID,           OID_VIDEO_FPS,
+		GA_TabCycle,     TRUE,
+		GA_RelVerify,    TRUE,
+		INTEGER_Minimum, 1,
+		INTEGER_Maximum, 100,
+		INTEGER_Number,  DEFAULT_FPS,
+		TAG_END);
+
+	gd->obj[OID_VIDEO_FPS_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
+		GA_ID,           OID_VIDEO_FPS_LAYOUT,
+		LAYOUT_AddChild, SPACE,
+		LAYOUT_AddChild, gd->obj[OID_VIDEO_FPS],
+		CHILD_Label,     LABEL(MSG_VIDEO_FPS_GAD),
 		TAG_END);
 
 	strings[0] = GetString(loc, MSG_AUDIO_CODEC_NONE);
@@ -399,8 +447,43 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		CHOOSER_Selected,   0,
 		TAG_END);
 
-	gd->obj[OID_AUDIO_PARAMS_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
-		GA_ID, OID_AUDIO_PARAMS_LAYOUT,
+	strings[0] = GetString(loc, MSG_AUDIO_SAMPLE_SIZE_8BIT);
+	strings[1] = GetString(loc, MSG_AUDIO_SAMPLE_SIZE_16BIT);
+	strings[2] = GetString(loc, MSG_AUDIO_SAMPLE_SIZE_32BIT);
+	strings[3] = NULL;
+
+	gd->obj[OID_AUDIO_SAMPLE_SIZE] = IIntuition->NewObject(gd->chooserclass, NULL,
+		GA_ID,              OID_AUDIO_SAMPLE_SIZE,
+		GA_RelVerify,       TRUE,
+		GA_Disabled,        TRUE,
+		CHOOSER_LabelArray, strings,
+		CHOOSER_Selected,   1,
+		TAG_END);
+
+	strings[0] = GetString(loc, MSG_AUDIO_CHANNELS_MONO);
+	strings[1] = GetString(loc, MSG_AUDIO_CHANNELS_STEREO);
+	strings[2] = NULL;
+
+	gd->obj[OID_AUDIO_CHANNELS] = IIntuition->NewObject(gd->chooserclass, NULL,
+		GA_ID,              OID_AUDIO_CHANNELS,
+		GA_RelVerify,       TRUE,
+		GA_Disabled,        TRUE,
+		CHOOSER_LabelArray, strings,
+		CHOOSER_Selected,   1,
+		TAG_END);
+
+	strings[0] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_11025HZ);
+	strings[1] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_22050HZ);
+	strings[2] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_44100HZ);
+	strings[3] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_48000HZ);
+	strings[4] = NULL;
+
+	gd->obj[OID_AUDIO_SAMPLE_RATE] = IIntuition->NewObject(gd->chooserclass, NULL,
+		GA_ID,              OID_AUDIO_SAMPLE_RATE,
+		GA_RelVerify,       TRUE,
+		GA_Disabled,        TRUE,
+		CHOOSER_LabelArray, strings,
+		CHOOSER_Selected,   3,
 		TAG_END);
 
 	gd->obj[OID_FORMAT_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -412,22 +495,78 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		CHILD_Label,        LABEL(MSG_VIDEO_CODEC_GAD),
 		LAYOUT_AddChild,    gd->obj[OID_ASPECT_RATIO],
 		CHILD_Label,        LABEL(MSG_ASPECT_RATIO_GAD),
-		LAYOUT_AddChild,    gd->obj[OID_VIDEO_PARAMS_LAYOUT],
+		LAYOUT_AddChild,    gd->obj[OID_VIDEO_WIDTH_HEIGHT_LAYOUT],
+		LAYOUT_AddChild,    gd->obj[OID_VIDEO_FPS_LAYOUT],
 		LAYOUT_AddChild,    gd->obj[OID_AUDIO_CODEC],
 		CHILD_Label,        LABEL(MSG_AUDIO_CODEC_GAD),
-		LAYOUT_AddChild,    gd->obj[OID_AUDIO_PARAMS_LAYOUT],
+		LAYOUT_AddChild,    gd->obj[OID_AUDIO_SAMPLE_SIZE],
+		CHILD_Label,        LABEL(MSG_AUDIO_SAMPLE_SIZE_GAD),
+		LAYOUT_AddChild,    gd->obj[OID_AUDIO_CHANNELS],
+		CHILD_Label,        LABEL(MSG_AUDIO_CHANNELS_GAD),
+		LAYOUT_AddChild,    gd->obj[OID_AUDIO_SAMPLE_RATE],
+		CHILD_Label,        LABEL(MSG_AUDIO_SAMPLE_RATE_GAD),
+		TAG_END);
+
+	gd->obj[OID_ENABLE_POINTER] = IIntuition->NewObject(gd->checkboxclass, NULL,
+		GA_ID,            OID_ENABLE_POINTER,
+		GA_RelVerify,     TRUE,
+		CHECKBOX_Checked, TRUE,
+		TAG_END);
+
+	gd->obj[OID_POINTER_FILE] = IIntuition->NewObject(gd->getfileclass, NULL,
+		GA_ID,            OID_POINTER_FILE,
+		GA_TabCycle,      TRUE,
+		GA_RelVerify,     TRUE,
+		GETFILE_Pattern,  "#?.info",
+		GETFILE_FullFile, "ENV:Sys/def_pointer.info",
+		TAG_END);
+
+	gd->obj[OID_POINTER_FILE_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
+		GA_ID,             OID_POINTER_FILE_LAYOUT,
+		LAYOUT_Label,      GetString(loc, MSG_POINTER_FILE_GAD),
+		LAYOUT_BevelStyle, BVS_GROUP,
+		LAYOUT_AddChild,   gd->obj[OID_POINTER_FILE],
+		TAG_END);
+
+	gd->obj[OID_BUSY_POINTER_FILE] = IIntuition->NewObject(gd->getfileclass, NULL,
+		GA_ID,            OID_BUSY_POINTER_FILE,
+		GA_TabCycle,      TRUE,
+		GA_RelVerify,     TRUE,
+		GETFILE_Pattern,  "#?.info",
+		GETFILE_FullFile, "ENV:Sys/def_busypointer.info",
+		TAG_END);
+
+	gd->obj[OID_BUSY_POINTER_FILE_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
+		GA_ID,             OID_BUSY_POINTER_FILE_LAYOUT,
+		LAYOUT_Label,      GetString(loc, MSG_BUSY_POINTER_FILE_GAD),
+		LAYOUT_BevelStyle, BVS_GROUP,
+		LAYOUT_AddChild,   gd->obj[OID_BUSY_POINTER_FILE],
 		TAG_END);
 
 	gd->obj[OID_POINTER_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
-		GA_ID,              OID_POINTER_PAGE,
-		LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
-		LAYOUT_AddChild,    IIntuition->NewObject(gd->spaceclass, NULL, TAG_END),
+		GA_ID,                OID_POINTER_PAGE,
+		LAYOUT_Orientation,   LAYOUT_ORIENT_VERT,
+		LAYOUT_AddChild,      gd->obj[OID_ENABLE_POINTER],
+		CHILD_Label,          LABEL(MSG_ENABLE_POINTER_GAD),
+		LAYOUT_AddChild,      gd->obj[OID_POINTER_FILE_LAYOUT],
+		CHILD_WeightedHeight, 0,
+		LAYOUT_AddChild,      gd->obj[OID_BUSY_POINTER_FILE_LAYOUT],
+		CHILD_WeightedHeight, 0,
+		LAYOUT_AddChild,      SPACE,
+		TAG_END);
+
+	gd->obj[OID_BILINEAR_FILTER] = IIntuition->NewObject(gd->checkboxclass, NULL,
+		GA_ID,            OID_BILINEAR_FILTER,
+		GA_RelVerify,     TRUE,
+		CHECKBOX_Checked, TRUE,
 		TAG_END);
 
 	gd->obj[OID_MISC_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
 		GA_ID,              OID_MISC_PAGE,
 		LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
-		LAYOUT_AddChild,    IIntuition->NewObject(gd->spaceclass, NULL, TAG_END),
+		LAYOUT_AddChild,    gd->obj[OID_BILINEAR_FILTER],
+		CHILD_Label,        LABEL(MSG_BILINEAR_FILTER_GAD),
+		LAYOUT_AddChild,    SPACE,
 		TAG_END);
 
 	gd->obj[OID_TAB_PAGES] = IIntuition->NewObject(NULL, "page.gadget",
