@@ -27,9 +27,9 @@
 
 #define SREC_PROCNAME  "SRec: Screen Recorder"
 #define SREC_PRIORITY  (0)
-#define SREC_STACKSIZE (64 << 10)
+#define SREC_STACKSIZE (64UL << 10)
 
-#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (64 << 10)
+#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (64UL << 10)
 
 struct SRecArgs {
 	struct Message message;
@@ -40,7 +40,7 @@ struct SRecArgs {
 	BOOL           no_altivec;
 };
 
-void safe_signal_proc(uint32 pid, uint32 sigmask);
+BOOL safe_signal_proc(uint32 pid, uint32 sigmask);
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase);
 
 #endif

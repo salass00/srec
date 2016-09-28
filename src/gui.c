@@ -147,7 +147,10 @@ struct srec_gui {
 	uint32                    app_id;
 	struct MsgPort           *app_mp;
 	PrefsObject              *app_prefs;
+	uint32                    srec_pid;
 	struct MsgPort           *srec_mp;
+	struct SRecArgs          *startup_msg;
+	struct DeathMessage      *death_msg;
 	struct MsgPort           *wb_mp;
 	Object                   *obj[OID_MAX];
 	TEXT                      window_title[64];
@@ -396,6 +399,10 @@ static void gui_free_menu(struct srec_gui *gd) {
 
 	if (gd->obj[OID_MENUSTRIP] != NULL)
 		IIntuition->DisposeObject(gd->obj[OID_MENUSTRIP]);
+}
+
+static inline BOOL gui_is_recording(struct srec_gui *gd) {
+	return (gd->srec_pid != 0) ? TRUE : FALSE;
 }
 
 static BOOL gui_create_window(struct srec_gui *gd) {
@@ -673,13 +680,14 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_RECORD] = IIntuition->NewObject(gd->buttonclass, NULL,
 		GA_ID,        OID_RECORD,
 		GA_RelVerify, TRUE,
+		GA_Disabled,  gui_is_recording(gd),
 		GA_Text,      GetString(loc, MSG_RECORD_GAD),
 		TAG_END);
 
 	gd->obj[OID_STOP] = IIntuition->NewObject(gd->buttonclass, NULL,
 		GA_ID,        OID_STOP,
 		GA_RelVerify, TRUE,
-		GA_Disabled,  TRUE,
+		GA_Disabled,  !gui_is_recording(gd),
 		GA_Text,      GetString(loc, MSG_STOP_GAD),
 		TAG_END);
 
@@ -827,6 +835,21 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 
 	gd->srec_mp = IExec->AllocSysObject(ASOT_PORT, NULL);
 	if (gd->srec_mp == NULL)
+		goto out;
+
+	gd->startup_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
+		ASOMSG_Name,   "SRec startup message",
+		ASOMSG_Length, sizeof(*gd->startup_msg),
+		TAG_END);
+	if (gd->startup_msg == NULL)
+		goto out;
+
+	gd->death_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
+		ASOMSG_Name,      "SRec death message",
+		ASOMSG_ReplyPort, gd->srec_mp,
+		ASOMSG_Length,    sizeof(*gd->death_msg),
+		TAG_END);
+	if (gd->death_msg == NULL)
 		goto out;
 
 	if (!gui_create_window(gd))
@@ -987,7 +1010,17 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 out:
 
 	if (gd != NULL) {
+		if (gui_is_recording(gd)) {
+			//FIXME: Stop recording
+		}
+
 		gui_free_window(gd);
+
+		if (gd->death_msg != NULL)
+			IExec->FreeSysObject(ASOT_PORT, gd->death_msg);
+
+		if (gd->startup_msg != NULL)
+			IExec->FreeSysObject(ASOT_PORT, gd->startup_msg);
 
 		if (gd->srec_mp != NULL)
 			IExec->FreeSysObject(ASOT_PORT, gd->srec_mp);

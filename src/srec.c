@@ -40,15 +40,18 @@ static int32 sighookfunc(struct Hook *hook, uint32 pid, struct Process *proc) {
 	return FALSE;
 }
 
-void safe_signal_proc(uint32 pid, uint32 sigmask) {
+BOOL safe_signal_proc(uint32 pid, uint32 sigmask) {
 	struct Hook hook;
+
+	if (pid == 0)
+		return FALSE;
 
 	IUtility->ClearMem(&hook, sizeof(hook));
 
 	hook.h_Entry = (HOOKFUNC)sighookfunc;
 	hook.h_Data  = (void *)sigmask;
 
-	IDOS->ProcessScan(&hook, (void *)pid, 0);
+	return IDOS->ProcessScan(&hook, (void *)pid, 0) ? TRUE : FALSE;
 }
 
 typedef struct {

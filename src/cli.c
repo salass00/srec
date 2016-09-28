@@ -39,9 +39,9 @@ enum {
 int cli_main(struct LocaleInfo *loc) {
 	int32 args[ARG_MAX];
 	struct RDArgs *rdargs;
-	struct SRecArgs *srec_args = NULL;
+	struct SRecArgs *startup_msg = NULL;
 	struct MsgPort *mp = NULL;
-	struct DeathMessage *deathm = NULL;
+	struct DeathMessage *death_msg = NULL;
 	struct Process *srec_proc;
 	uint32 srec_pid;
 	uint32 signals;
@@ -55,32 +55,32 @@ int cli_main(struct LocaleInfo *loc) {
 		goto out;
 	}
 
-	srec_args = IExec->AllocSysObjectTags(ASOT_MESSAGE,
+	startup_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
 		ASOMSG_Name,   "SRec startup message",
-		ASOMSG_Length, sizeof(*srec_args),
+		ASOMSG_Length, sizeof(*startup_msg),
 		TAG_END);
-	if (srec_args == NULL) {
+	if (startup_msg == NULL) {
 		IDOS->PrintFault(ERROR_NO_FREE_STORE, "SRec");
 		goto out;
 	}
 
-	srec_args->width  = DEFAULT_WIDTH;
-	srec_args->height = DEFAULT_HEIGHT;
-	srec_args->fps    = DEFAULT_FPS;
+	startup_msg->width  = DEFAULT_WIDTH;
+	startup_msg->height = DEFAULT_HEIGHT;
+	startup_msg->fps    = DEFAULT_FPS;
 
-	IUtility->Strlcpy(srec_args->filename, (CONST_STRPTR)args[ARG_FILENAME], sizeof(srec_args->filename));
+	IUtility->Strlcpy(startup_msg->filename, (CONST_STRPTR)args[ARG_FILENAME], sizeof(startup_msg->filename));
 
 	if ((APTR)args[ARG_WIDTH] != NULL)
-		srec_args->width = *(uint32 *)args[ARG_WIDTH];
+		startup_msg->width = *(uint32 *)args[ARG_WIDTH];
 
 	if ((APTR)args[ARG_HEIGHT] != NULL)
-		srec_args->height = *(uint32 *)args[ARG_HEIGHT];
+		startup_msg->height = *(uint32 *)args[ARG_HEIGHT];
 
 	if ((APTR)args[ARG_FPS] != NULL)
-		srec_args->fps = *(uint32 *)args[ARG_FPS];
+		startup_msg->fps = *(uint32 *)args[ARG_FPS];
 
-	srec_args->no_filter = args[ARG_NOFILTER] ? TRUE : FALSE;
-	srec_args->no_altivec = args[ARG_NOALTIVEC] ? TRUE : FALSE;
+	startup_msg->no_filter = args[ARG_NOFILTER] ? TRUE : FALSE;
+	startup_msg->no_altivec = args[ARG_NOALTIVEC] ? TRUE : FALSE;
 
 	mp = IExec->AllocSysObject(ASOT_PORT, NULL);
 	if (mp == NULL) {
@@ -88,12 +88,12 @@ int cli_main(struct LocaleInfo *loc) {
 		goto out;
 	}
 
-	deathm = IExec->AllocSysObjectTags(ASOT_MESSAGE,
+	death_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
 		ASOMSG_Name,      "SRec death message",
 		ASOMSG_ReplyPort, mp,
-		ASOMSG_Length,    sizeof(struct DeathMessage),
+		ASOMSG_Length,    sizeof(*death_msg),
 		TAG_END);
-	if (deathm == NULL) {
+	if (death_msg == NULL) {
 		IDOS->PrintFault(ERROR_NO_FREE_STORE, "SRec");
 		goto out;
 	}
@@ -105,7 +105,7 @@ int cli_main(struct LocaleInfo *loc) {
 		NP_Entry,                srec_entry,
 		NP_StackSize,            SREC_STACKSIZE,
 		NP_LockStack,            TRUE,
-		NP_NotifyOnDeathMessage, deathm,
+		NP_NotifyOnDeathMessage, death_msg,
 		TAG_END);
 	if (srec_proc == NULL) {
 		IDOS->PrintFault(IDOS->IoErr(), "SRec");
@@ -113,7 +113,7 @@ int cli_main(struct LocaleInfo *loc) {
 	}
 
 	srec_pid = IDOS->GetPID(srec_proc, GPID_PROCESS);
-	IExec->PutMsg(&srec_proc->pr_MsgPort, &srec_args->message);
+	IExec->PutMsg(&srec_proc->pr_MsgPort, &startup_msg->message);
 
 	IDOS->Printf("%s\n", GetString(loc, MSG_CTRL_C_TO_STOP));
 	signals = IExec->Wait(SIGBREAKF_CTRL_C | (1UL << mp->mp_SigBit));
@@ -122,29 +122,29 @@ int cli_main(struct LocaleInfo *loc) {
 		safe_signal_proc(srec_pid, SIGBREAKF_CTRL_C);
 
 	IExec->WaitPort(mp);
-	deathm = (struct DeathMessage *)IExec->GetMsg(mp);
+	death_msg = (struct DeathMessage *)IExec->GetMsg(mp);
 
-	if (deathm->dm_ReturnCode != RETURN_OK) {
+	if (death_msg->dm_ReturnCode != RETURN_OK) {
 		BPTR ErrorOut = IDOS->ErrorOutput();
 		if (ErrorOut == ZERO)
 			ErrorOut = IDOS->Output();
 
 		IDOS->FPrintf(ErrorOut, "Screen Recorder process failed! (rc: %ld IoErr(): %ld)\n",
-			deathm->dm_ReturnCode, deathm->dm_Result2);
+			death_msg->dm_ReturnCode, death_msg->dm_Result2);
 		goto out;
 	}
 
 	rc = RETURN_OK;
 
 out:
-	if (deathm != NULL)
-		IExec->FreeSysObject(ASOT_MESSAGE, deathm);
+	if (death_msg != NULL)
+		IExec->FreeSysObject(ASOT_MESSAGE, death_msg);
+
+	if (startup_msg != NULL)
+		IExec->FreeSysObject(ASOT_MESSAGE, startup_msg);
 
 	if (mp != NULL)
 		IExec->FreeSysObject(ASOT_PORT, mp);
-
-	if (srec_args != NULL)
-		IExec->FreeSysObject(ASOT_MESSAGE, srec_args);
 
 	if (rdargs != NULL)
 		IDOS->FreeArgs(rdargs);
