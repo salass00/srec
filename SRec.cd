@@ -15,6 +15,27 @@ MSG_WINDOW_TITLE (//)
 MSG_KEY_NONE (//)
 none
 ;
+MSG_PROJECT_MENU (//)
+Project
+;
+MSG_PROJECT_ABOUT (//)
+About...
+;
+MSG_PROJECT_HIDE (//)
+Hide
+;
+MSG_PROJECT_ICONIFY (//)
+Iconify
+;
+MSG_PROJECT_QUIT (//)
+Quit
+;
+MSG_SETTINGS_MENU (//)
+Settings
+;
+MSG_SETTINGS_SAVE_AS_DEFAULTS (//)
+Save As Defaults
+;
 MSG_OUTPUT_FILE_GAD (//)
 Output
 ;

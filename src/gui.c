@@ -21,6 +21,7 @@
 #include "locale.h"
 #include "interfaces.h"
 #include "srec.h"
+#include <intuition/menuclass.h>
 #include <classes/window.h>
 #include <gadgets/layout.h>
 #include <gadgets/getfile.h>
@@ -36,6 +37,7 @@
 #include <interfaces/icon.h>
 #include <interfaces/commodities.h>
 #include <interfaces/application.h>
+#include <stdarg.h>
 #include "SRec_rev.h"
 
 enum {
@@ -45,6 +47,17 @@ enum {
 };
 
 enum {
+	MID_PROJECT_MENU,
+	MID_PROJECT_ABOUT,
+	MID_PROJECT_HIDE,
+	MID_PROJECT_ICONIFY,
+	MID_PROJECT_QUIT,
+	MID_SETTINGS_MENU,
+	MID_SETTINGS_SAVE_AS_DEFAULTS
+};
+
+enum {
+	OID_MENUSTRIP,
 	OID_WINDOW,
 	OID_ROOT_LAYOUT,
 	OID_OUTPUT_FILE,
@@ -334,13 +347,53 @@ static void gui_unregister_application(struct srec_gui *gd) {
 		IApplication->UnregisterApplicationA(gd->app_id, NULL);
 }
 
+static BOOL VARARGS68K gui_create_menu(struct srec_gui *gd, ...) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	const struct TagItem *tags;
+	BOOL result;
+	va_list ap;
+
+	gd->obj[OID_MENUSTRIP] = IIntuition->NewObject(NULL, "menuclass", MA_Type, T_ROOT, TAG_END);
+	if (gd->obj[OID_MENUSTRIP] == NULL)
+		return FALSE;
+
+	va_startlinear(ap, gd);
+	tags = va_getlinearva(ap, const struct TagItem *);
+	result = IIntuition->IDoMethod(gd->obj[OID_MENUSTRIP], MM_NEWMENU, 0, tags);
+	va_end(ap);
+
+	return result;
+}
+
+static void gui_free_menu(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+
+	if (gd->obj[OID_MENUSTRIP] != NULL)
+		IIntuition->DisposeObject(gd->obj[OID_MENUSTRIP]);
+}
+
 static BOOL gui_create_window(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct LocaleInfo *loc = gd->locale_info;
 	CONST_STRPTR strings[7];
+	BOOL result;
 
 	IUtility->SNPrintf(gd->window_title, sizeof(gd->window_title), GetString(loc, MSG_WINDOW_TITLE),
 		"SRec", gd->popkey ? gd->popkey : GetString(loc, MSG_KEY_NONE));
+
+	result = gui_create_menu(gd,
+		NM_Menu, GetString(loc, MSG_PROJECT_MENU), MA_ID, MID_PROJECT_MENU,
+			NM_Item, GetString(loc, MSG_PROJECT_ABOUT), MA_Key, "?", MA_ID, MID_PROJECT_ABOUT,
+			NM_Item, ML_SEPARATOR,
+			NM_Item, GetString(loc, MSG_PROJECT_HIDE), MA_Key, "H", MA_ID, MID_PROJECT_HIDE,
+			NM_Item, GetString(loc, MSG_PROJECT_ICONIFY), MA_Key, "I", MA_ID, MID_PROJECT_ICONIFY,
+			NM_Item, ML_SEPARATOR,
+			NM_Item, GetString(loc, MSG_PROJECT_QUIT), MA_Key, "Q", MA_ID, MID_PROJECT_QUIT,
+		NM_Menu, GetString(loc, MSG_SETTINGS_MENU), MA_ID, MID_SETTINGS_MENU,
+			NM_Item, GetString(loc, MSG_SETTINGS_SAVE_AS_DEFAULTS), MA_ID, MID_SETTINGS_SAVE_AS_DEFAULTS,
+		TAG_END);
+	if (!result)
+		return FALSE;
 
 	gd->wb_mp = IExec->AllocSysObject(ASOT_PORT, NULL);
 	if (gd->wb_mp == NULL)
@@ -627,6 +680,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		WA_IDCMP,             IDCMP_GADGETUP | IDCMP_MENUPICK | IDCMP_CLOSEWINDOW,
 		WINDOW_CharSet,       loc->li_CodeSet,
 		WINDOW_Position,      WPOS_TOPLEFT,
+		WINDOW_MenuStrip,     gd->obj[OID_MENUSTRIP],
 		WINDOW_AppPort,       gd->wb_mp,
 		WINDOW_IconifyGadget, TRUE,
 		WINDOW_IconTitle,     "SRec",
@@ -649,6 +703,8 @@ static void gui_free_window(struct srec_gui *gd) {
 
 	if (gd->wb_mp != NULL)
 		IExec->FreeSysObject(ASOT_PORT, gd->wb_mp);
+
+	gui_free_menu(gd);
 }
 
 static BOOL gui_show_window(struct srec_gui *gd) {
