@@ -679,6 +679,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_STOP] = IIntuition->NewObject(gd->buttonclass, NULL,
 		GA_ID,        OID_STOP,
 		GA_RelVerify, TRUE,
+		GA_Disabled,  TRUE,
 		GA_Text,      GetString(loc, MSG_STOP_GAD),
 		TAG_END);
 
@@ -896,7 +897,27 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 		}
 
 		if (signals & app_sig) {
-			//FIXME: Add code here
+			struct ApplicationMsg *msg;
+			uint32 type;
+
+			while ((msg = (struct ApplicationMsg *)IExec->GetMsg(gd->app_mp)) != NULL) {
+				type = msg->type;
+
+				IExec->ReplyMsg((struct Message *)msg);
+
+				switch (type) {
+					case APPLIBMT_Quit:
+						done = TRUE;
+						break;
+					case APPLIBMT_Hide:
+						gui_hide_window(gd);
+						break;
+					case APPLIBMT_Unhide:
+					case APPLIBMT_ToFront:
+						gui_show_window(gd);
+						break;
+				}
+			}
 		}
 
 		if (signals & srec_sig) {
