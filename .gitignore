@@ -1,5 +1,7 @@
 # Ignore dependency, object and archive files
 *.[doa]
+# Ignore generated header files
+include/locale_strings.h
 # Ignore generated exe files
 SRec
 SRec.debug
