@@ -22,6 +22,7 @@
 #include "interfaces.h"
 #include "srec.h"
 #include <intuition/menuclass.h>
+#include <classes/requester.h>
 #include <classes/window.h>
 #include <gadgets/layout.h>
 #include <gadgets/getfile.h>
@@ -40,6 +41,21 @@
 #include <stdarg.h>
 #include "SRec_rev.h"
 
+const TEXT gpl_license[] =
+"This program is free software; you can redistribute it and/or modify\n"
+"it under the terms of the GNU General Public License as published by\n"
+"the Free Software Foundation; either version 2 of the License, or\n"
+"(at your option) any later version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"GNU General Public License for more details.\n"
+"\n"
+"You should have received a copy of the GNU General Public License\n"
+"along with this program; if not, write to the Free Software Foundation,\n"
+"Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA";
+
 enum {
 	EVT_POPKEY = 1,
 	EVT_RECORDKEY,
@@ -47,6 +63,7 @@ enum {
 };
 
 enum {
+	MID_DUMMY,
 	MID_PROJECT_MENU,
 	MID_PROJECT_ABOUT,
 	MID_PROJECT_HIDE,
@@ -724,6 +741,46 @@ static void gui_hide_window(struct srec_gui *gd) {
 	IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_CLOSE, NULL);
 }
 
+static void gui_iconify_window(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+
+	IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_ICONIFY, NULL);
+}
+
+static void gui_about_requester(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct LocaleInfo *loc = gd->locale_info;
+	struct Window *window;
+	Object *requester;
+	TEXT requester_title[64];
+	TEXT body_text[1024];
+
+	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
+
+	IUtility->SNPrintf(requester_title, sizeof(requester_title),
+		GetString(loc, MSG_ABOUT_WINDOW_TITLE), "SRec");
+
+	IUtility->SNPrintf(body_text, sizeof(body_text),
+		"SRec version %lu.%lu (%s)\n\n"
+		"Copyright (C) 2016 Fredrik Wikstrom <fredrik@a500.org>\n\n"
+		"%s",
+		VERSION, REVISION, DATE, gpl_license);
+
+	requester = IIntuition->NewObject(gd->requesterclass, NULL,
+		REQ_Image,      REQIMAGE_INFO,
+		REQ_CharSet,    loc->li_CodeSet,
+		REQ_TitleText,  requester_title,
+		REQ_BodyText,   body_text,
+		REQ_GadgetText, GetString(loc, MSG_OK_GAD),
+		TAG_END);
+
+	if (requester != NULL) {
+		IIntuition->IDoMethod(requester, RM_OPENREQ, NULL, window, NULL);
+
+		IIntuition->DisposeObject(requester);
+	}
+}
+
 int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	struct srec_gui *gd;
 	struct IntuitionIFace *IIntuition;
@@ -820,23 +877,50 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 		}
 
 		if (signals & window_sigs) {
+			BOOL hide = FALSE;
+			BOOL iconify = FALSE;
 			uint32 result;
 			uint16 code;
+			uint32 id;
 
 			while ((result = IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_HANDLEINPUT, &code)) != WMHI_LASTMSG) {
 				switch (result & WMHI_CLASSMASK) {
 					case WMHI_GADGETUP:
-						switch (result & WMHI_GADGETMASK) {
+						id = result & WMHI_GADGETMASK;
+						switch (id) {
 						}
 						break;
 
 					case WMHI_MENUPICK:
+						id = NO_MENU_ID;
+						while ((id = IIntuition->IDoMethod(gd->obj[OID_MENUSTRIP], MM_NEXTSELECT, 0, id)) != NO_MENU_ID) {
+							switch (id) {
+								case MID_PROJECT_ABOUT:
+									gui_about_requester(gd);
+									break;
+								case MID_PROJECT_HIDE:
+									hide = TRUE;
+									break;
+								case MID_PROJECT_ICONIFY:
+									iconify = TRUE;
+									break;
+								case MID_PROJECT_QUIT:
+									done = TRUE;
+									break;
+							}
+						}
 						break;
 
 					case WMHI_CLOSEWINDOW:
-						done = TRUE;
+						hide = TRUE;
 						break;
 				}
+			}
+
+			if (hide) {
+				gui_hide_window(gd);
+			} else if (iconify) {
+				gui_iconify_window(gd);
 			}
 		}
 	}
