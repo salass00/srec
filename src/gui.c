@@ -109,45 +109,47 @@ enum {
 
 /* Global data structure for GUI */
 struct srec_gui {
-	struct LocaleInfo       *locale_info;
-	struct IntuitionIFace   *iintuition;
-	struct IconIFace        *iicon;
-	struct CommoditiesIFace *icommodities;
-	struct ApplicationIFace *iapplication;
-	struct ClassLibrary     *requesterbase;
-	Class                   *requesterclass;
-	struct ClassLibrary     *windowbase;
-	Class                   *windowclass;
-	struct ClassLibrary     *layoutbase;
-	Class                   *layoutclass;
-	struct ClassLibrary     *getfilebase;
-	Class                   *getfileclass;
-	struct ClassLibrary     *clicktabbase;
-	Class                   *clicktabclass;
-	struct ClassLibrary     *spacebase;
-	Class                   *spaceclass;
-	struct ClassLibrary     *chooserbase;
-	Class                   *chooserclass;
-	struct ClassLibrary     *integerbase;
-	Class                   *integerclass;
-	struct ClassLibrary     *checkboxbase;
-	Class                   *checkboxclass;
-	struct ClassLibrary     *buttonbase;
-	Class                   *buttonclass;
-	struct ClassLibrary     *labelbase;
-	Class                   *labelclass;
-	struct DiskObject       *icon;
-	struct MsgPort          *broker_mp;
-	CxObj                   *broker;
-	CONST_STRPTR             popkey;
-	CONST_STRPTR             recordkey;
-	CONST_STRPTR             stopkey;
-	BOOL                     hidden;
-	uint32                   app_id;
-	struct MsgPort          *app_mp;
-	struct MsgPort          *wb_mp;
-	Object                  *obj[OID_MAX];
-	TEXT                     window_title[64];
+	struct LocaleInfo        *locale_info;
+	struct IntuitionIFace    *iintuition;
+	struct IconIFace         *iicon;
+	struct CommoditiesIFace  *icommodities;
+	struct ApplicationIFace  *iapplication;
+	struct PrefsObjectsIFace *iprefsobjects;
+	struct ClassLibrary      *requesterbase;
+	Class                    *requesterclass;
+	struct ClassLibrary      *windowbase;
+	Class                    *windowclass;
+	struct ClassLibrary      *layoutbase;
+	Class                    *layoutclass;
+	struct ClassLibrary      *getfilebase;
+	Class                    *getfileclass;
+	struct ClassLibrary      *clicktabbase;
+	Class                    *clicktabclass;
+	struct ClassLibrary      *spacebase;
+	Class                    *spaceclass;
+	struct ClassLibrary      *chooserbase;
+	Class                    *chooserclass;
+	struct ClassLibrary      *integerbase;
+	Class                    *integerclass;
+	struct ClassLibrary      *checkboxbase;
+	Class                    *checkboxclass;
+	struct ClassLibrary      *buttonbase;
+	Class                    *buttonclass;
+	struct ClassLibrary      *labelbase;
+	Class                    *labelclass;
+	struct DiskObject        *icon;
+	struct MsgPort           *broker_mp;
+	CxObj                    *broker;
+	CONST_STRPTR              popkey;
+	CONST_STRPTR              recordkey;
+	CONST_STRPTR              stopkey;
+	BOOL                      hidden;
+	uint32                    app_id;
+	struct MsgPort           *app_mp;
+	PrefsObject              *app_prefs;
+	struct MsgPort           *wb_mp;
+	Object                   *obj[OID_MAX];
+	TEXT                      window_title[64];
 };
 
 static BOOL gui_open_libs(struct srec_gui *gd) {
@@ -157,11 +159,15 @@ static BOOL gui_open_libs(struct srec_gui *gd) {
 	error |= !(gd->iicon = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1));
 	error |= !(gd->icommodities = (struct CommoditiesIFace *)OpenInterface("commodities.library", 53, "main", 1));
 	error |= !(gd->iapplication = (struct ApplicationIFace *)OpenInterface("application.library", 53, "application", 2));
+	error |= !(gd->iprefsobjects = (struct PrefsObjectsIFace *)OpenInterface("application.library", 53, "prefsobjects", 2));
 
 	return (error == 0) ? TRUE : FALSE;
 }
 
 static void gui_close_libs(struct srec_gui *gd) {
+	if (gd->iprefsobjects != NULL)
+		CloseInterface((struct Interface *)gd->iprefsobjects);
+
 	if (gd->iapplication != NULL)
 		CloseInterface((struct Interface *)gd->iapplication);
 
@@ -346,12 +352,14 @@ static BOOL gui_register_application(struct srec_gui *gd) {
 		REGAPP_URLIdentifier,     "a500.org",
 		REGAPP_UniqueApplication, TRUE,
 		REGAPP_Hidden,            gd->hidden,
+		REGAPP_LoadPrefs,         TRUE,
 		TAG_END);
 	if (gd->app_id == 0)
 		return FALSE;
 
 	IApplication->GetApplicationAttrs(gd->app_id,
-		APPATTR_Port, &gd->app_mp,
+		APPATTR_Port,          &gd->app_mp,
+		APPATTR_MainPrefsDict, &gd->app_prefs,
 		TAG_END);
 
 	return TRUE;
@@ -391,6 +399,7 @@ static void gui_free_menu(struct srec_gui *gd) {
 
 static BOOL gui_create_window(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct PrefsObjectsIFace *IPrefsObjects = gd->iprefsobjects;
 	struct LocaleInfo *loc = gd->locale_info;
 	CONST_STRPTR strings[7];
 	BOOL result;
@@ -428,6 +437,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_RelVerify,       TRUE,
 		GETFILE_Pattern,    "#?.mkv",
 		GETFILE_DoSaveMode, TRUE,
+		GETFILE_FullFile,   IPrefsObjects->DictGetStringForKey(gd->app_prefs, "OutputFile", ""),
 		TAG_END);
 
 	strings[0] = "MKV";
@@ -437,7 +447,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,              OID_CONTAINER_FORMAT,
 		GA_RelVerify,       TRUE,
 		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   0,
+		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "ContainerFormat", 0),
 		TAG_END);
 
 	strings[0] = "ZMBV";
@@ -447,7 +457,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,              OID_VIDEO_CODEC,
 		GA_RelVerify,       TRUE,
 		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   0,
+		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoCodec", 0),
 		TAG_END);
 
 	strings[0] = GetString(loc, MSG_ASPECT_RATIO_LIKE_WB);
@@ -462,7 +472,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,              OID_ASPECT_RATIO,
 		GA_RelVerify,       TRUE,
 		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   0,
+		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AspectRatio", 0),
 		TAG_END);
 
 	gd->obj[OID_VIDEO_WIDTH] = IIntuition->NewObject(gd->integerclass, NULL,
@@ -471,7 +481,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_RelVerify,    TRUE,
 		INTEGER_Minimum, 16,
 		INTEGER_Maximum, 16000,
-		INTEGER_Number,  DEFAULT_WIDTH,
+		INTEGER_Number,  IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoWidth", DEFAULT_WIDTH),
 		TAG_END);
 
 	gd->obj[OID_VIDEO_HEIGHT] = IIntuition->NewObject(gd->integerclass, NULL,
@@ -480,7 +490,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_RelVerify,    TRUE,
 		INTEGER_Minimum, 16,
 		INTEGER_Maximum, 16000,
-		INTEGER_Number,  DEFAULT_HEIGHT,
+		INTEGER_Number,  IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoHeight", DEFAULT_HEIGHT),
 		TAG_END);
 
 	gd->obj[OID_VIDEO_WIDTH_HEIGHT_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -497,7 +507,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_RelVerify,    TRUE,
 		INTEGER_Minimum, 1,
 		INTEGER_Maximum, 100,
-		INTEGER_Number,  DEFAULT_FPS,
+		INTEGER_Number,  IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoFPS", DEFAULT_FPS),
 		TAG_END);
 
 	gd->obj[OID_VIDEO_FPS_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -527,7 +537,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_RelVerify,       TRUE,
 		GA_Disabled,        TRUE,
 		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   1,
+		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioSampleSize", 1),
 		TAG_END);
 
 	strings[0] = GetString(loc, MSG_AUDIO_CHANNELS_MONO);
@@ -539,7 +549,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_RelVerify,       TRUE,
 		GA_Disabled,        TRUE,
 		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   1,
+		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioChannels", 1),
 		TAG_END);
 
 	strings[0] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_11025HZ);
@@ -553,7 +563,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_RelVerify,       TRUE,
 		GA_Disabled,        TRUE,
 		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   3,
+		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioSampleRate", 3),
 		TAG_END);
 
 	gd->obj[OID_FORMAT_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -580,7 +590,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_ENABLE_POINTER] = IIntuition->NewObject(gd->checkboxclass, NULL,
 		GA_ID,            OID_ENABLE_POINTER,
 		GA_RelVerify,     TRUE,
-		CHECKBOX_Checked, TRUE,
+		CHECKBOX_Checked, IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnablePointer", TRUE),
 		TAG_END);
 
 	gd->obj[OID_POINTER_FILE] = IIntuition->NewObject(gd->getfileclass, NULL,
@@ -588,7 +598,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_TabCycle,      TRUE,
 		GA_RelVerify,     TRUE,
 		GETFILE_Pattern,  "#?.info",
-		GETFILE_FullFile, "ENV:Sys/def_pointer.info",
+		GETFILE_FullFile, IPrefsObjects->DictGetStringForKey(gd->app_prefs, "PointerFile", "ENV:Sys/def_pointer.info"),
 		TAG_END);
 
 	gd->obj[OID_POINTER_FILE_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -603,7 +613,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_TabCycle,      TRUE,
 		GA_RelVerify,     TRUE,
 		GETFILE_Pattern,  "#?.info",
-		GETFILE_FullFile, "ENV:Sys/def_busypointer.info",
+		GETFILE_FullFile, IPrefsObjects->DictGetStringForKey(gd->app_prefs, "BusyPointerFile", "ENV:Sys/def_busypointer.info"),
 		TAG_END);
 
 	gd->obj[OID_BUSY_POINTER_FILE_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -628,7 +638,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_BILINEAR_FILTER] = IIntuition->NewObject(gd->checkboxclass, NULL,
 		GA_ID,            OID_BILINEAR_FILTER,
 		GA_RelVerify,     TRUE,
-		CHECKBOX_Checked, TRUE,
+		CHECKBOX_Checked, IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "BilinearFilter", TRUE),
 		TAG_END);
 
 	gd->obj[OID_MISC_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -848,8 +858,10 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								gui_show_window(gd);
 								break;
 							case EVT_RECORDKEY:
+								//FIXME: Start recording
 								break;
 							case EVT_STOPKEY:
+								//FIXME: Stop recording
 								break;
 						}
 						break;
@@ -888,6 +900,12 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 					case WMHI_GADGETUP:
 						id = result & WMHI_GADGETMASK;
 						switch (id) {
+							case OID_RECORD:
+								//FIXME: Start recording
+								break;
+							case OID_STOP:
+								//FIXME: Stop recording
+								break;
 						}
 						break;
 
