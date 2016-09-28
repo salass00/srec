@@ -21,8 +21,8 @@
 #include "timer.h"
 #include "libmkv.h"
 #include "zmbv.h"
-#include <dos/dosextens.h>
 #include <proto/exec.h>
+#include <proto/dos.h>
 #include <proto/utility.h>
 #include <interfaces/intuition.h>
 #include <interfaces/graphics.h>
@@ -31,6 +31,25 @@
 #include "SRec_rev.h"
 
 #define VLC_COMPAT 1
+
+static int32 sighookfunc(struct Hook *hook, uint32 pid, struct Process *proc) {
+	if (IDOS->GetPID(proc, GPID_PROCESS) == pid) {
+		IExec->Signal(&proc->pr_Task, (uint32)hook->h_Data);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+void safe_signal_proc(uint32 pid, uint32 sigmask) {
+	struct Hook hook;
+
+	IUtility->ClearMem(&hook, sizeof(hook));
+
+	hook.h_Entry = (HOOKFUNC)sighookfunc;
+	hook.h_Data  = (void *)sigmask;
+
+	IDOS->ProcessScan(&hook, (void *)pid, 0);
+}
 
 typedef struct {
 	uint32_t biSize;
@@ -85,7 +104,9 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	int rc = RETURN_ERROR;
 
 	proc = (struct Process *)IExec->FindTask(NULL);
-	args = (const struct SRecArgs *)proc->pr_Task.tc_UserData;
+
+	IExec->WaitPort(&proc->pr_MsgPort);
+	args = (const struct SRecArgs *)IExec->GetMsg(&proc->pr_MsgPort);
 
 	duration_us = (uint32)lroundf(1000.0f / (float)args->fps) * 1000UL;
 	duration_ns = duration_us * 1000UL;

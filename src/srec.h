@@ -32,13 +32,15 @@
 #define MAX_VRAM_TO_RAM_TRANSFER_SIZE (64 << 10)
 
 struct SRecArgs {
-	TEXT   filename[1024];
-	uint32 width, height;
-	uint32 fps;
-	BOOL   no_filter;
-	BOOL   no_altivec;
+	struct Message message;
+	TEXT           filename[1024];
+	uint32         width, height;
+	uint32         fps;
+	BOOL           no_filter;
+	BOOL           no_altivec;
 };
 
+void safe_signal_proc(uint32 pid, uint32 sigmask);
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase);
 
 #endif

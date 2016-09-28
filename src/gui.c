@@ -147,6 +147,7 @@ struct srec_gui {
 	uint32                    app_id;
 	struct MsgPort           *app_mp;
 	PrefsObject              *app_prefs;
+	struct MsgPort           *srec_mp;
 	struct MsgPort           *wb_mp;
 	Object                   *obj[OID_MAX];
 	TEXT                      window_title[64];
@@ -794,7 +795,7 @@ static void gui_about_requester(struct srec_gui *gd) {
 int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	struct srec_gui *gd;
 	struct IntuitionIFace *IIntuition;
-	uint32 signals, cx_sig, window_sigs;
+	uint32 signals, cx_sig, app_sig, srec_sig, window_sigs;
 	BOOL done = FALSE;
 	int rc = RETURN_ERROR;
 
@@ -823,6 +824,10 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	if (!gui_register_application(gd))
 		goto out;
 
+	gd->srec_mp = IExec->AllocSysObject(ASOT_PORT, NULL);
+	if (gd->srec_mp == NULL)
+		goto out;
+
 	if (!gui_create_window(gd))
 		goto out;
 
@@ -831,11 +836,13 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 
 	IIntuition = gd->iintuition;
 
-	cx_sig = 1UL << gd->broker_mp->mp_SigBit;
+	cx_sig   = 1UL << gd->broker_mp->mp_SigBit;
+	app_sig  = 1UL << gd->app_mp->mp_SigBit;
+	srec_sig = 1UL << gd->srec_mp->mp_SigBit;
 
 	while (!done) {
 		IIntuition->GetAttr(WINDOW_SigMask, gd->obj[OID_WINDOW], &window_sigs);
-		signals = IExec->Wait(SIGBREAKF_CTRL_C | cx_sig | window_sigs);
+		signals = IExec->Wait(SIGBREAKF_CTRL_C | cx_sig | app_sig | srec_sig | window_sigs);
 
 		if (signals & SIGBREAKF_CTRL_C)
 			done = TRUE;
@@ -888,6 +895,14 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 			}
 		}
 
+		if (signals & app_sig) {
+			//FIXME: Add code here
+		}
+
+		if (signals & srec_sig) {
+			//FIXME: Add code here
+		}
+
 		if (signals & window_sigs) {
 			BOOL hide = FALSE;
 			BOOL iconify = FALSE;
@@ -925,6 +940,9 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								case MID_PROJECT_QUIT:
 									done = TRUE;
 									break;
+								case MID_SETTINGS_SAVE_AS_DEFAULTS:
+									//FIXME: Save settings
+									break;
 							}
 						}
 						break;
@@ -949,6 +967,9 @@ out:
 
 	if (gd != NULL) {
 		gui_free_window(gd);
+
+		if (gd->srec_mp != NULL)
+			IExec->FreeSysObject(ASOT_PORT, gd->srec_mp);
 
 		gui_unregister_application(gd);
 

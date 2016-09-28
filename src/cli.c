@@ -43,6 +43,7 @@ int cli_main(struct LocaleInfo *loc) {
 	struct MsgPort *mp = NULL;
 	struct DeathMessage *deathm = NULL;
 	struct Process *srec_proc;
+	uint32 srec_pid;
 	uint32 signals;
 	int rc = RETURN_ERROR;
 
@@ -54,9 +55,9 @@ int cli_main(struct LocaleInfo *loc) {
 		goto out;
 	}
 
-	srec_args = IExec->AllocVecTags(sizeof(*srec_args),
-		AVT_Type,           MEMF_SHARED,
-		AVT_Lock,           FALSE,
+	srec_args = IExec->AllocSysObjectTags(ASOT_MESSAGE,
+		ASOMSG_Name,   "SRec startup message",
+		ASOMSG_Length, sizeof(*srec_args),
 		TAG_END);
 	if (srec_args == NULL) {
 		IDOS->PrintFault(ERROR_NO_FREE_STORE, "SRec");
@@ -102,10 +103,7 @@ int cli_main(struct LocaleInfo *loc) {
 		NP_Priority,             SREC_PRIORITY,
 		NP_Child,                TRUE,
 		NP_Entry,                srec_entry,
-		NP_UserData,             srec_args,
-		#ifdef SREC_STACKSIZE
 		NP_StackSize,            SREC_STACKSIZE,
-		#endif
 		NP_LockStack,            TRUE,
 		NP_NotifyOnDeathMessage, deathm,
 		TAG_END);
@@ -114,12 +112,14 @@ int cli_main(struct LocaleInfo *loc) {
 		goto out;
 	}
 
-	IDOS->Printf("%s\n", GetString(loc, MSG_CTRL_C_TO_STOP));
+	srec_pid = IDOS->GetPID(srec_proc, GPID_PROCESS);
+	IExec->PutMsg(&srec_proc->pr_MsgPort, &srec_args->message);
 
+	IDOS->Printf("%s\n", GetString(loc, MSG_CTRL_C_TO_STOP));
 	signals = IExec->Wait(SIGBREAKF_CTRL_C | (1UL << mp->mp_SigBit));
 
 	if (signals & SIGBREAKF_CTRL_C)
-		IExec->Signal((struct Task *)srec_proc, SIGBREAKF_CTRL_C);
+		safe_signal_proc(srec_pid, SIGBREAKF_CTRL_C);
 
 	IExec->WaitPort(mp);
 	deathm = (struct DeathMessage *)IExec->GetMsg(mp);
@@ -144,7 +144,7 @@ out:
 		IExec->FreeSysObject(ASOT_PORT, mp);
 
 	if (srec_args != NULL)
-		IExec->FreeVec(srec_args);
+		IExec->FreeSysObject(ASOT_MESSAGE, srec_args);
 
 	if (rdargs != NULL)
 		IDOS->FreeArgs(rdargs);
