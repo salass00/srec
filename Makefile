@@ -6,6 +6,8 @@ RM     := rm -f
 TARGET  := SRec
 VERSION := 2
 
+SYSTEM := $(shell uname -s)
+
 CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude
 LDFLAGS := -static
 LIBS    := 
@@ -41,7 +43,11 @@ src/zmbv_altivec.o: src/zmbv.h
 src/zmbv_altivec.o: CFLAGS += -maltivec
 
 include/locale_strings.h: SRec.cd
+ifeq ($(SYSTEM),AmigaOS)
+	CatComp CFILE $@ NOCODE $<
+else
 	catcomp --cfile $@ $<
+endif
 
 libmkv/libmkv.a:
 	make -C libmkv
