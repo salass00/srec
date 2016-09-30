@@ -38,6 +38,8 @@
 #include <interfaces/icon.h>
 #include <interfaces/commodities.h>
 #include <interfaces/application.h>
+#include <interfaces/chooser.h>
+#include <string.h>
 #include <stdarg.h>
 #include "SRec_rev.h"
 
@@ -115,6 +117,7 @@ struct srec_gui {
 	struct CommoditiesIFace  *icommodities;
 	struct ApplicationIFace  *iapplication;
 	struct PrefsObjectsIFace *iprefsobjects;
+	struct ChooserIFace      *ichooser;
 	struct ClassLibrary      *requesterbase;
 	Class                    *requesterclass;
 	struct ClassLibrary      *windowbase;
@@ -153,6 +156,13 @@ struct srec_gui {
 	struct DeathMessage      *death_msg;
 	struct MsgPort           *wb_mp;
 	Object                   *obj[OID_MAX];
+	struct List              *container_list;
+	struct List              *video_codec_list;
+	struct List              *aspect_ratio_list;
+	struct List              *audio_codec_list;
+	struct List              *sample_size_list;
+	struct List              *channels_list;
+	struct List              *sample_rate_list;
 	TEXT                      window_title[64];
 };
 
@@ -201,11 +211,17 @@ static BOOL gui_open_classes(struct srec_gui *gd) {
 	error |= !(gd->buttonbase = IIntuition->OpenClass("gadgets/button.gadget", 53, &gd->buttonclass));
 	error |= !(gd->labelbase = IIntuition->OpenClass("images/label.image", 53, &gd->labelclass));
 
+	if (gd->chooserbase != NULL)
+		error |= !(gd->ichooser = (struct ChooserIFace *)IExec->GetInterface(&gd->chooserbase->cl_Lib, "main", 1, NULL));
+
 	return (error == 0) ? TRUE : FALSE;
 }
 
 static void gui_close_classes(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
+
+	if (gd->ichooser != NULL)
+		IExec->DropInterface((struct Interface *)gd->ichooser);
 
 	if (gd->labelbase != NULL)
 		IIntuition->CloseClass(gd->labelbase);
@@ -405,12 +421,140 @@ static inline BOOL gui_is_recording(struct srec_gui *gd) {
 	return (gd->srec_pid != 0) ? TRUE : FALSE;
 }
 
+struct chooser_map {
+	uint32 cfg_val;
+	CONST_STRPTR cfg_str;
+	int32 msg_id;
+};
+
+static void gui_free_chooser_list(const struct srec_gui *gd, struct List *list) {
+	struct ChooserIFace *IChooser = gd->ichooser;
+	struct Node *node;
+
+	if (list != NULL) {
+		while ((node = IExec->RemHead(list)) != NULL)
+			IChooser->FreeChooserNode(node);
+
+		IExec->FreeSysObject(ASOT_LIST, list);
+	}
+}
+
+static struct List *gui_create_chooser_list(const struct srec_gui *gd,
+	const struct chooser_map *map, uint32 len)
+{
+	struct ChooserIFace *IChooser = gd->ichooser;
+	struct LocaleInfo *loc = gd->locale_info;
+	struct List *list;
+	struct Node *node;
+	uint32 i;
+
+	list = IExec->AllocSysObject(ASOT_LIST, NULL);
+	if (list != NULL) {
+		for (i = 0; i != len; i++) {
+			node = IChooser->AllocChooserNode(
+				CNA_Text,     GetString(loc, map[i].msg_id),
+				CNA_UserData, &map[i],
+				TAG_END);
+			if (node == NULL) {
+				gui_free_chooser_list(gd, list);
+				return NULL;
+			}
+
+			IExec->AddTail(list, node);
+		}
+	}
+
+	return list;
+}
+
+static uint32 gui_map_cfg_str_to_cfg_val(const struct srec_gui *gd, CONST_STRPTR str,
+	const struct chooser_map *map, uint32 len, uint32 def)
+{
+	uint32 i;
+
+	if (str != NULL) {
+		for (i = 0; i != len; i++) {
+			if (strcmp(map[i].cfg_str, str) == 0)
+				return map[i].cfg_val;
+		}
+	}
+
+	return def;
+}
+
+static uint32 gui_map_cfg_val_to_chooser_index(const struct srec_gui *gd, uint32 val,
+	const struct chooser_map *map, uint32 len)
+{
+	uint32 i;
+
+	for (i = 0; i != len; i++) {
+		if (map[i].cfg_val == val)
+			return i;
+	}
+
+	/* Should never happen */
+	return 0;
+}
+
+const struct chooser_map container_map[] = {
+	{ CONTAINER_MKV, "MKV", MSG_CONTAINER_FORMAT_MKV }
+};
+
+const struct chooser_map video_codec_map[] = {
+	{ VIDEO_CODEC_ZMBV, "ZMBV", MSG_VIDEO_CODEC_ZMBV }
+};
+
+enum {
+	ASPECT_RATIO_LIKE_WB = 0,
+	ASPECT_RATIO_CUSTOM,
+	ASPECT_RATIO_4_3,
+	ASPECT_RATIO_5_4,
+	ASPECT_RATIO_16_9,
+	ASPECT_RATIO_16_10
+};
+
+#define DEFAULT_ASPECT_RATIO ASPECT_RATIO_LIKE_WB
+
+const struct chooser_map aspect_ratio_map[] = {
+	{ ASPECT_RATIO_LIKE_WB, "LIKEWB", MSG_ASPECT_RATIO_LIKE_WB },
+	{ ASPECT_RATIO_CUSTOM,  "CUSTOM", MSG_ASPECT_RATIO_CUSTOM  },
+	{ ASPECT_RATIO_4_3,       "4:3",  MSG_ASPECT_RATIO_4_3     },
+	{ ASPECT_RATIO_5_4,       "5:4",  MSG_ASPECT_RATIO_5_4     },
+	{ ASPECT_RATIO_16_9,     "16:9",  MSG_ASPECT_RATIO_16_9    },
+	{ ASPECT_RATIO_16_10,   "16:10",  MSG_ASPECT_RATIO_16_10   }
+};
+
+const struct chooser_map audio_codec_map[] = {
+	{ AUDIO_CODEC_NONE, NULL, MSG_AUDIO_CODEC_NONE }
+};
+
+const struct chooser_map sample_size_map[] = {
+	{  8,  "8BIT", MSG_AUDIO_SAMPLE_SIZE_8BIT  },
+	{ 16, "16BIT", MSG_AUDIO_SAMPLE_SIZE_16BIT },
+	{ 32, "32BIT", MSG_AUDIO_SAMPLE_SIZE_32BIT }
+};
+
+const struct chooser_map channels_map[] = {
+	{ CHANNELS_MONO,   "MONO",   MSG_AUDIO_CHANNELS_MONO   },
+	{ CHANNELS_STEREO, "STEREO", MSG_AUDIO_CHANNELS_STEREO }
+};
+
+const struct chooser_map sample_rate_map[] = {
+	{ 11025, "11025HZ", MSG_AUDIO_SAMPLE_RATE_11025HZ },
+	{ 22050, "22050HZ", MSG_AUDIO_SAMPLE_RATE_22050HZ },
+	{ 44100, "44100HZ", MSG_AUDIO_SAMPLE_RATE_44100HZ },
+	{ 48000, "48000HZ", MSG_AUDIO_SAMPLE_RATE_48000HZ }
+};
+
 static BOOL gui_create_window(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct PrefsObjectsIFace *IPrefsObjects = gd->iprefsobjects;
 	struct LocaleInfo *loc = gd->locale_info;
-	CONST_STRPTR strings[7];
+	CONST_STRPTR tab_titles[4];
+	CONST_STRPTR cfg_str;
+	uint32 cfg_val;
 	BOOL result;
+	BOOL error;
 
 	IUtility->SNPrintf(gd->window_title, sizeof(gd->window_title), GetString(loc, MSG_WINDOW_TITLE),
 		"SRec", gd->popkey ? gd->popkey : GetString(loc, MSG_KEY_NONE));
@@ -433,6 +577,19 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	if (gd->wb_mp == NULL)
 		return FALSE;
 
+	#define ARRAY_LEN(array) (sizeof(array)/sizeof(array[0]))
+
+	error = 0;
+	error |= !(gd->container_list = gui_create_chooser_list(gd, container_map, ARRAY_LEN(container_map)));
+	error |= !(gd->video_codec_list = gui_create_chooser_list(gd, video_codec_map, ARRAY_LEN(video_codec_map)));
+	error |= !(gd->aspect_ratio_list = gui_create_chooser_list(gd, aspect_ratio_map, ARRAY_LEN(aspect_ratio_map)));
+	error |= !(gd->audio_codec_list = gui_create_chooser_list(gd, audio_codec_map, ARRAY_LEN(audio_codec_map)));
+	error |= !(gd->sample_size_list = gui_create_chooser_list(gd, sample_size_map, ARRAY_LEN(sample_size_map)));
+	error |= !(gd->channels_list = gui_create_chooser_list(gd, channels_map, ARRAY_LEN(channels_map)));
+	error |= !(gd->sample_rate_list = gui_create_chooser_list(gd, sample_rate_map, ARRAY_LEN(sample_rate_map)));
+	if (error != 0)
+		return FALSE;
+
 	#define SPACE \
 		IIntuition->NewObjectA(gd->spaceclass, NULL, NULL)
 	#define LABEL(id) \
@@ -448,39 +605,34 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GETFILE_FullFile,   IPrefsObjects->DictGetStringForKey(gd->app_prefs, "OutputFile", ""),
 		TAG_END);
 
-	strings[0] = "MKV";
-	strings[1] = NULL;
+	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "ContainerFormat", NULL);
+	cfg_val = gui_map_cfg_str_to_cfg_val(gd, cfg_str, container_map, ARRAY_LEN(container_map), DEFAULT_CONTAINER);
 
 	gd->obj[OID_CONTAINER_FORMAT] = IIntuition->NewObject(gd->chooserclass, NULL,
-		GA_ID,              OID_CONTAINER_FORMAT,
-		GA_RelVerify,       TRUE,
-		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "ContainerFormat", 0),
+		GA_ID,            OID_CONTAINER_FORMAT,
+		GA_RelVerify,     TRUE,
+		CHOOSER_Labels,   gd->container_list,
+		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, cfg_val, container_map, ARRAY_LEN(container_map)),
 		TAG_END);
 
-	strings[0] = "ZMBV";
-	strings[1] = NULL;
+	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "VideoCodec", NULL);
+	cfg_val = gui_map_cfg_str_to_cfg_val(gd, cfg_str, video_codec_map, ARRAY_LEN(video_codec_map), DEFAULT_VIDEO_CODEC);
 
 	gd->obj[OID_VIDEO_CODEC] = IIntuition->NewObject(gd->chooserclass, NULL,
-		GA_ID,              OID_VIDEO_CODEC,
-		GA_RelVerify,       TRUE,
-		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoCodec", 0),
+		GA_ID,            OID_VIDEO_CODEC,
+		GA_RelVerify,     TRUE,
+		CHOOSER_Labels,   gd->video_codec_list,
+		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, cfg_val, video_codec_map, ARRAY_LEN(video_codec_map)),
 		TAG_END);
 
-	strings[0] = GetString(loc, MSG_ASPECT_RATIO_LIKE_WB);
-	strings[1] = GetString(loc, MSG_ASPECT_RATIO_CUSTOM);
-	strings[2] = GetString(loc, MSG_ASPECT_RATIO_4_3);
-	strings[3] = GetString(loc, MSG_ASPECT_RATIO_5_4);
-	strings[4] = GetString(loc, MSG_ASPECT_RATIO_16_9);
-	strings[5] = GetString(loc, MSG_ASPECT_RATIO_16_10);
-	strings[6] = NULL;
+	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AspectRatio", NULL);
+	cfg_val = gui_map_cfg_str_to_cfg_val(gd, cfg_str, aspect_ratio_map, ARRAY_LEN(aspect_ratio_map), DEFAULT_ASPECT_RATIO);
 
 	gd->obj[OID_ASPECT_RATIO] = IIntuition->NewObject(gd->chooserclass, NULL,
-		GA_ID,              OID_ASPECT_RATIO,
-		GA_RelVerify,       TRUE,
-		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AspectRatio", 0),
+		GA_ID,            OID_ASPECT_RATIO,
+		GA_RelVerify,     TRUE,
+		CHOOSER_Labels,   gd->aspect_ratio_list,
+		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, cfg_val, aspect_ratio_map, ARRAY_LEN(aspect_ratio_map)),
 		TAG_END);
 
 	gd->obj[OID_VIDEO_WIDTH] = IIntuition->NewObject(gd->integerclass, NULL,
@@ -525,53 +677,47 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		CHILD_Label,     LABEL(MSG_VIDEO_FPS_GAD),
 		TAG_END);
 
-	strings[0] = GetString(loc, MSG_AUDIO_CODEC_NONE);
-	strings[1] = NULL;
+	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioCodec", NULL);
+	cfg_val = gui_map_cfg_str_to_cfg_val(gd, cfg_str, audio_codec_map, ARRAY_LEN(audio_codec_map), DEFAULT_AUDIO_CODEC);
 
 	gd->obj[OID_AUDIO_CODEC] = IIntuition->NewObject(gd->chooserclass, NULL,
-		GA_ID,              OID_AUDIO_CODEC,
-		GA_RelVerify,       TRUE,
-		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioCodec", 0),
+		GA_ID,            OID_AUDIO_CODEC,
+		GA_RelVerify,     TRUE,
+		CHOOSER_Labels,   gd->audio_codec_list,
+		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, cfg_val, audio_codec_map, ARRAY_LEN(audio_codec_map)),
 		TAG_END);
 
-	strings[0] = GetString(loc, MSG_AUDIO_SAMPLE_SIZE_8BIT);
-	strings[1] = GetString(loc, MSG_AUDIO_SAMPLE_SIZE_16BIT);
-	strings[2] = GetString(loc, MSG_AUDIO_SAMPLE_SIZE_32BIT);
-	strings[3] = NULL;
+	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioSampleSize", NULL);
+	cfg_val = gui_map_cfg_str_to_cfg_val(gd, cfg_str, sample_size_map, ARRAY_LEN(sample_size_map), DEFAULT_SAMPLE_SIZE);
 
 	gd->obj[OID_AUDIO_SAMPLE_SIZE] = IIntuition->NewObject(gd->chooserclass, NULL,
-		GA_ID,              OID_AUDIO_SAMPLE_SIZE,
-		GA_RelVerify,       TRUE,
-		GA_Disabled,        TRUE,
-		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioSampleSize", 1),
+		GA_ID,            OID_AUDIO_SAMPLE_SIZE,
+		GA_RelVerify,     TRUE,
+		GA_Disabled,      TRUE,
+		CHOOSER_Labels,   gd->sample_size_list,
+		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, cfg_val, sample_size_map, ARRAY_LEN(sample_size_map)),
 		TAG_END);
 
-	strings[0] = GetString(loc, MSG_AUDIO_CHANNELS_MONO);
-	strings[1] = GetString(loc, MSG_AUDIO_CHANNELS_STEREO);
-	strings[2] = NULL;
+	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioChannels", NULL);
+	cfg_val = gui_map_cfg_str_to_cfg_val(gd, cfg_str, channels_map, ARRAY_LEN(channels_map), DEFAULT_CHANNELS);
 
 	gd->obj[OID_AUDIO_CHANNELS] = IIntuition->NewObject(gd->chooserclass, NULL,
-		GA_ID,              OID_AUDIO_CHANNELS,
-		GA_RelVerify,       TRUE,
-		GA_Disabled,        TRUE,
-		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioChannels", 1),
+		GA_ID,            OID_AUDIO_CHANNELS,
+		GA_RelVerify,     TRUE,
+		GA_Disabled,      TRUE,
+		CHOOSER_Labels,   gd->channels_list,
+		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, cfg_val, channels_map, ARRAY_LEN(channels_map)),
 		TAG_END);
 
-	strings[0] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_11025HZ);
-	strings[1] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_22050HZ);
-	strings[2] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_44100HZ);
-	strings[3] = GetString(loc, MSG_AUDIO_SAMPLE_RATE_48000HZ);
-	strings[4] = NULL;
+	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioSampleRate", NULL);
+	cfg_val = gui_map_cfg_str_to_cfg_val(gd, cfg_str, sample_rate_map, ARRAY_LEN(sample_rate_map), DEFAULT_SAMPLE_RATE);
 
 	gd->obj[OID_AUDIO_SAMPLE_RATE] = IIntuition->NewObject(gd->chooserclass, NULL,
-		GA_ID,              OID_AUDIO_SAMPLE_RATE,
-		GA_RelVerify,       TRUE,
-		GA_Disabled,        TRUE,
-		CHOOSER_LabelArray, strings,
-		CHOOSER_Selected,   IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioSampleRate", 3),
+		GA_ID,            OID_AUDIO_SAMPLE_RATE,
+		GA_RelVerify,     TRUE,
+		GA_Disabled,      TRUE,
+		CHOOSER_Labels,   gd->sample_rate_list,
+		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, cfg_val, sample_rate_map, ARRAY_LEN(sample_rate_map)),
 		TAG_END);
 
 	gd->obj[OID_FORMAT_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -606,7 +752,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_TabCycle,      TRUE,
 		GA_RelVerify,     TRUE,
 		GETFILE_Pattern,  "#?.info",
-		GETFILE_FullFile, IPrefsObjects->DictGetStringForKey(gd->app_prefs, "PointerFile", "ENV:Sys/def_pointer.info"),
+		GETFILE_FullFile, IPrefsObjects->DictGetStringForKey(gd->app_prefs, "PointerFile", DEFAULT_POINTER_FILE),
 		TAG_END);
 
 	gd->obj[OID_POINTER_FILE_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -621,7 +767,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_TabCycle,      TRUE,
 		GA_RelVerify,     TRUE,
 		GETFILE_Pattern,  "#?.info",
-		GETFILE_FullFile, IPrefsObjects->DictGetStringForKey(gd->app_prefs, "BusyPointerFile", "ENV:Sys/def_busypointer.info"),
+		GETFILE_FullFile, IPrefsObjects->DictGetStringForKey(gd->app_prefs, "BusyPointerFile", DEFAULT_BUSY_POINTER_FILE),
 		TAG_END);
 
 	gd->obj[OID_BUSY_POINTER_FILE_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -665,15 +811,15 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		PAGE_Current, 0,
 		TAG_END);
 
-	strings[0] = GetString(loc, MSG_FORMAT_TAB);
-	strings[1] = GetString(loc, MSG_POINTER_TAB);
-	strings[2] = GetString(loc, MSG_MISC_TAB);
-	strings[3] = NULL;
+	tab_titles[0] = GetString(loc, MSG_FORMAT_TAB);
+	tab_titles[1] = GetString(loc, MSG_POINTER_TAB);
+	tab_titles[2] = GetString(loc, MSG_MISC_TAB);
+	tab_titles[3] = NULL;
 
 	gd->obj[OID_TABS] = IIntuition->NewObject(gd->clicktabclass, NULL,
 		GA_ID,              OID_TABS,
 		GA_RelVerify,       TRUE,
-		GA_Text,            strings,
+		GA_Text,            tab_titles,
 		CLICKTAB_PageGroup, gd->obj[OID_TAB_PAGES],
 		TAG_END);
 
@@ -737,6 +883,14 @@ static void gui_free_window(struct srec_gui *gd) {
 
 	if (gd->obj[OID_WINDOW] != NULL)
 		IIntuition->DisposeObject(gd->obj[OID_WINDOW]);
+
+	gui_free_chooser_list(gd, gd->container_list);
+	gui_free_chooser_list(gd, gd->video_codec_list);
+	gui_free_chooser_list(gd, gd->aspect_ratio_list);
+	gui_free_chooser_list(gd, gd->audio_codec_list);
+	gui_free_chooser_list(gd, gd->sample_size_list);
+	gui_free_chooser_list(gd, gd->channels_list);
+	gui_free_chooser_list(gd, gd->sample_rate_list);
 
 	if (gd->wb_mp != NULL)
 		IExec->FreeSysObject(ASOT_PORT, gd->wb_mp);

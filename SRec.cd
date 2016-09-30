@@ -57,8 +57,14 @@ Misc
 MSG_CONTAINER_FORMAT_GAD (//)
 Format
 ;
+MSG_CONTAINER_FORMAT_MKV (//)
+MKV
+;
 MSG_VIDEO_CODEC_GAD (//)
 Video Codec
+;
+MSG_VIDEO_CODEC_ZMBV (//)
+ZMBV
 ;
 MSG_ASPECT_RATIO_GAD (//)
 Aspect Ratio

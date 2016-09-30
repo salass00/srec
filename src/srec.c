@@ -110,10 +110,15 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 	#define IIntuition gd.iintuition
 	#define IGraphics  gd.igraphics
+	#define IIcon      gd.iicon
 
 	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
 	IGraphics  = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
-	if (IIntuition == NULL || IGraphics == NULL)
+	IIcon      = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1);
+	if (IIntuition == NULL || IGraphics == NULL || IIcon == NULL)
+		goto out;
+
+	if (args->container != CONTAINER_MKV || args->video_codec != VIDEO_CODEC_ZMBV || args->audio_codec != AUDIO_CODEC_NONE)
 		goto out;
 
 	duration_us = (uint32)lroundf(1000.0f / (float)args->fps) * 1000UL;
@@ -123,7 +128,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	if (encoder == NULL)
 		goto out;
 
-	writer = mk_createWriter(args->filename, 1000000LL, VLC_COMPAT);
+	writer = mk_createWriter(args->output_file, 1000000LL, VLC_COMPAT);
 	if (writer == NULL)
 		goto out;
 
@@ -371,6 +376,9 @@ out:
 
 	if (encoder != NULL)
 		zmbv_end(encoder);
+
+	if (IIcon != NULL)
+		CloseInterface((struct Interface *)IIcon);
 
 	if (IGraphics != NULL)
 		CloseInterface((struct Interface *)IGraphics);

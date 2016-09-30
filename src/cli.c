@@ -24,7 +24,7 @@
 #include <proto/dos.h>
 #include <proto/utility.h>
 
-#define TEMPLATE "FILENAME/A,WIDTH/N,HEIGHT/N,FPS/N,NOFILTER/S,NOALTIVEC/S"
+#define TEMPLATE "FILENAME/A,WIDTH/N,HEIGHT/N,FPS/N,NOFILTER/S,NOPOINTER/S,NOALTIVEC/S"
 
 enum {
 	ARG_FILENAME,
@@ -32,6 +32,7 @@ enum {
 	ARG_HEIGHT,
 	ARG_FPS,
 	ARG_NOFILTER,
+	ARG_NOPOINTER,
 	ARG_NOALTIVEC,
 	ARG_MAX
 };
@@ -64,11 +65,20 @@ int cli_main(struct LocaleInfo *loc) {
 		goto out;
 	}
 
-	startup_msg->width  = DEFAULT_WIDTH;
-	startup_msg->height = DEFAULT_HEIGHT;
-	startup_msg->fps    = DEFAULT_FPS;
+	IUtility->Strlcpy(startup_msg->output_file, (CONST_STRPTR)args[ARG_FILENAME], sizeof(startup_msg->output_file));
 
-	IUtility->Strlcpy(startup_msg->filename, (CONST_STRPTR)args[ARG_FILENAME], sizeof(startup_msg->filename));
+	IUtility->Strlcpy(startup_msg->pointer_file, DEFAULT_POINTER_FILE, sizeof(startup_msg->pointer_file));
+	IUtility->Strlcpy(startup_msg->busy_pointer_file, DEFAULT_BUSY_POINTER_FILE, sizeof(startup_msg->busy_pointer_file));
+
+	startup_msg->container   = DEFAULT_CONTAINER;
+	startup_msg->video_codec = DEFAULT_VIDEO_CODEC;
+	startup_msg->width       = DEFAULT_WIDTH;
+	startup_msg->height      = DEFAULT_HEIGHT;
+	startup_msg->fps         = DEFAULT_FPS;
+	startup_msg->audio_codec = DEFAULT_AUDIO_CODEC;
+	startup_msg->sample_size = DEFAULT_SAMPLE_SIZE;
+	startup_msg->channels    = DEFAULT_CHANNELS;
+	startup_msg->sample_rate = DEFAULT_SAMPLE_RATE;
 
 	if ((APTR)args[ARG_WIDTH] != NULL)
 		startup_msg->width = *(uint32 *)args[ARG_WIDTH];
@@ -79,7 +89,8 @@ int cli_main(struct LocaleInfo *loc) {
 	if ((APTR)args[ARG_FPS] != NULL)
 		startup_msg->fps = *(uint32 *)args[ARG_FPS];
 
-	startup_msg->no_filter = args[ARG_NOFILTER] ? TRUE : FALSE;
+	startup_msg->no_filter  = args[ARG_NOFILTER]  ? TRUE : FALSE;
+	startup_msg->no_pointer = args[ARG_NOPOINTER] ? TRUE : FALSE;
 	startup_msg->no_altivec = args[ARG_NOALTIVEC] ? TRUE : FALSE;
 
 	mp = IExec->AllocSysObject(ASOT_PORT, NULL);

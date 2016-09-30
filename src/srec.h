@@ -22,10 +22,39 @@
 #include <exec/exec.h>
 #include <interfaces/intuition.h>
 #include <interfaces/graphics.h>
+#include <interfaces/icon.h>
 
-#define DEFAULT_WIDTH  640
-#define DEFAULT_HEIGHT 480
-#define DEFAULT_FPS    10
+enum {
+	CONTAINER_MKV = 1
+};
+
+enum {
+	VIDEO_CODEC_ZMBV = 1
+};
+
+enum {
+	AUDIO_CODEC_NONE = 0
+};
+
+enum {
+	CHANNELS_MONO = 1,
+	CHANNELS_STEREO = 2
+};
+
+#define DEFAULT_CONTAINER   CONTAINER_MKV
+
+#define DEFAULT_VIDEO_CODEC VIDEO_CODEC_ZMBV
+#define DEFAULT_WIDTH       640
+#define DEFAULT_HEIGHT      480
+#define DEFAULT_FPS         10
+
+#define DEFAULT_AUDIO_CODEC AUDIO_CODEC_NONE
+#define DEFAULT_SAMPLE_SIZE 16
+#define DEFAULT_CHANNELS    CHANNELS_STEREO
+#define DEFAULT_SAMPLE_RATE 48000
+
+#define DEFAULT_POINTER_FILE      "ENV:Sys/def_pointer.info"
+#define DEFAULT_BUSY_POINTER_FILE "ENV:Sys/def_busypointer.info"
 
 #define SREC_PROCNAME  "SRec: Screen Recorder"
 #define SREC_PRIORITY  (0)
@@ -35,16 +64,26 @@
 
 struct SRecArgs {
 	struct Message message;
-	TEXT           filename[1024];
+	TEXT           output_file[1024];
+	uint32         container;
+	uint32         video_codec;
 	uint32         width, height;
 	uint32         fps;
+	uint32         audio_codec;
+	uint32         sample_size;
+	uint32         channels;
+	uint32         sample_rate;
 	BOOL           no_filter;
+	BOOL           no_pointer;
 	BOOL           no_altivec;
+	TEXT           pointer_file[1024];
+	TEXT           busy_pointer_file[1024];
 };
 
 struct SRecGlobal {
 	struct IntuitionIFace *iintuition;
 	struct GraphicsIFace  *igraphics;
+	struct IconIFace      *iicon;
 };
 
 BOOL safe_signal_proc(uint32 pid, uint32 sigmask);
