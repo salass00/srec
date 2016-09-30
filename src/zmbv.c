@@ -340,6 +340,12 @@ out:
 	return FALSE;
 }
 
+static int sched_yield(void) {
+	struct Task *me = IExec->FindTask(NULL);
+	IExec->SetTaskPri(me, me->tc_Node.ln_Pri);
+	return 0;
+}
+
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	BOOL *keyframep)
 {
@@ -351,7 +357,9 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	if (state->srec_bm == NULL)
 		return FALSE;
 
-	if ((state->frame_bpr * state->height) <= MAX_VRAM_TO_RAM_TRANSFER_SIZE) {
+	if (MAX_VRAM_TO_RAM_TRANSFER_SIZE == 0 ||
+	    MAX_VRAM_TO_RAM_TRANSFER_SIZE >= (state->frame_bpr * state->height))
+	{
 		IGraphics->BltBitMapTags(
 			BLITA_Source, state->srec_bm,
 			BLITA_Dest,   state->current_frame_bm,
@@ -373,6 +381,8 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 				BLITA_Width,  width,
 				BLITA_Height, max_rows,
 				TAG_END);
+
+			sched_yield();
 
 			y += max_rows;
 			rows_left -= max_rows;
