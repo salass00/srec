@@ -5,3 +5,5 @@ include/locale_strings.h
 # Ignore generated exe files
 SRec
 SRec.debug
+# Ignore generated catalog files
+*.catalog
