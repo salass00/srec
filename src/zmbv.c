@@ -340,12 +340,6 @@ out:
 	return FALSE;
 }
 
-static int sched_yield(void) {
-	struct Task *me = IExec->FindTask(NULL);
-	IExec->SetTaskPri(me, me->tc_Node.ln_Pri);
-	return 0;
-}
-
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	BOOL *keyframep)
 {
@@ -381,8 +375,6 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 				BLITA_Width,  width,
 				BLITA_Height, max_rows,
 				TAG_END);
-
-			sched_yield();
 
 			y += max_rows;
 			rows_left -= max_rows;
