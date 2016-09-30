@@ -15,7 +15,9 @@ LIBS    :=
 SRCS := src/main.c src/locale.c src/cli.o src/gui.o src/srec.c src/interfaces.c src/timer.c src/zmbv.c src/zmbv_altivec.c
 OBJS := $(SRCS:.c=.o)
 
-.PHONY: all revision clean
+CATALOGS := catalogs/italian/SRec.catalog
+
+.PHONY: all revision clean catalogs
 
 all: $(TARGET)
 
@@ -51,6 +53,11 @@ endif
 
 libmkv/libmkv.a:
 	make -C libmkv
+
+catalogs: $(CATALOGS)
+
+%.catalog: %.ct catalogs/SRec.cd
+	catcomp --catalog $@ catalogs/SRec.cd $<
 
 revision:
 	bumprev $(VERSION) $(TARGET)

@@ -1,0 +1,223 @@
+## version $VER: SRec.catalog 2.1 (30.9.2016)
+## codeset 0
+## language italiano
+## chunk AUTH Translated by Samir Hawamdeh (http://www.betatesting.it/backforthefuture)
+;
+; ATO Italia
+; Compiled with FlexCat 2.18 PPC (AmigaOS4)
+; flexcat SRec.cd SRec.ct catalog=SRec.catalog
+; 
+; Italian translation of SRec
+;
+; Traduzione italiana di SRec
+;
+; $VER: SRec 2.1 (20.9.2016)
+;
+MSG_TOO_OLD_OS_VERSION
+SRec %ld.%ld richiede %s o superiore!
+; SRec %ld.%ld requires %s or newer!
+;
+MSG_CTRL_C_TO_STOP
+CTRL-C per fermare la registrazione
+; CTRL-C to stop recording.
+;
+MSG_CX_DESCR
+Screen Recorder
+; Screen Recorder
+;
+MSG_ABOUT_WINDOW_TITLE
+Informazioni su %s
+; About - %s
+;
+MSG_OK_GAD
+_Ok
+; _Ok
+;
+MSG_WINDOW_TITLE
+%s: Hot Key = <%s>
+; %s: Hot Key = <%s>
+;
+MSG_KEY_NONE
+nessuno
+; none
+;
+MSG_PROJECT_MENU
+Progetto
+; Project
+;
+MSG_PROJECT_ABOUT
+Informazioni...
+; About...
+;
+MSG_PROJECT_HIDE
+Nascondi
+; Hide
+;
+MSG_PROJECT_ICONIFY
+Iconifica
+; Iconify
+;
+MSG_PROJECT_QUIT
+Esci
+; Quit
+;
+MSG_SETTINGS_MENU
+Impostazioni
+; Settings
+;
+MSG_SETTINGS_SAVE_AS_DEFAULTS
+Salva come predefinito
+; Save As Defaults
+;
+MSG_OUTPUT_FILE_GAD
+Output
+; Output
+;
+MSG_FORMAT_TAB
+Formato
+; Format
+;
+MSG_POINTER_TAB
+Puntatore
+; Pointer
+;
+MSG_MISC_TAB
+Varie
+; Misc
+;
+MSG_CONTAINER_FORMAT_GAD
+Formato
+; Format
+;
+MSG_CONTAINER_FORMAT_MKV
+MKV
+; MKV
+;
+MSG_VIDEO_CODEC_GAD
+Codec Video
+; Video Codec
+;
+MSG_VIDEO_CODEC_ZMBV
+ZMBV
+; ZMBV
+;
+MSG_ASPECT_RATIO_GAD
+Aspect Ratio
+; Aspect Ratio
+;
+MSG_ASPECT_RATIO_LIKE_WB
+Tipo WB
+; Like WB
+;
+MSG_ASPECT_RATIO_CUSTOM
+Personalizzato
+; Custom
+;
+MSG_ASPECT_RATIO_4_3
+4 : 3
+; 4 : 3
+;
+MSG_ASPECT_RATIO_5_4
+5 : 4
+; 5 : 4
+;
+MSG_ASPECT_RATIO_16_9
+16 : 9
+; 16 : 9
+;
+MSG_ASPECT_RATIO_16_10
+16 : 10
+; 16 : 10
+;
+MSG_VIDEO_WIDTH_GAD
+Larghezza
+; Width
+;
+MSG_VIDEO_HEIGHT_GAD
+Altezza
+; Height
+;
+MSG_VIDEO_FPS_GAD
+Fotogrammi Per Secondo
+; Frames Per Second
+;
+MSG_AUDIO_CODEC_GAD
+Codec Audio
+; Audio Codec
+;
+MSG_AUDIO_CODEC_NONE
+Nessuno
+; None
+;
+MSG_AUDIO_SAMPLE_SIZE_GAD
+Dimensione Sample
+; Sample Size
+;
+MSG_AUDIO_SAMPLE_SIZE_8BIT
+8-bit
+; 8-bit
+;
+MSG_AUDIO_SAMPLE_SIZE_16BIT
+16-bit
+; 16-bit
+;
+MSG_AUDIO_SAMPLE_SIZE_32BIT
+32-bit
+; 32-bit
+;
+MSG_AUDIO_CHANNELS_GAD
+Canali
+; Channels
+;
+MSG_AUDIO_CHANNELS_MONO
+Mono
+; Mono
+;
+MSG_AUDIO_CHANNELS_STEREO
+Stereo
+; Stereo
+;
+MSG_AUDIO_SAMPLE_RATE_GAD
+Qualità Audio
+; Sample Rate
+;
+MSG_AUDIO_SAMPLE_RATE_11025HZ
+11025 Hz
+; 11025 Hz
+;
+MSG_AUDIO_SAMPLE_RATE_22050HZ
+22050 Hz
+; 22050 Hz
+;
+MSG_AUDIO_SAMPLE_RATE_44100HZ
+44100 Hz
+; 44100 Hz
+;
+MSG_AUDIO_SAMPLE_RATE_48000HZ
+48000 Hz
+; 48000 Hz
+;
+MSG_ENABLE_POINTER_GAD
+Attiva Puntatore
+; Enable Pointer
+;
+MSG_POINTER_FILE_GAD
+Puntatore Grafico
+; Pointer Graphic
+;
+MSG_BUSY_POINTER_FILE_GAD
+Puntatore Occupato
+; Busy Pointer Graphic
+;
+MSG_BILINEAR_FILTER_GAD
+Bilinear Filtering
+; Bilinear Filtering
+;
+MSG_RECORD_GAD
+Registra
+; Record
+;
+MSG_STOP_GAD
+Stop
+; Stop
+;
