@@ -57,8 +57,8 @@ int cli_main(struct LocaleInfo *loc) {
 	}
 
 	startup_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
-		ASOMSG_Name,   PROGNAME " startup message",
-		ASOMSG_Length, sizeof(*startup_msg),
+		ASOMSG_Name, PROGNAME " startup message",
+		ASOMSG_Size, sizeof(*startup_msg),
 		TAG_END);
 	if (startup_msg == NULL) {
 		IDOS->PrintFault(ERROR_NO_FREE_STORE, PROGNAME);
@@ -102,7 +102,7 @@ int cli_main(struct LocaleInfo *loc) {
 	death_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
 		ASOMSG_Name,      PROGNAME " death message",
 		ASOMSG_ReplyPort, mp,
-		ASOMSG_Length,    sizeof(*death_msg),
+		ASOMSG_Size,      sizeof(*death_msg),
 		TAG_END);
 	if (death_msg == NULL) {
 		IDOS->PrintFault(ERROR_NO_FREE_STORE, PROGNAME);

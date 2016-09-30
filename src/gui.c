@@ -992,8 +992,8 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 		goto out;
 
 	gd->startup_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
-		ASOMSG_Name,   PROGNAME " startup message",
-		ASOMSG_Length, sizeof(*gd->startup_msg),
+		ASOMSG_Name, PROGNAME " startup message",
+		ASOMSG_Size, sizeof(*gd->startup_msg),
 		TAG_END);
 	if (gd->startup_msg == NULL)
 		goto out;
@@ -1001,7 +1001,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	gd->death_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
 		ASOMSG_Name,      PROGNAME " death message",
 		ASOMSG_ReplyPort, gd->srec_mp,
-		ASOMSG_Length,    sizeof(*gd->death_msg),
+		ASOMSG_Size,      sizeof(*gd->death_msg),
 		TAG_END);
 	if (gd->death_msg == NULL)
 		goto out;
