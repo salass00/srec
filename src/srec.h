@@ -30,8 +30,7 @@
 #define SREC_PRIORITY  (0)
 #define SREC_STACKSIZE (64UL << 10)
 
-#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (0UL)
-//#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (1UL << 20)
+#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (256UL << 10)
 
 enum {
 	CONTAINER_MKV = 1
@@ -67,7 +66,6 @@ enum {
 
 struct SRecArgs {
 	struct Message message;
-	TEXT           output_file[1024];
 	uint32         container;
 	uint32         video_codec;
 	uint32         width, height;
@@ -79,6 +77,7 @@ struct SRecArgs {
 	BOOL           no_filter;
 	BOOL           no_pointer;
 	BOOL           no_altivec;
+	TEXT           output_file[1024];
 	TEXT           pointer_file[1024];
 	TEXT           busy_pointer_file[1024];
 };
