@@ -321,7 +321,7 @@ static BOOL gui_register_broker(struct srec_gui *gd) {
 		IDOS->StrToLong(tt, &priority);
 
 	nb.nb_Version = NB_VERSION;
-	nb.nb_Name    = "SRec";
+	nb.nb_Name    = PROGNAME;
 	nb.nb_Title   = VERS;
 	nb.nb_Descr   = GetString(gd->locale_info, MSG_CX_DESCR);
 	nb.nb_Unique  = NBU_UNIQUE | NBU_NOTIFY;
@@ -368,7 +368,7 @@ static void gui_unregister_broker(struct srec_gui *gd) {
 static BOOL gui_register_application(struct srec_gui *gd) {
 	struct ApplicationIFace *IApplication = gd->iapplication;
 
-	gd->app_id = IApplication->RegisterApplication("SRec",
+	gd->app_id = IApplication->RegisterApplication(PROGNAME,
 		REGAPP_URLIdentifier,     "a500.org",
 		REGAPP_UniqueApplication, TRUE,
 		REGAPP_Hidden,            gd->hidden,
@@ -557,7 +557,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	BOOL error;
 
 	IUtility->SNPrintf(gd->window_title, sizeof(gd->window_title), GetString(loc, MSG_WINDOW_TITLE),
-		"SRec", gd->popkey ? gd->popkey : GetString(loc, MSG_KEY_NONE));
+		PROGNAME, gd->popkey ? gd->popkey : GetString(loc, MSG_KEY_NONE));
 
 	result = gui_create_menu(gd,
 		NM_Menu, GetString(loc, MSG_PROJECT_MENU), MA_ID, MID_PROJECT_MENU,
@@ -866,7 +866,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		WINDOW_MenuStrip,     gd->obj[OID_MENUSTRIP],
 		WINDOW_AppPort,       gd->wb_mp,
 		WINDOW_IconifyGadget, TRUE,
-		WINDOW_IconTitle,     "SRec",
+		WINDOW_IconTitle,     PROGNAME,
 		WINDOW_Icon,          gd->icon,
 		WINDOW_IconNoDispose, TRUE,
 		WINDOW_Layout,        gd->obj[OID_ROOT_LAYOUT],
@@ -932,13 +932,13 @@ static void gui_about_requester(struct srec_gui *gd) {
 	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
 
 	IUtility->SNPrintf(requester_title, sizeof(requester_title),
-		GetString(loc, MSG_ABOUT_WINDOW_TITLE), "SRec");
+		GetString(loc, MSG_ABOUT_WINDOW_TITLE), PROGNAME);
 
 	IUtility->SNPrintf(body_text, sizeof(body_text),
-		"SRec version %lu.%lu (%s)\n\n"
+		"%s version %lu.%lu (%s)\n\n"
 		"Copyright (C) 2016 Fredrik Wikstrom <fredrik@a500.org>\n\n"
 		"%s",
-		VERSION, REVISION, DATE, gpl_license);
+		PROGNAME, VERSION, REVISION, DATE, gpl_license);
 
 	requester = IIntuition->NewObject(gd->requesterclass, NULL,
 		REQ_Image,      REQIMAGE_INFO,
@@ -992,14 +992,14 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 		goto out;
 
 	gd->startup_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
-		ASOMSG_Name,   "SRec startup message",
+		ASOMSG_Name,   PROGNAME " startup message",
 		ASOMSG_Length, sizeof(*gd->startup_msg),
 		TAG_END);
 	if (gd->startup_msg == NULL)
 		goto out;
 
 	gd->death_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
-		ASOMSG_Name,      "SRec death message",
+		ASOMSG_Name,      PROGNAME " death message",
 		ASOMSG_ReplyPort, gd->srec_mp,
 		ASOMSG_Length,    sizeof(*gd->death_msg),
 		TAG_END);

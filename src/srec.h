@@ -24,6 +24,14 @@
 #include <interfaces/graphics.h>
 #include <interfaces/icon.h>
 
+#define PROGNAME "SRec"
+
+#define SREC_PROCNAME  "SRec: Screen Recorder"
+#define SREC_PRIORITY  (0)
+#define SREC_STACKSIZE (64UL << 10)
+
+#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (64UL << 10)
+
 enum {
 	CONTAINER_MKV = 1
 };
@@ -55,12 +63,6 @@ enum {
 
 #define DEFAULT_POINTER_FILE      "ENV:Sys/def_pointer.info"
 #define DEFAULT_BUSY_POINTER_FILE "ENV:Sys/def_busypointer.info"
-
-#define SREC_PROCNAME  "SRec: Screen Recorder"
-#define SREC_PRIORITY  (0)
-#define SREC_STACKSIZE (64UL << 10)
-
-#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (64UL << 10)
 
 struct SRecArgs {
 	struct Message message;

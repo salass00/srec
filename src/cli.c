@@ -52,16 +52,16 @@ int cli_main(struct LocaleInfo *loc) {
 
 	rdargs = IDOS->ReadArgs(TEMPLATE, args, NULL);
 	if (rdargs == NULL) {
-		IDOS->PrintFault(IDOS->IoErr(), "SRec");
+		IDOS->PrintFault(IDOS->IoErr(), PROGNAME);
 		goto out;
 	}
 
 	startup_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
-		ASOMSG_Name,   "SRec startup message",
+		ASOMSG_Name,   PROGNAME " startup message",
 		ASOMSG_Length, sizeof(*startup_msg),
 		TAG_END);
 	if (startup_msg == NULL) {
-		IDOS->PrintFault(ERROR_NO_FREE_STORE, "SRec");
+		IDOS->PrintFault(ERROR_NO_FREE_STORE, PROGNAME);
 		goto out;
 	}
 
@@ -95,17 +95,17 @@ int cli_main(struct LocaleInfo *loc) {
 
 	mp = IExec->AllocSysObject(ASOT_PORT, NULL);
 	if (mp == NULL) {
-		IDOS->PrintFault(ERROR_NO_FREE_STORE, "SRec");
+		IDOS->PrintFault(ERROR_NO_FREE_STORE, PROGNAME);
 		goto out;
 	}
 
 	death_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
-		ASOMSG_Name,      "SRec death message",
+		ASOMSG_Name,      PROGNAME " death message",
 		ASOMSG_ReplyPort, mp,
 		ASOMSG_Length,    sizeof(*death_msg),
 		TAG_END);
 	if (death_msg == NULL) {
-		IDOS->PrintFault(ERROR_NO_FREE_STORE, "SRec");
+		IDOS->PrintFault(ERROR_NO_FREE_STORE, PROGNAME);
 		goto out;
 	}
 
@@ -119,7 +119,7 @@ int cli_main(struct LocaleInfo *loc) {
 		NP_NotifyOnDeathMessage, death_msg,
 		TAG_END);
 	if (srec_proc == NULL) {
-		IDOS->PrintFault(IDOS->IoErr(), "SRec");
+		IDOS->PrintFault(IDOS->IoErr(), PROGNAME);
 		goto out;
 	}
 
