@@ -42,7 +42,7 @@ src/zmbv.o: src/srec.h src/zmbv.h src/interfaces.h
 src/zmbv_altivec.o: src/zmbv.h
 src/zmbv_altivec.o: CFLAGS += -maltivec
 
-include/locale_strings.h: SRec.cd
+include/locale_strings.h: catalogs/SRec.cd
 ifeq ($(SYSTEM),AmigaOS)
 	CatComp CFILE $@ NOCODE $<
 else
