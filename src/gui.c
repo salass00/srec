@@ -576,21 +576,18 @@ static void gui_read_prefs(struct srec_gui *gd) {
 
 	gd->output_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "OutputFile", "");
 
-	gd->pointer_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "PointerFile", DEFAULT_POINTER_FILE);
-	gd->busy_pointer_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "BusyPointerFile", DEFAULT_BUSY_POINTER_FILE);
-
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "ContainerFormat", NULL);
 	gd->container = gui_map_cfg_str_to_cfg_val(gd, cfg_str, container_map, ARRAY_LEN(container_map), DEFAULT_CONTAINER);
 
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "VideoCodec", NULL);
 	gd->video_codec = gui_map_cfg_str_to_cfg_val(gd, cfg_str, video_codec_map, ARRAY_LEN(video_codec_map), DEFAULT_VIDEO_CODEC);
 
+	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AspectRatio", NULL);
+	gd->aspect_ratio = gui_map_cfg_str_to_cfg_val(gd, cfg_str, aspect_ratio_map, ARRAY_LEN(aspect_ratio_map), DEFAULT_ASPECT_RATIO);
+
 	gd->width  = MAX(16, IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoWidth", DEFAULT_WIDTH));
 	gd->height = MAX(16, IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoHeight", DEFAULT_WIDTH));
 	gd->fps    = MAX( 1, IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoFPS", DEFAULT_WIDTH));
-
-	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AspectRatio", NULL);
-	gd->aspect_ratio = gui_map_cfg_str_to_cfg_val(gd, cfg_str, aspect_ratio_map, ARRAY_LEN(aspect_ratio_map), DEFAULT_ASPECT_RATIO);
 
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioCodec", NULL);
 	gd->audio_codec = gui_map_cfg_str_to_cfg_val(gd, cfg_str, audio_codec_map, ARRAY_LEN(audio_codec_map), DEFAULT_AUDIO_CODEC);
@@ -605,6 +602,10 @@ static void gui_read_prefs(struct srec_gui *gd) {
 	gd->sample_rate = gui_map_cfg_str_to_cfg_val(gd, cfg_str, sample_rate_map, ARRAY_LEN(sample_rate_map), DEFAULT_SAMPLE_RATE);
 
 	gd->enable_pointer = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnablePointer", TRUE);
+
+	gd->pointer_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "PointerFile", DEFAULT_POINTER_FILE);
+	gd->busy_pointer_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "BusyPointerFile", DEFAULT_BUSY_POINTER_FILE);
+
 	gd->enable_filter  = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "BilinearFilter", TRUE);
 	gd->enable_altivec = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnableAltivec", TRUE);
 }
@@ -788,6 +789,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,            OID_POINTER_FILE,
 		GA_TabCycle,      TRUE,
 		GA_RelVerify,     TRUE,
+		GA_Disabled,      !gd->enable_pointer,
 		GETFILE_Pattern,  "#?.info",
 		GETFILE_FullFile, gd->pointer_file,
 		TAG_END);
@@ -803,6 +805,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,            OID_BUSY_POINTER_FILE,
 		GA_TabCycle,      TRUE,
 		GA_RelVerify,     TRUE,
+		GA_Disabled,      !gd->enable_pointer,
 		GETFILE_Pattern,  "#?.info",
 		GETFILE_FullFile, gd->busy_pointer_file,
 		TAG_END);
