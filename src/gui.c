@@ -736,7 +736,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_AUDIO_SAMPLE_SIZE] = IIntuition->NewObject(gd->chooserclass, NULL,
 		GA_ID,            OID_AUDIO_SAMPLE_SIZE,
 		GA_RelVerify,     TRUE,
-		GA_Disabled,      TRUE,
+		GA_Disabled,      (gd->audio_codec == AUDIO_CODEC_NONE),
 		CHOOSER_Labels,   gd->sample_size_list,
 		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, gd->sample_size, sample_size_map, ARRAY_LEN(sample_size_map)),
 		TAG_END);
@@ -744,7 +744,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_AUDIO_CHANNELS] = IIntuition->NewObject(gd->chooserclass, NULL,
 		GA_ID,            OID_AUDIO_CHANNELS,
 		GA_RelVerify,     TRUE,
-		GA_Disabled,      TRUE,
+		GA_Disabled,      (gd->audio_codec == AUDIO_CODEC_NONE),
 		CHOOSER_Labels,   gd->channels_list,
 		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, gd->channels, channels_map, ARRAY_LEN(channels_map)),
 		TAG_END);
@@ -752,7 +752,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_AUDIO_SAMPLE_RATE] = IIntuition->NewObject(gd->chooserclass, NULL,
 		GA_ID,            OID_AUDIO_SAMPLE_RATE,
 		GA_RelVerify,     TRUE,
-		GA_Disabled,      TRUE,
+		GA_Disabled,      (gd->audio_codec == AUDIO_CODEC_NONE),
 		CHOOSER_Labels,   gd->sample_rate_list,
 		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, gd->sample_rate, sample_rate_map, ARRAY_LEN(sample_rate_map)),
 		TAG_END);
@@ -1152,6 +1152,42 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 					case WMHI_GADGETUP:
 						id = result & WMHI_GADGETMASK;
 						switch (id) {
+							case OID_CONTAINER_FORMAT:
+								gd->container = container_map[code].cfg_val;
+								break;
+							case OID_VIDEO_CODEC:
+								gd->video_codec = video_codec_map[code].cfg_val;
+								break;
+							case OID_ASPECT_RATIO:
+								gd->aspect_ratio = aspect_ratio_map[code].cfg_val;
+								break;
+							case OID_VIDEO_WIDTH:
+								gd->width = code;
+								break;
+							case OID_VIDEO_HEIGHT:
+								gd->height = code;
+								break;
+							case OID_VIDEO_FPS:
+								gd->fps = code;
+								break;
+							case OID_AUDIO_CODEC:
+								gd->audio_codec = audio_codec_map[code].cfg_val;
+								break;
+							case OID_AUDIO_SAMPLE_SIZE:
+								gd->sample_size = sample_size_map[code].cfg_val;
+								break;
+							case OID_AUDIO_CHANNELS:
+								gd->channels = channels_map[code].cfg_val;
+								break;
+							case OID_AUDIO_SAMPLE_RATE:
+								gd->sample_rate = sample_rate_map[code].cfg_val;
+								break;
+							case OID_ENABLE_POINTER:
+								gd->enable_pointer = code ? TRUE : FALSE;
+								break;
+							case OID_BILINEAR_FILTER:
+								gd->enable_filter = code ? TRUE : FALSE;
+								break;
 							case OID_RECORD:
 								//FIXME: Start recording
 								break;
