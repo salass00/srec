@@ -366,6 +366,9 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		uint32 rows_left = state->height;
 		uint32 y         = 0;
 
+		if (max_rows == 0)
+			max_rows = 1;
+
 		while (rows_left > max_rows) {
 			IGraphics->BltBitMapTags(
 				BLITA_Source, state->srec_bm,
