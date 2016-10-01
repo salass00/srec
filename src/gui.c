@@ -585,7 +585,7 @@ static const struct chooser_map aspect_ratio_map[] = {
 };
 
 static const struct chooser_map audio_codec_map[] = {
-	{ AUDIO_CODEC_NONE, NULL, MSG_AUDIO_CODEC_NONE }
+	{ AUDIO_CODEC_NONE, "", MSG_AUDIO_CODEC_NONE }
 };
 
 static const struct chooser_map sample_size_map[] = {
