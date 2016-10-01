@@ -1145,6 +1145,19 @@ static void gui_about_requester(struct srec_gui *gd) {
 	}
 }
 
+static void gui_getfile_requester(struct srec_gui *gd, uint32 id) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct Window *window = NULL;
+
+	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
+	if (window == NULL) {
+		/* Do nothing */
+		return;
+	}
+
+	IIntuition->IDoMethod(gd->obj[id], GFILE_REQUEST, window);
+}
+
 static void gui_start_recording(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct SRecArgs *sm = gd->startup_msg;
@@ -1375,6 +1388,9 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 					case WMHI_GADGETUP:
 						id = result & WMHI_GADGETMASK;
 						switch (id) {
+							case OID_OUTPUT_FILE:
+								gui_getfile_requester(gd, OID_OUTPUT_FILE);
+								break;
 							case OID_CONTAINER_FORMAT:
 								gd->container = container_map[code].cfg_val;
 								break;
@@ -1412,6 +1428,12 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 							case OID_ENABLE_POINTER:
 								gd->enable_pointer = code ? TRUE : FALSE;
 								gui_update_pointer_gadgets(gd);
+								break;
+							case OID_POINTER_FILE:
+								gui_getfile_requester(gd, OID_POINTER_FILE);
+								break;
+							case OID_BUSY_POINTER_FILE:
+								gui_getfile_requester(gd, OID_BUSY_POINTER_FILE);
 								break;
 							case OID_BILINEAR_FILTER:
 								gd->enable_filter = code ? TRUE : FALSE;
