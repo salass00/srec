@@ -41,10 +41,12 @@
 #include <interfaces/layout.h>
 #include <interfaces/chooser.h>
 #include <sys/param.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
 #include "SRec_rev.h"
 
+#define ABS(x) ((x) < 0 ? -(x) : (x))
 #define CLAMP(val,min,max) MAX(MIN(val, max), min)
 
 #define ARRAY_LEN(array) (sizeof(array)/sizeof(array[0]))
@@ -516,6 +518,29 @@ static uint32 gui_map_cfg_str_to_cfg_val(const struct srec_gui *gd, CONST_STRPTR
 	return def;
 }
 
+static uint32 gui_map_find_closest_cfg_val(const struct srec_gui *gd, uint32 val,
+	const struct chooser_map *map, uint32 len)
+{
+	uint32 closest_diff = UINT32_MAX;
+	uint32 closest_val  = map[0].cfg_val;
+	uint32 diff;
+	uint32 i;
+
+	for (i = 0; i != len; i++) {
+		diff = ABS((int32)map[i].cfg_val - (int32)val);
+
+		if (diff == 0)
+			return val;
+
+		if (diff < closest_diff) {
+			closest_diff = diff;
+			closest_val  = map[i].cfg_val;
+		}
+	}
+
+	return closest_val;
+}
+
 static uint32 gui_map_cfg_val_to_chooser_index(const struct srec_gui *gd, uint32 val,
 	const struct chooser_map *map, uint32 len)
 {
@@ -563,9 +588,9 @@ static const struct chooser_map audio_codec_map[] = {
 };
 
 static const struct chooser_map sample_size_map[] = {
-	{  8,  "8BIT", MSG_AUDIO_SAMPLE_SIZE_8BIT  },
-	{ 16, "16BIT", MSG_AUDIO_SAMPLE_SIZE_16BIT },
-	{ 32, "32BIT", MSG_AUDIO_SAMPLE_SIZE_32BIT }
+	{  8, NULL, MSG_AUDIO_SAMPLE_SIZE_8BIT  },
+	{ 16, NULL, MSG_AUDIO_SAMPLE_SIZE_16BIT },
+	{ 32, NULL, MSG_AUDIO_SAMPLE_SIZE_32BIT }
 };
 
 static const struct chooser_map channels_map[] = {
@@ -574,15 +599,16 @@ static const struct chooser_map channels_map[] = {
 };
 
 static const struct chooser_map sample_rate_map[] = {
-	{ 11025, "11025HZ", MSG_AUDIO_SAMPLE_RATE_11025HZ },
-	{ 22050, "22050HZ", MSG_AUDIO_SAMPLE_RATE_22050HZ },
-	{ 44100, "44100HZ", MSG_AUDIO_SAMPLE_RATE_44100HZ },
-	{ 48000, "48000HZ", MSG_AUDIO_SAMPLE_RATE_48000HZ }
+	{ 11025, NULL, MSG_AUDIO_SAMPLE_RATE_11025HZ },
+	{ 22050, NULL, MSG_AUDIO_SAMPLE_RATE_22050HZ },
+	{ 44100, NULL, MSG_AUDIO_SAMPLE_RATE_44100HZ },
+	{ 48000, NULL, MSG_AUDIO_SAMPLE_RATE_48000HZ }
 };
 
 static void gui_read_prefs(struct srec_gui *gd) {
 	struct PrefsObjectsIFace *IPrefsObjects = gd->iprefsobjects;
 	CONST_STRPTR cfg_str;
+	uint32 cfg_val;
 
 	gd->output_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "OutputFile", "");
 
@@ -602,14 +628,14 @@ static void gui_read_prefs(struct srec_gui *gd) {
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioCodec", NULL);
 	gd->audio_codec = gui_map_cfg_str_to_cfg_val(gd, cfg_str, audio_codec_map, ARRAY_LEN(audio_codec_map), DEFAULT_AUDIO_CODEC);
 
-	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioSampleSize", NULL);
-	gd->sample_size = gui_map_cfg_str_to_cfg_val(gd, cfg_str, sample_size_map, ARRAY_LEN(sample_size_map), DEFAULT_SAMPLE_SIZE);
+	cfg_val = IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioSampleSize", DEFAULT_SAMPLE_SIZE);
+	gd->sample_size = gui_map_find_closest_cfg_val(gd, cfg_val, sample_size_map, ARRAY_LEN(sample_size_map));
 
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioChannels", NULL);
 	gd->channels = gui_map_cfg_str_to_cfg_val(gd, cfg_str, channels_map, ARRAY_LEN(channels_map), DEFAULT_CHANNELS);
 
-	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioSampleRate", NULL);
-	gd->sample_rate = gui_map_cfg_str_to_cfg_val(gd, cfg_str, sample_rate_map, ARRAY_LEN(sample_rate_map), DEFAULT_SAMPLE_RATE);
+	cfg_val = IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "AudioSampleRate", DEFAULT_SAMPLE_RATE);
+	gd->sample_rate = gui_map_find_closest_cfg_val(gd, cfg_val, sample_rate_map, ARRAY_LEN(sample_rate_map));
 
 	gd->enable_pointer = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnablePointer", TRUE);
 
