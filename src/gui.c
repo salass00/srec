@@ -28,6 +28,7 @@
 #include <gadgets/getfile.h>
 #include <gadgets/clicktab.h>
 #include <gadgets/chooser.h>
+#include <gadgets/string.h>
 #include <gadgets/integer.h>
 #include <gadgets/checkbox.h>
 #include <images/label.h>
@@ -864,21 +865,23 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		TAG_END);
 
 	gd->obj[OID_VIDEO_WIDTH] = IIntuition->NewObject(gd->integerclass, NULL,
-		GA_ID,           OID_VIDEO_WIDTH,
-		GA_TabCycle,     TRUE,
-		GA_RelVerify,    TRUE,
-		INTEGER_Minimum, MIN_WIDTH,
-		INTEGER_Maximum, MAX_WIDTH,
-		INTEGER_Number,  gd->width,
+		GA_ID,                    OID_VIDEO_WIDTH,
+		GA_TabCycle,              TRUE,
+		GA_RelVerify,             TRUE,
+		STRINGA_RelVerifySpecial, TRUE,
+		INTEGER_Minimum,          MIN_WIDTH,
+		INTEGER_Maximum,          MAX_WIDTH,
+		INTEGER_Number,           gd->width,
 		TAG_END);
 
 	gd->obj[OID_VIDEO_HEIGHT] = IIntuition->NewObject(gd->integerclass, NULL,
-		GA_ID,           OID_VIDEO_HEIGHT,
-		GA_TabCycle,     TRUE,
-		GA_RelVerify,    TRUE,
-		INTEGER_Minimum, MIN_HEIGHT,
-		INTEGER_Maximum, MAX_HEIGHT,
-		INTEGER_Number,  gd->height,
+		GA_ID,                    OID_VIDEO_HEIGHT,
+		GA_TabCycle,              TRUE,
+		GA_RelVerify,             TRUE,
+		STRINGA_RelVerifySpecial, TRUE,
+		INTEGER_Minimum,          MIN_HEIGHT,
+		INTEGER_Maximum,          MAX_HEIGHT,
+		INTEGER_Number,           gd->height,
 		TAG_END);
 
 	gd->obj[OID_VIDEO_WIDTH_HEIGHT_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -890,12 +893,13 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		TAG_END);
 
 	gd->obj[OID_VIDEO_FPS] = IIntuition->NewObject(gd->integerclass, NULL,
-		GA_ID,           OID_VIDEO_FPS,
-		GA_TabCycle,     TRUE,
-		GA_RelVerify,    TRUE,
-		INTEGER_Minimum, MIN_FPS,
-		INTEGER_Maximum, MAX_FPS,
-		INTEGER_Number,  gd->fps,
+		GA_ID,                    OID_VIDEO_FPS,
+		GA_TabCycle,              TRUE,
+		GA_RelVerify,             TRUE,
+		STRINGA_RelVerifySpecial, TRUE,
+		INTEGER_Minimum,          MIN_FPS,
+		INTEGER_Maximum,          MAX_FPS,
+		INTEGER_Number,           gd->fps,
 		TAG_END);
 
 	gd->obj[OID_VIDEO_FPS_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
