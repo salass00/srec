@@ -8,7 +8,7 @@ VERSION := 2
 
 SYSTEM := $(shell uname -s)
 
-CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude
+CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude -DENABLE_AVI
 LDFLAGS := -static
 LIBS    := 
 
@@ -28,7 +28,7 @@ $(TARGET): $(OBJS) $(AVILIB) $(LIBMKV)
 	$(CC) $(LDFLAGS) -o $@.debug $^ $(LIBS)
 	$(STRIP) -R.comment -o $@ $@.debug
 
-src/main.o: src/locale.h include/locale_strings.h src/cli.h src/gui.h SRec_rev.h
+src/main.o: src/interfaces.h src/locale.h include/locale_strings.h src/cli.h src/gui.h SRec_rev.h
 
 src/locale.o: src/locale.h include/locale_strings.h
 
