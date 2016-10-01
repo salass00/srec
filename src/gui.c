@@ -664,14 +664,16 @@ static void gui_enforce_aspect_ratio(struct srec_gui *gd, BOOL change_height) {
 	uint32 height = gd->height;
 	uint32 wb_w, wb_h;
 
+	if (gd->aspect_ratio == ASPECT_RATIO_CUSTOM) {
+		/* Do nothing */
+		return;
+	}
+
 	if (change_height) {
 		switch (gd->aspect_ratio) {
 			case ASPECT_RATIO_LIKE_WB:
 				if (gui_wb_dimensions(gd, &wb_w, &wb_h))
 					height = width * wb_h / wb_w;
-				break;
-			case ASPECT_RATIO_CUSTOM:
-				/* Do nothing */
 				break;
 			case ASPECT_RATIO_4_3:
 				height = width * 3 / 4;
@@ -695,9 +697,6 @@ static void gui_enforce_aspect_ratio(struct srec_gui *gd, BOOL change_height) {
 			case ASPECT_RATIO_LIKE_WB:
 				if (gui_wb_dimensions(gd, &wb_w, &wb_h))
 					width = height * wb_w / wb_h;
-				break;
-			case ASPECT_RATIO_CUSTOM:
-				/* Do nothing */
 				break;
 			case ASPECT_RATIO_4_3:
 				width = height * 4 / 3;
