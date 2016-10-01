@@ -612,6 +612,24 @@ static void gui_read_prefs(struct srec_gui *gd) {
 	gd->enable_altivec = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnableAltivec", TRUE);
 }
 
+void gui_update_record_stop_buttons(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct Window *window;
+	BOOL is_recording;
+
+	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
+
+	is_recording = gui_is_recording(gd);
+
+	IIntuition->SetGadgetAttrs((struct Gadget *)gd->obj[OID_RECORD], window, NULL,
+		GA_Disabled, is_recording,
+		TAG_END);
+
+	IIntuition->SetGadgetAttrs((struct Gadget *)gd->obj[OID_RECORD], window, NULL,
+		GA_Disabled, !is_recording,
+		TAG_END);
+}
+
 static BOOL gui_create_window(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct LocaleInfo *loc = gd->locale_info;
@@ -868,14 +886,12 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_RECORD] = IIntuition->NewObject(gd->buttonclass, NULL,
 		GA_ID,        OID_RECORD,
 		GA_RelVerify, TRUE,
-		GA_Disabled,  gui_is_recording(gd),
 		GA_Text,      GetString(loc, MSG_RECORD_GAD),
 		TAG_END);
 
 	gd->obj[OID_STOP] = IIntuition->NewObject(gd->buttonclass, NULL,
 		GA_ID,        OID_STOP,
 		GA_RelVerify, TRUE,
-		GA_Disabled,  !gui_is_recording(gd),
 		GA_Text,      GetString(loc, MSG_STOP_GAD),
 		TAG_END);
 
@@ -916,6 +932,8 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 
 	if (gd->obj[OID_TAB_PAGES] == NULL || gd->obj[OID_WINDOW] == NULL)
 		return FALSE;
+
+	gui_update_record_stop_buttons(gd);
 
 	return TRUE;
 }
@@ -994,6 +1012,65 @@ static void gui_about_requester(struct srec_gui *gd) {
 		IIntuition->IDoMethod(requester, RM_OPENREQ, NULL, window, NULL);
 
 		IIntuition->DisposeObject(requester);
+	}
+}
+
+void gui_start_recording(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct SRecArgs *sm = gd->startup_msg;
+	CONST_STRPTR output_file;
+	CONST_STRPTR pointer_file;
+	CONST_STRPTR busy_pointer_file;
+	struct Process *proc;
+
+	if (gui_is_recording(gd))
+		return;
+
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_OUTPUT_FILE], (uint32 *)&output_file);
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_POINTER_FILE], (uint32 *)&pointer_file);
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_BUSY_POINTER_FILE], (uint32 *)&busy_pointer_file);
+
+	IUtility->Strlcpy(sm->output_file, output_file, sizeof(sm->output_file));
+
+	IUtility->Strlcpy(sm->pointer_file, pointer_file, sizeof(sm->pointer_file));
+	IUtility->Strlcpy(sm->busy_pointer_file, busy_pointer_file, sizeof(sm->busy_pointer_file));
+
+	sm->container   = gd->container;
+	sm->video_codec = gd->video_codec;
+	sm->width       = gd->width;
+	sm->height      = gd->height;
+	sm->fps         = gd->fps;
+	sm->audio_codec = gd->audio_codec;
+	sm->sample_size = gd->sample_size;
+	sm->channels    = gd->channels;
+	sm->sample_rate = gd->sample_rate;
+	sm->no_filter   = !gd->enable_filter;
+	sm->no_pointer  = !gd->enable_pointer;
+	sm->no_altivec  = !gd->enable_altivec;
+
+	proc = IDOS->CreateNewProcTags(
+		NP_Name,                 SREC_PROCNAME,
+		NP_Priority,             SREC_PRIORITY,
+		NP_Child,                TRUE,
+		NP_Entry,                srec_entry,
+		NP_StackSize,            SREC_STACKSIZE,
+		NP_LockStack,            TRUE,
+		NP_NotifyOnDeathMessage, gd->death_msg,
+		TAG_END);
+	if (proc == NULL) {
+		//FIXME: Add error requester
+		return;
+	}
+
+	gd->srec_pid = IDOS->GetPID(proc, GPID_PROCESS);
+	IExec->PutMsg(&proc->pr_MsgPort, &sm->message);
+
+	gui_update_record_stop_buttons(gd);
+}
+
+void gui_stop_recording(struct srec_gui *gd) {
+	if (gui_is_recording(gd)) {
+		safe_signal_proc(gd->srec_pid, SIGBREAKF_CTRL_C);
 	}
 }
 
@@ -1087,10 +1164,10 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								gui_show_window(gd);
 								break;
 							case EVT_RECORDKEY:
-								//FIXME: Start recording
+								gui_start_recording(gd);
 								break;
 							case EVT_STOPKEY:
-								//FIXME: Stop recording
+								gui_stop_recording(gd);
 								break;
 						}
 						break;
@@ -1142,7 +1219,18 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 		}
 
 		if (signals & srec_sig) {
-			//FIXME: Add code here
+			struct DeathMessage *dm;
+
+			dm = (struct DeathMessage *)IExec->GetMsg(gd->srec_mp);
+			if (dm != NULL) {
+				gd->srec_pid = 0;
+
+				gui_update_record_stop_buttons(gd);
+
+				if (dm->dm_ReturnCode != RETURN_OK) {
+					//FIXME: Add error requester
+				}
+			}
 		}
 
 		if (signals & window_sigs) {
@@ -1194,10 +1282,10 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								gd->enable_filter = code ? TRUE : FALSE;
 								break;
 							case OID_RECORD:
-								//FIXME: Start recording
+								gui_start_recording(gd);
 								break;
 							case OID_STOP:
-								//FIXME: Stop recording
+								gui_stop_recording(gd);
 								break;
 						}
 						break;
@@ -1245,7 +1333,18 @@ out:
 
 	if (gd != NULL) {
 		if (gui_is_recording(gd)) {
-			//FIXME: Stop recording
+			struct DeathMessage *dm;
+
+			gui_stop_recording(gd);
+
+			IExec->WaitPort(gd->srec_mp);
+			dm = (struct DeathMessage *)IExec->GetMsg(gd->srec_mp);
+
+			gd->srec_pid = 0;
+
+			if (dm->dm_ReturnCode != RETURN_OK) {
+				//FIXME: Add error requester
+			}
 		}
 
 		gui_free_window(gd);

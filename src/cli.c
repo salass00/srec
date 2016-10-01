@@ -42,7 +42,7 @@ int cli_main(struct LocaleInfo *loc) {
 	struct RDArgs *rdargs;
 	struct SRecArgs *startup_msg = NULL;
 	struct MsgPort *mp = NULL;
-	struct DeathMessage *death_msg = NULL;
+	struct DeathMessage *death_msg = NULL, *dm;
 	struct Process *srec_proc;
 	uint32 srec_pid;
 	uint32 signals;
@@ -133,15 +133,17 @@ int cli_main(struct LocaleInfo *loc) {
 		safe_signal_proc(srec_pid, SIGBREAKF_CTRL_C);
 
 	IExec->WaitPort(mp);
-	death_msg = (struct DeathMessage *)IExec->GetMsg(mp);
+	dm = (struct DeathMessage *)IExec->GetMsg(mp);
 
-	if (death_msg->dm_ReturnCode != RETURN_OK) {
+	srec_pid = 0;
+
+	if (dm->dm_ReturnCode != RETURN_OK) {
 		BPTR ErrorOut = IDOS->ErrorOutput();
 		if (ErrorOut == ZERO)
 			ErrorOut = IDOS->Output();
 
 		IDOS->FPrintf(ErrorOut, "Screen Recorder process failed! (rc: %ld IoErr(): %ld)\n",
-			death_msg->dm_ReturnCode, death_msg->dm_Result2);
+			dm->dm_ReturnCode, dm->dm_Result2);
 		goto out;
 	}
 
