@@ -38,6 +38,7 @@
 #include <interfaces/icon.h>
 #include <interfaces/commodities.h>
 #include <interfaces/application.h>
+#include <interfaces/layout.h>
 #include <interfaces/chooser.h>
 #include <sys/param.h>
 #include <string.h>
@@ -122,6 +123,7 @@ struct srec_gui {
 	struct CommoditiesIFace  *icommodities;
 	struct ApplicationIFace  *iapplication;
 	struct PrefsObjectsIFace *iprefsobjects;
+	struct LayoutIFace       *ilayout;
 	struct ChooserIFace      *ichooser;
 	struct ClassLibrary      *requesterbase;
 	Class                    *requesterclass;
@@ -237,6 +239,9 @@ static BOOL gui_open_classes(struct srec_gui *gd) {
 	error |= !(gd->buttonbase = IIntuition->OpenClass("gadgets/button.gadget", 53, &gd->buttonclass));
 	error |= !(gd->labelbase = IIntuition->OpenClass("images/label.image", 53, &gd->labelclass));
 
+	if (gd->layoutbase != NULL)
+		error |= !(gd->ilayout = (struct LayoutIFace *)IExec->GetInterface(&gd->layoutbase->cl_Lib, "main", 1, NULL));
+
 	if (gd->chooserbase != NULL)
 		error |= !(gd->ichooser = (struct ChooserIFace *)IExec->GetInterface(&gd->chooserbase->cl_Lib, "main", 1, NULL));
 
@@ -248,6 +253,9 @@ static void gui_close_classes(struct srec_gui *gd) {
 
 	if (gd->ichooser != NULL)
 		IExec->DropInterface((struct Interface *)gd->ichooser);
+
+	if (gd->ilayout != NULL)
+		IExec->DropInterface((struct Interface *)gd->ilayout);
 
 	if (gd->labelbase != NULL)
 		IIntuition->CloseClass(gd->labelbase);
@@ -541,7 +549,7 @@ enum {
 
 #define DEFAULT_ASPECT_RATIO ASPECT_RATIO_LIKE_WB
 
-const struct chooser_map aspect_ratio_map[] = {
+static const struct chooser_map aspect_ratio_map[] = {
 	{ ASPECT_RATIO_LIKE_WB, "LIKEWB", MSG_ASPECT_RATIO_LIKE_WB },
 	{ ASPECT_RATIO_CUSTOM,  "CUSTOM", MSG_ASPECT_RATIO_CUSTOM  },
 	{ ASPECT_RATIO_4_3,       "4:3",  MSG_ASPECT_RATIO_4_3     },
@@ -550,22 +558,22 @@ const struct chooser_map aspect_ratio_map[] = {
 	{ ASPECT_RATIO_16_10,   "16:10",  MSG_ASPECT_RATIO_16_10   }
 };
 
-const struct chooser_map audio_codec_map[] = {
+static const struct chooser_map audio_codec_map[] = {
 	{ AUDIO_CODEC_NONE, NULL, MSG_AUDIO_CODEC_NONE }
 };
 
-const struct chooser_map sample_size_map[] = {
+static const struct chooser_map sample_size_map[] = {
 	{  8,  "8BIT", MSG_AUDIO_SAMPLE_SIZE_8BIT  },
 	{ 16, "16BIT", MSG_AUDIO_SAMPLE_SIZE_16BIT },
 	{ 32, "32BIT", MSG_AUDIO_SAMPLE_SIZE_32BIT }
 };
 
-const struct chooser_map channels_map[] = {
+static const struct chooser_map channels_map[] = {
 	{ CHANNELS_MONO,   "MONO",   MSG_AUDIO_CHANNELS_MONO   },
 	{ CHANNELS_STEREO, "STEREO", MSG_AUDIO_CHANNELS_STEREO }
 };
 
-const struct chooser_map sample_rate_map[] = {
+static const struct chooser_map sample_rate_map[] = {
 	{ 11025, "11025HZ", MSG_AUDIO_SAMPLE_RATE_11025HZ },
 	{ 22050, "22050HZ", MSG_AUDIO_SAMPLE_RATE_22050HZ },
 	{ 44100, "44100HZ", MSG_AUDIO_SAMPLE_RATE_44100HZ },
@@ -612,20 +620,37 @@ static void gui_read_prefs(struct srec_gui *gd) {
 	gd->enable_altivec = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnableAltivec", TRUE);
 }
 
-void gui_update_record_stop_buttons(struct srec_gui *gd) {
+static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
-	struct Window *window;
-	BOOL is_recording;
+	struct TagItem *tags;
+	struct Window *window = NULL;
+	va_list ap;
 
 	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
 
+	va_startlinear(ap, id);
+	tags = va_getlinearva(ap, struct TagItem *);
+
+	if (id > OID_TAB_PAGES && id < OID_RECORD_STOP_LAYOUT) {
+		struct LayoutIFace *ILayout = gd->ilayout;
+		ILayout->SetPageGadgetAttrsA((struct Gadget *)gd->obj[id], gd->obj[OID_TAB_PAGES], window, NULL, tags);
+	} else {
+		IIntuition->SetGadgetAttrsA((struct Gadget *)gd->obj[id], window, NULL, tags);
+	}
+
+	va_end(ap);
+}
+
+static void gui_update_record_stop_buttons(struct srec_gui *gd) {
+	BOOL is_recording;
+
 	is_recording = gui_is_recording(gd);
 
-	IIntuition->SetGadgetAttrs((struct Gadget *)gd->obj[OID_RECORD], window, NULL,
+	gui_set_gadget_attrs(gd, OID_RECORD,
 		GA_Disabled, is_recording,
 		TAG_END);
 
-	IIntuition->SetGadgetAttrs((struct Gadget *)gd->obj[OID_RECORD], window, NULL,
+	gui_set_gadget_attrs(gd, OID_STOP,
 		GA_Disabled, !is_recording,
 		TAG_END);
 }
@@ -1015,7 +1040,7 @@ static void gui_about_requester(struct srec_gui *gd) {
 	}
 }
 
-void gui_start_recording(struct srec_gui *gd) {
+static void gui_start_recording(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct SRecArgs *sm = gd->startup_msg;
 	CONST_STRPTR output_file;
@@ -1068,7 +1093,7 @@ void gui_start_recording(struct srec_gui *gd) {
 	gui_update_record_stop_buttons(gd);
 }
 
-void gui_stop_recording(struct srec_gui *gd) {
+static void gui_stop_recording(struct srec_gui *gd) {
 	if (gui_is_recording(gd)) {
 		safe_signal_proc(gd->srec_pid, SIGBREAKF_CTRL_C);
 	}
