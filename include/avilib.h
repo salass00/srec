@@ -360,8 +360,8 @@ typedef struct
 #define IBM_FORMAT_ADPCM                (0x0103)
 #endif
 
-avi_t* AVI_open_output_file(void * filename);
-void AVI_set_video(avi_t *AVI, int width, int height, short bpp, double fps, char *compressor);
+avi_t* AVI_open_output_file(const void * filename);
+void AVI_set_video(avi_t *AVI, int width, int height, short bpp, double fps, const char *compressor);
 void AVI_set_audio(avi_t *AVI, int channels, long rate, int bits, int format, long mp3rate);
 int  AVI_write_frame(avi_t *AVI, char *data, long bytes, int keyframe);
 int  AVI_dup_frame(avi_t *AVI);

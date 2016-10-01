@@ -33,7 +33,8 @@
 #define MAX_VRAM_TO_RAM_TRANSFER_SIZE (256UL << 10)
 
 enum {
-	CONTAINER_MKV = 1
+	CONTAINER_AVI = 1,
+	CONTAINER_MKV,
 };
 
 enum {

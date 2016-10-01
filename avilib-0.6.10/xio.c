@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-int xio_open(void *pathname, int flags, ...) {
+int xio_open(const void *pathname, int flags, ...) {
 	va_list ap;
 	int fd;
 

@@ -659,7 +659,7 @@ int AVI_can_read_text(avi_t *AVI)
    returns a pointer to avi_t on success, a zero pointer on error
 */
 
-avi_t* AVI_open_output_file(void * filename)
+avi_t* AVI_open_output_file(const void * filename)
 {
    avi_t *AVI;
    int i;
@@ -720,7 +720,7 @@ avi_t* AVI_open_output_file(void * filename)
    return AVI;
 }
 
-void AVI_set_video(avi_t *AVI, int width, int height, short bpp, double fps, char *compressor)
+void AVI_set_video(avi_t *AVI, int width, int height, short bpp, double fps, const char *compressor)
 {
    /* may only be called if file is open for writing */
 

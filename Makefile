@@ -15,13 +15,16 @@ LIBS    :=
 SRCS := src/main.c src/locale.c src/cli.o src/gui.o src/srec.c src/interfaces.c src/timer.c src/zmbv.c src/zmbv_altivec.c
 OBJS := $(SRCS:.c=.o)
 
+AVILIB := avilib-0.6.10/libavi.a
+LIBMKV := libmkv/libmkv.a
+
 CATALOGS := catalogs/italian/SRec.catalog
 
 .PHONY: all revision clean catalogs
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS) libmkv/libmkv.a
+$(TARGET): $(OBJS) $(AVILIB) $(LIBMKV)
 	$(CC) $(LDFLAGS) -o $@.debug $^ $(LIBS)
 	$(STRIP) -R.comment -o $@ $@.debug
 
@@ -51,11 +54,11 @@ else
 	catcomp --cfile $@ $<
 endif
 
-libmkv/libmkv.a:
-	make -C libmkv
+$(LIBMKV):
+	make -C $(dir $@)
 
-avilib-0.6.10/libavi.a:
-	make -C avilib-0.6.10
+$(AVILIB):
+	make -C $(dir $@)
 
 catalogs: $(CATALOGS)
 

@@ -19,6 +19,7 @@
 #include "srec.h"
 #include "interfaces.h"
 #include "timer.h"
+#include "avilib.h"
 #include "libmkv.h"
 #include "zmbv.h"
 #include <proto/exec.h>
@@ -85,10 +86,6 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	const struct SRecArgs *args;
 	struct SRecGlobal gd;
 	struct zmbv_state *encoder = NULL;
-	mk_Writer *writer = NULL;
-	BITMAPINFOHEADER bmih;
-	mk_TrackConfig video_conf;
-	mk_Track *video_track;
 	struct TimeRequest *tr = NULL;
 	uint32 signals, timer_sig;
 	BOOL timer_in_use = FALSE;
@@ -102,6 +99,17 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	uint64 duration_ns;
 	uint64 timestamp = 0;
 	int rc = RETURN_ERROR;
+
+#ifdef ENABLE_AVI
+	/* AVI output */
+	avi_t *AVI = NULL;
+#endif
+
+	/* MKV output */
+	mk_Writer *writer = NULL;
+	BITMAPINFOHEADER bmih;
+	mk_TrackConfig video_conf;
+	mk_Track *video_track = NULL;
 
 	proc = (struct Process *)IExec->FindTask(NULL);
 
@@ -118,13 +126,24 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	if (IIntuition == NULL || IGraphics == NULL || IIcon == NULL)
 		goto out;
 
-	if (!(args->width >= MIN_WIDTH && args->width <= MAX_WIDTH) || !(args->height >= MIN_HEIGHT && args->height <= MAX_HEIGHT))
+	if (!(args->width >= MIN_WIDTH && args->width <= MAX_WIDTH))
+		goto out;
+
+	if (!(args->height >= MIN_HEIGHT && args->height <= MAX_HEIGHT))
 		goto out;
 
 	if (!(args->fps >= MIN_FPS && args->fps <= MAX_FPS))
 		goto out;
 
-	if (args->container != CONTAINER_MKV || args->video_codec != VIDEO_CODEC_ZMBV || args->audio_codec != AUDIO_CODEC_NONE)
+#ifdef ENABLE_AVI
+	if (args->container != CONTAINER_AVI && args->container != CONTAINER_MKV)
+		goto out;
+#else
+	if (args->container != CONTAINER_MKV)
+		goto out;
+#endif
+
+	if (args->video_codec != VIDEO_CODEC_ZMBV || args->audio_codec != AUDIO_CODEC_NONE)
 		goto out;
 
 	duration_us = (uint32)lroundf(1000.0f / (float)args->fps) * 1000UL;
@@ -134,47 +153,58 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	if (encoder == NULL)
 		goto out;
 
-	writer = mk_createWriter(args->output_file, 1000000LL, VLC_COMPAT);
-	if (writer == NULL)
-		goto out;
+#ifdef ENABLE_AVI
+	if (args->container == CONTAINER_AVI) {
+		AVI = AVI_open_output_file(args->output_file);
+		if (AVI == NULL)
+			goto out;
 
-	IUtility->ClearMem(&bmih, sizeof(bmih));
+		AVI_set_video(AVI, args->width, args->height, 24, args->fps, "ZMBV");
+	} else
+#endif
+	{
+		writer = mk_createWriter(args->output_file, 1000000LL, VLC_COMPAT);
+		if (writer == NULL)
+			goto out;
 
-	bmih.biSize      = h2le32(sizeof(bmih));
-	bmih.biWidth     = h2le32(args->width);
-	bmih.biHeight    = h2le32(args->height);
-	bmih.biPlanes    = h2le16(1);
-	bmih.biBitCount  = h2le16(24);
-	bmih.biSizeImage = h2le32(args->width * args->height * 3);
+		IUtility->ClearMem(&bmih, sizeof(bmih));
 
-	IExec->CopyMem("ZMBV", &bmih.biCompression, 4);
+		bmih.biSize      = h2le32(sizeof(bmih));
+		bmih.biWidth     = h2le32(args->width);
+		bmih.biHeight    = h2le32(args->height);
+		bmih.biPlanes    = h2le16(1);
+		bmih.biBitCount  = h2le16(24);
+		bmih.biSizeImage = h2le32(args->width * args->height * 3);
 
-	IUtility->ClearMem(&video_conf, sizeof(video_conf));
+		IExec->CopyMem("ZMBV", &bmih.biCompression, 4);
 
-	video_conf.trackType        = MK_TRACK_VIDEO;
-	video_conf.flagEnabled      = 1;
-	video_conf.flagDefault      = 1;
-	video_conf.flagForced       = 1;
-	video_conf.flagLacing       = 0; // Is this correct?
-	video_conf.defaultDuration  = duration_ns;
-	video_conf.codecID          = MK_VCODEC_MSVCM; // "V_MS/VFW/FOURCC"
-	video_conf.codecPrivate     = &bmih;
-	video_conf.codecPrivateSize = sizeof(bmih);
+		IUtility->ClearMem(&video_conf, sizeof(video_conf));
 
-	video_conf.extra.video.flagInterlaced  = 0;
-	video_conf.extra.video.pixelWidth      = args->width;
-	video_conf.extra.video.pixelHeight     = args->height;
-	video_conf.extra.video.displayWidth    = args->width;
-	video_conf.extra.video.displayHeight   = args->height;
-	video_conf.extra.video.displayUnit     = 0; // 0 = pixels
-	video_conf.extra.video.aspectRatioType = MK_ASPECTRATIO_KEEP;
+		video_conf.trackType        = MK_TRACK_VIDEO;
+		video_conf.flagEnabled      = 1;
+		video_conf.flagDefault      = 1;
+		video_conf.flagForced       = 1;
+		video_conf.flagLacing       = 0; // Is this correct?
+		video_conf.defaultDuration  = duration_ns;
+		video_conf.codecID          = MK_VCODEC_MSVCM; // "V_MS/VFW/FOURCC"
+		video_conf.codecPrivate     = &bmih;
+		video_conf.codecPrivateSize = sizeof(bmih);
 
-	video_track = mk_createTrack(writer, &video_conf);
-	if (video_track == NULL)
-		goto out;
+		video_conf.extra.video.flagInterlaced  = 0;
+		video_conf.extra.video.pixelWidth      = args->width;
+		video_conf.extra.video.pixelHeight     = args->height;
+		video_conf.extra.video.displayWidth    = args->width;
+		video_conf.extra.video.displayHeight   = args->height;
+		video_conf.extra.video.displayUnit     = 0; // 0 = pixels
+		video_conf.extra.video.aspectRatioType = MK_ASPECTRATIO_KEEP;
 
-	if (mk_writeHeader(writer, VERS) != 0)
-		goto out;
+		video_track = mk_createTrack(writer, &video_conf);
+		if (video_track == NULL)
+			goto out;
+
+		if (mk_writeHeader(writer, VERS) != 0)
+			goto out;
+	}
 
 	tr = OpenTimerDevice(UNIT_MICROHZ);
 	if (tr == NULL)
@@ -346,13 +376,25 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 					goto out;
 				}
 
-				if (!zmbv_encode(encoder, &frame, &framesize, &keyframe) ||
-					mk_startFrame(writer, video_track) != 0 ||
-					mk_addFrameData(writer, video_track, frame, framesize) != 0 ||
-					mk_setFrameFlags(writer, video_track, timestamp, keyframe, duration_ns) != 0)
-				{
-					IExec->DebugPrintF("error outputting frame #%lu\n", frames);
+				if (!zmbv_encode(encoder, &frame, &framesize, &keyframe))
 					goto out;
+
+#ifdef ENABLE_AVI
+				if (args->container == CONTAINER_AVI) {
+					if (AVI_write_frame(AVI, frame, framesize, keyframe) != 0) {
+						IExec->DebugPrintF("error outputting frame #%lu\n", frames);
+						goto out;
+					}
+				} else
+#endif
+				{
+					if (mk_startFrame(writer, video_track) != 0 ||
+						mk_addFrameData(writer, video_track, frame, framesize) != 0 ||
+						mk_setFrameFlags(writer, video_track, timestamp, keyframe, duration_ns) != 0)
+					{
+						IExec->DebugPrintF("error outputting frame #%lu\n", frames);
+						goto out;
+					}
 				}
 
 				timestamp += duration_ns;
@@ -377,8 +419,18 @@ out:
 		CloseTimerDevice(tr);
 	}
 
-	if (writer != NULL)
-		mk_close(writer);
+#ifdef ENABLE_AVI
+	if (args->container == CONTAINER_AVI) {
+		if (AVI != NULL) {
+			AVI_close(AVI);
+		}
+	} else
+#endif
+	{
+		if (writer != NULL) {
+			mk_close(writer);
+		}
+	}
 
 	if (encoder != NULL)
 		zmbv_end(encoder);
