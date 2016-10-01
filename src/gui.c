@@ -44,6 +44,8 @@
 #include <stdarg.h>
 #include "SRec_rev.h"
 
+#define CLAMP(val,min,max) MAX(MIN(val, max), min)
+
 #define ARRAY_LEN(array) (sizeof(array)/sizeof(array[0]))
 
 const TEXT gpl_license[] =
@@ -585,9 +587,9 @@ static void gui_read_prefs(struct srec_gui *gd) {
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AspectRatio", NULL);
 	gd->aspect_ratio = gui_map_cfg_str_to_cfg_val(gd, cfg_str, aspect_ratio_map, ARRAY_LEN(aspect_ratio_map), DEFAULT_ASPECT_RATIO);
 
-	gd->width  = MAX(16, IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoWidth", DEFAULT_WIDTH));
-	gd->height = MAX(16, IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoHeight", DEFAULT_WIDTH));
-	gd->fps    = MAX( 1, IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoFPS", DEFAULT_WIDTH));
+	gd->width  = CLAMP(IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoWidth", DEFAULT_WIDTH), MIN_WIDTH, MAX_WIDTH);
+	gd->height = CLAMP(IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoHeight", DEFAULT_WIDTH), MIN_HEIGHT, MAX_HEIGHT);
+	gd->fps    = CLAMP(IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoFPS", DEFAULT_WIDTH), MIN_FPS, MAX_FPS);
 
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioCodec", NULL);
 	gd->audio_codec = gui_map_cfg_str_to_cfg_val(gd, cfg_str, audio_codec_map, ARRAY_LEN(audio_codec_map), DEFAULT_AUDIO_CODEC);
@@ -689,8 +691,8 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,           OID_VIDEO_WIDTH,
 		GA_TabCycle,     TRUE,
 		GA_RelVerify,    TRUE,
-		INTEGER_Minimum, 16,
-		INTEGER_Maximum, 16000,
+		INTEGER_Minimum, MIN_WIDTH,
+		INTEGER_Maximum, MAX_WIDTH,
 		INTEGER_Number,  gd->width,
 		TAG_END);
 
@@ -698,8 +700,8 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,           OID_VIDEO_HEIGHT,
 		GA_TabCycle,     TRUE,
 		GA_RelVerify,    TRUE,
-		INTEGER_Minimum, 16,
-		INTEGER_Maximum, 16000,
+		INTEGER_Minimum, MIN_HEIGHT,
+		INTEGER_Maximum, MAX_HEIGHT,
 		INTEGER_Number,  gd->height,
 		TAG_END);
 
@@ -715,8 +717,8 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,           OID_VIDEO_FPS,
 		GA_TabCycle,     TRUE,
 		GA_RelVerify,    TRUE,
-		INTEGER_Minimum, 1,
-		INTEGER_Maximum, 100,
+		INTEGER_Minimum, MIN_FPS,
+		INTEGER_Maximum, MAX_FPS,
 		INTEGER_Number,  gd->fps,
 		TAG_END);
 

@@ -64,6 +64,13 @@ enum {
 #define DEFAULT_POINTER_FILE      "ENV:Sys/def_pointer.info"
 #define DEFAULT_BUSY_POINTER_FILE "ENV:Sys/def_busypointer.info"
 
+#define MIN_WIDTH  16
+#define MAX_WIDTH  16000
+#define MIN_HEIGHT 16
+#define MAX_HEIGHT 16000
+#define MIN_FPS    1
+#define MAX_FPS    100
+
 struct SRecArgs {
 	struct Message message;
 	uint32         container;

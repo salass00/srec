@@ -118,10 +118,10 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	if (IIntuition == NULL || IGraphics == NULL || IIcon == NULL)
 		goto out;
 
-	if (!(args->width >= 16 && args->width <= 16000) || !(args->height >= 16 && args->height <= 16000))
+	if (!(args->width >= MIN_WIDTH && args->width <= MAX_WIDTH) || !(args->height >= MIN_HEIGHT && args->height <= MAX_HEIGHT))
 		goto out;
 
-	if (!(args->fps > 0 && args->fps <= 100))
+	if (!(args->fps >= MIN_FPS && args->fps <= MAX_FPS))
 		goto out;
 
 	if (args->container != CONTAINER_MKV || args->video_codec != VIDEO_CODEC_ZMBV || args->audio_codec != AUDIO_CODEC_NONE)
