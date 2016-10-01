@@ -596,8 +596,8 @@ static void gui_read_prefs(struct srec_gui *gd) {
 	gd->aspect_ratio = gui_map_cfg_str_to_cfg_val(gd, cfg_str, aspect_ratio_map, ARRAY_LEN(aspect_ratio_map), DEFAULT_ASPECT_RATIO);
 
 	gd->width  = CLAMP(IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoWidth", DEFAULT_WIDTH), MIN_WIDTH, MAX_WIDTH);
-	gd->height = CLAMP(IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoHeight", DEFAULT_WIDTH), MIN_HEIGHT, MAX_HEIGHT);
-	gd->fps    = CLAMP(IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoFPS", DEFAULT_WIDTH), MIN_FPS, MAX_FPS);
+	gd->height = CLAMP(IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoHeight", DEFAULT_HEIGHT), MIN_HEIGHT, MAX_HEIGHT);
+	gd->fps    = CLAMP(IPrefsObjects->DictGetIntegerForKey(gd->app_prefs, "VideoFPS", DEFAULT_FPS), MIN_FPS, MAX_FPS);
 
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "AudioCodec", NULL);
 	gd->audio_codec = gui_map_cfg_str_to_cfg_val(gd, cfg_str, audio_codec_map, ARRAY_LEN(audio_codec_map), DEFAULT_AUDIO_CODEC);
