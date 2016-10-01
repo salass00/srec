@@ -965,11 +965,12 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		TAG_END);
 
 	gd->obj[OID_POINTER_FILE] = IIntuition->NewObject(gd->getfileclass, NULL,
-		GA_ID,            OID_POINTER_FILE,
-		GA_TabCycle,      TRUE,
-		GA_RelVerify,     TRUE,
-		GETFILE_Pattern,  "#?.info",
-		GETFILE_FullFile, gd->pointer_file,
+		GA_ID,              OID_POINTER_FILE,
+		GA_TabCycle,        TRUE,
+		GA_RelVerify,       TRUE,
+		GETFILE_Pattern,    "#?.info",
+		GETFILE_DoSaveMode, FALSE,
+		GETFILE_FullFile,   gd->pointer_file,
 		TAG_END);
 
 	gd->obj[OID_POINTER_FILE_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
@@ -980,11 +981,12 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		TAG_END);
 
 	gd->obj[OID_BUSY_POINTER_FILE] = IIntuition->NewObject(gd->getfileclass, NULL,
-		GA_ID,            OID_BUSY_POINTER_FILE,
-		GA_TabCycle,      TRUE,
-		GA_RelVerify,     TRUE,
-		GETFILE_Pattern,  "#?.info",
-		GETFILE_FullFile, gd->busy_pointer_file,
+		GA_ID,              OID_BUSY_POINTER_FILE,
+		GA_TabCycle,        TRUE,
+		GA_RelVerify,       TRUE,
+		GETFILE_Pattern,    "#?.info",
+		GETFILE_DoSaveMode, FALSE,
+		GETFILE_FullFile,   gd->busy_pointer_file,
 		TAG_END);
 
 	gd->obj[OID_BUSY_POINTER_FILE_LAYOUT] = IIntuition->NewObject(gd->layoutclass, NULL,
