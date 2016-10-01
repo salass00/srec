@@ -642,6 +642,24 @@ static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...)
 	va_end(ap);
 }
 
+static void gui_update_audio_gadgets(struct srec_gui *gd) {
+	BOOL codec_is_none;
+
+	codec_is_none = (gd->audio_codec == AUDIO_CODEC_NONE) ? TRUE : FALSE;
+
+	gui_set_gadget_attrs(gd, OID_AUDIO_SAMPLE_SIZE,
+		GA_Disabled, codec_is_none,
+		TAG_END);
+
+	gui_set_gadget_attrs(gd, OID_AUDIO_CHANNELS,
+		GA_Disabled, codec_is_none,
+		TAG_END);
+
+	gui_set_gadget_attrs(gd, OID_AUDIO_SAMPLE_RATE,
+		GA_Disabled, codec_is_none,
+		TAG_END);
+}
+
 static void gui_update_record_stop_buttons(struct srec_gui *gd) {
 	BOOL is_recording;
 
@@ -783,7 +801,6 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_AUDIO_SAMPLE_SIZE] = IIntuition->NewObject(gd->chooserclass, NULL,
 		GA_ID,            OID_AUDIO_SAMPLE_SIZE,
 		GA_RelVerify,     TRUE,
-		GA_Disabled,      (gd->audio_codec == AUDIO_CODEC_NONE),
 		CHOOSER_Labels,   gd->sample_size_list,
 		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, gd->sample_size, sample_size_map, ARRAY_LEN(sample_size_map)),
 		TAG_END);
@@ -791,7 +808,6 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_AUDIO_CHANNELS] = IIntuition->NewObject(gd->chooserclass, NULL,
 		GA_ID,            OID_AUDIO_CHANNELS,
 		GA_RelVerify,     TRUE,
-		GA_Disabled,      (gd->audio_codec == AUDIO_CODEC_NONE),
 		CHOOSER_Labels,   gd->channels_list,
 		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, gd->channels, channels_map, ARRAY_LEN(channels_map)),
 		TAG_END);
@@ -799,7 +815,6 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	gd->obj[OID_AUDIO_SAMPLE_RATE] = IIntuition->NewObject(gd->chooserclass, NULL,
 		GA_ID,            OID_AUDIO_SAMPLE_RATE,
 		GA_RelVerify,     TRUE,
-		GA_Disabled,      (gd->audio_codec == AUDIO_CODEC_NONE),
 		CHOOSER_Labels,   gd->sample_rate_list,
 		CHOOSER_Selected, gui_map_cfg_val_to_chooser_index(gd, gd->sample_rate, sample_rate_map, ARRAY_LEN(sample_rate_map)),
 		TAG_END);
@@ -959,6 +974,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	if (gd->obj[OID_TAB_PAGES] == NULL || gd->obj[OID_WINDOW] == NULL)
 		return FALSE;
 
+	gui_update_audio_gadgets(gd);
 	gui_update_record_stop_buttons(gd);
 
 	return TRUE;
@@ -1291,6 +1307,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								break;
 							case OID_AUDIO_CODEC:
 								gd->audio_codec = audio_codec_map[code].cfg_val;
+								gui_update_audio_gadgets(gd);
 								break;
 							case OID_AUDIO_SAMPLE_SIZE:
 								gd->sample_size = sample_size_map[code].cfg_val;
