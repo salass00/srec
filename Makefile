@@ -54,6 +54,9 @@ endif
 libmkv/libmkv.a:
 	make -C libmkv
 
+avilib-0.6.10/libavi.a:
+	make -C avilib-0.6.10
+
 catalogs: $(CATALOGS)
 
 %.catalog: %.ct catalogs/SRec.cd
@@ -64,5 +67,6 @@ revision:
 
 clean:
 	make -C libmkv clean
+	make -C avilib-0.6.10 clean
 	$(RM) src/*.o $(TARGET).debug $(TARGET)
 
