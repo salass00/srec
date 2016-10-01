@@ -642,6 +642,83 @@ static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...)
 	va_end(ap);
 }
 
+static BOOL gui_wb_dimensions(struct srec_gui *gd, uint32 *width, uint32 *height) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct Screen *screen;
+
+	screen = IIntuition->LockPubScreen(NULL);
+	if (screen == NULL)
+		return FALSE;
+
+	//FIXME: This probably won't work with an autoscroll screen
+	*width  = screen->Width;
+	*height = screen->Height;
+
+	IIntuition->UnlockPubScreen(NULL, screen);
+
+	return TRUE;
+}
+
+static void gui_enforce_aspect_ratio(struct srec_gui *gd, BOOL change_height) {
+	uint32 width  = gd->width;
+	uint32 height = gd->height;
+	uint32 wb_w, wb_h;
+
+	if (change_height) {
+		switch (gd->aspect_ratio) {
+			case ASPECT_RATIO_LIKE_WB:
+				if (gui_wb_dimensions(gd, &wb_w, &wb_h))
+					height = width * wb_h / wb_w;
+				break;
+			case ASPECT_RATIO_CUSTOM:
+				/* Do nothing */
+				break;
+			case ASPECT_RATIO_4_3:
+				height = width * 3 / 4;
+				break;
+			case ASPECT_RATIO_5_4:
+				height = width * 4 / 5;
+				break;
+			case ASPECT_RATIO_16_9:
+				height = width * 9 / 16;
+				break;
+			case ASPECT_RATIO_16_10:
+				height = width * 10 / 16;
+				break;
+		}
+		gui_set_gadget_attrs(gd, OID_VIDEO_HEIGHT,
+			INTEGER_Number, height,
+			TAG_END);
+		gd->height = CLAMP(height, MIN_HEIGHT, MAX_HEIGHT);
+	} else {
+		switch (gd->aspect_ratio) {
+			case ASPECT_RATIO_LIKE_WB:
+				if (gui_wb_dimensions(gd, &wb_w, &wb_h))
+					width = height * wb_w / wb_h;
+				break;
+			case ASPECT_RATIO_CUSTOM:
+				/* Do nothing */
+				break;
+			case ASPECT_RATIO_4_3:
+				width = height * 4 / 3;
+				break;
+			case ASPECT_RATIO_5_4:
+				width = height * 5 / 4;
+				break;
+			case ASPECT_RATIO_16_9:
+				width = height * 16 / 9;
+				break;
+			case ASPECT_RATIO_16_10:
+				width = height * 16 / 10;
+				break;
+		}
+		gui_set_gadget_attrs(gd, OID_VIDEO_WIDTH,
+			INTEGER_Number, width,
+			TAG_END);
+		gd->width = CLAMP(width, MIN_WIDTH, MAX_WIDTH);
+	}
+}
+
 static void gui_update_audio_gadgets(struct srec_gui *gd) {
 	BOOL codec_is_none;
 
@@ -984,6 +1061,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	if (gd->obj[OID_TAB_PAGES] == NULL || gd->obj[OID_WINDOW] == NULL)
 		return FALSE;
 
+	gui_enforce_aspect_ratio(gd, TRUE);
 	gui_update_audio_gadgets(gd);
 	gui_update_pointer_gadgets(gd);
 	gui_update_record_stop_buttons(gd);
@@ -1306,12 +1384,15 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								break;
 							case OID_ASPECT_RATIO:
 								gd->aspect_ratio = aspect_ratio_map[code].cfg_val;
+								gui_enforce_aspect_ratio(gd, TRUE);
 								break;
 							case OID_VIDEO_WIDTH:
 								gd->width = code;
+								gui_enforce_aspect_ratio(gd, TRUE);
 								break;
 							case OID_VIDEO_HEIGHT:
 								gd->height = code;
+								gui_enforce_aspect_ratio(gd, FALSE);
 								break;
 							case OID_VIDEO_FPS:
 								gd->fps = code;
