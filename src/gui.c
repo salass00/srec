@@ -660,6 +660,18 @@ static void gui_update_audio_gadgets(struct srec_gui *gd) {
 		TAG_END);
 }
 
+static void gui_update_pointer_gadgets(struct srec_gui *gd) {
+	BOOL pointer_disabled = !gd->enable_pointer;
+
+	gui_set_gadget_attrs(gd, OID_POINTER_FILE,
+		GA_Disabled, pointer_disabled,
+		TAG_END);
+
+	gui_set_gadget_attrs(gd, OID_BUSY_POINTER_FILE,
+		GA_Disabled, pointer_disabled,
+		TAG_END);
+}
+
 static void gui_update_record_stop_buttons(struct srec_gui *gd) {
 	BOOL is_recording;
 
@@ -850,7 +862,6 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,            OID_POINTER_FILE,
 		GA_TabCycle,      TRUE,
 		GA_RelVerify,     TRUE,
-		GA_Disabled,      !gd->enable_pointer,
 		GETFILE_Pattern,  "#?.info",
 		GETFILE_FullFile, gd->pointer_file,
 		TAG_END);
@@ -866,7 +877,6 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,            OID_BUSY_POINTER_FILE,
 		GA_TabCycle,      TRUE,
 		GA_RelVerify,     TRUE,
-		GA_Disabled,      !gd->enable_pointer,
 		GETFILE_Pattern,  "#?.info",
 		GETFILE_FullFile, gd->busy_pointer_file,
 		TAG_END);
@@ -975,6 +985,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		return FALSE;
 
 	gui_update_audio_gadgets(gd);
+	gui_update_pointer_gadgets(gd);
 	gui_update_record_stop_buttons(gd);
 
 	return TRUE;
@@ -1320,6 +1331,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								break;
 							case OID_ENABLE_POINTER:
 								gd->enable_pointer = code ? TRUE : FALSE;
+								gui_update_pointer_gadgets(gd);
 								break;
 							case OID_BILINEAR_FILTER:
 								gd->enable_filter = code ? TRUE : FALSE;
