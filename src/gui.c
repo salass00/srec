@@ -622,8 +622,9 @@ static void gui_read_prefs(struct srec_gui *gd) {
 
 static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
-	struct TagItem *tags;
+	struct Gadget *gadget = (struct Gadget *)gd->obj[id];
 	struct Window *window = NULL;
+	struct TagItem *tags;
 	va_list ap;
 
 	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
@@ -633,9 +634,9 @@ static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...)
 
 	if (id > OID_TAB_PAGES && id < OID_RECORD_STOP_LAYOUT) {
 		struct LayoutIFace *ILayout = gd->ilayout;
-		ILayout->SetPageGadgetAttrsA((struct Gadget *)gd->obj[id], gd->obj[OID_TAB_PAGES], window, NULL, tags);
+		ILayout->SetPageGadgetAttrsA(gadget, gd->obj[OID_TAB_PAGES], window, NULL, tags);
 	} else {
-		IIntuition->SetGadgetAttrsA((struct Gadget *)gd->obj[id], window, NULL, tags);
+		IIntuition->SetGadgetAttrsA(gadget, window, NULL, tags);
 	}
 
 	va_end(ap);
