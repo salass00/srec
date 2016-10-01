@@ -606,7 +606,7 @@ static const struct chooser_map sample_rate_map[] = {
 	{ 48000, NULL, MSG_AUDIO_SAMPLE_RATE_48000HZ }
 };
 
-static void gui_read_prefs(struct srec_gui *gd) {
+static void gui_read_settings(struct srec_gui *gd) {
 	struct PrefsObjectsIFace *IPrefsObjects = gd->iprefsobjects;
 	CONST_STRPTR cfg_str;
 	uint32 cfg_val;
@@ -1247,6 +1247,127 @@ static void gui_stop_recording(struct srec_gui *gd) {
 	}
 }
 
+static void gui_save_settings(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct PrefsObjectsIFace *IPrefsObjects = gd->iprefsobjects;
+	CONST_STRPTR output_file;
+	CONST_STRPTR pointer_file;
+	CONST_STRPTR busy_pointer_file;
+	uint32 index;
+	PrefsObject *obj;
+
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_OUTPUT_FILE], (uint32 *)&output_file);
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_POINTER_FILE], (uint32 *)&pointer_file);
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_BUSY_POINTER_FILE], (uint32 *)&busy_pointer_file);
+
+	obj = IPrefsObjects->PrefsString(NULL, NULL,
+		ALPO_Alloc,             NULL,
+		ALPOSTR_AllocSetString, output_file,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "OutputFile");
+
+	IIntuition->GetAttr(CHOOSER_Selected, gd->obj[OID_CONTAINER_FORMAT], &index);
+	obj = IPrefsObjects->PrefsString(NULL, NULL,
+		ALPO_Alloc,        NULL,
+		ALPOSTR_SetString, container_map[index].cfg_str,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "ContainerFormat");
+
+	IIntuition->GetAttr(CHOOSER_Selected, gd->obj[OID_VIDEO_CODEC], &index);
+	obj = IPrefsObjects->PrefsString(NULL, NULL,
+		ALPO_Alloc,        NULL,
+		ALPOSTR_SetString, video_codec_map[index].cfg_str,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "VideoCodec");
+
+	IIntuition->GetAttr(CHOOSER_Selected, gd->obj[OID_ASPECT_RATIO], &index);
+	obj = IPrefsObjects->PrefsString(NULL, NULL,
+		ALPO_Alloc,        NULL,
+		ALPOSTR_SetString, aspect_ratio_map[index].cfg_str,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "AspectRatio");
+
+	obj = IPrefsObjects->PrefsNumber(NULL, NULL,
+		ALPO_Alloc,           NULL,
+		ALPONUM_AllocSetLong, gd->width,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "VideoWidth");
+
+	obj = IPrefsObjects->PrefsNumber(NULL, NULL,
+		ALPO_Alloc,           NULL,
+		ALPONUM_AllocSetLong, gd->height,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "VideoHeight");
+
+	obj = IPrefsObjects->PrefsNumber(NULL, NULL,
+		ALPO_Alloc,           NULL,
+		ALPONUM_AllocSetLong, gd->fps,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "VideoFPS");
+
+	IIntuition->GetAttr(CHOOSER_Selected, gd->obj[OID_AUDIO_CODEC], &index);
+	obj = IPrefsObjects->PrefsString(NULL, NULL,
+		ALPO_Alloc,        NULL,
+		ALPOSTR_SetString, audio_codec_map[index].cfg_str,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "AudioCodec");
+
+	obj = IPrefsObjects->PrefsNumber(NULL, NULL,
+		ALPO_Alloc,           NULL,
+		ALPONUM_AllocSetLong, gd->sample_size,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "AudioSampleSize");
+
+	IIntuition->GetAttr(CHOOSER_Selected, gd->obj[OID_AUDIO_CHANNELS], &index);
+	obj = IPrefsObjects->PrefsString(NULL, NULL,
+		ALPO_Alloc,        NULL,
+		ALPOSTR_SetString, channels_map[index].cfg_str,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "AudioChannels");
+
+	obj = IPrefsObjects->PrefsNumber(NULL, NULL,
+		ALPO_Alloc,           NULL,
+		ALPONUM_AllocSetLong, gd->sample_rate,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "AudioSampleRate");
+
+	obj = IPrefsObjects->PrefsNumber(NULL, NULL,
+		ALPO_Alloc,           NULL,
+		ALPONUM_AllocSetBool, gd->enable_pointer,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "EnablePointer");
+
+	obj = IPrefsObjects->PrefsString(NULL, NULL,
+		ALPO_Alloc,             NULL,
+		ALPOSTR_AllocSetString, pointer_file,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "PointerFile");
+
+	obj = IPrefsObjects->PrefsString(NULL, NULL,
+		ALPO_Alloc,             NULL,
+		ALPOSTR_AllocSetString, busy_pointer_file,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "BusyPointerFile");
+
+	obj = IPrefsObjects->PrefsNumber(NULL, NULL,
+		ALPO_Alloc,           NULL,
+		ALPONUM_AllocSetBool, gd->enable_filter,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "BilinearFilter");
+
+	obj = IPrefsObjects->PrefsNumber(NULL, NULL,
+		ALPO_Alloc,           NULL,
+		ALPONUM_AllocSetBool, gd->enable_altivec,
+		TAG_END);
+	IPrefsObjects->DictSetObjectForKey(gd->app_prefs, obj, "EnableAltivec");
+
+	IPrefsObjects->WritePrefs(gd->app_prefs,
+		WRITEPREFS_AppID,       gd->app_id,
+		WRITEPREFS_WriteENV,    TRUE,
+		WRITEPREFS_WriteENVARC, TRUE,
+		TAG_END);
+}
+
 int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	struct srec_gui *gd;
 	struct IntuitionIFace *IIntuition;
@@ -1298,7 +1419,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	if (gd->death_msg == NULL)
 		goto out;
 
-	gui_read_prefs(gd);
+	gui_read_settings(gd);
 
 	if (!gui_create_window(gd))
 		goto out;
@@ -1494,7 +1615,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 									done = TRUE;
 									break;
 								case MID_SETTINGS_SAVE_AS_DEFAULTS:
-									//FIXME: Save settings
+									gui_save_settings(gd);
 									break;
 							}
 						}
