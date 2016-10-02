@@ -1123,25 +1123,50 @@ static void gui_free_window(struct srec_gui *gd) {
 
 static BOOL gui_show_window(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct ApplicationIFace *IApplication = gd->iapplication;
 	struct Window *window;
 
 	window = (struct Window *)IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_OPEN, NULL);
 	if (window == NULL)
 		return FALSE;
 
+	IApplication->SetApplicationAttrs(gd->app_id,
+		APPATTR_Hidden, FALSE,
+		TAG_END);
+
 	return TRUE;
 }
 
-static void gui_hide_window(struct srec_gui *gd) {
+static BOOL gui_hide_window(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct ApplicationIFace *IApplication = gd->iapplication;
+	uint32 success;
 
-	IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_CLOSE, NULL);
+	success = IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_CLOSE, NULL);
+	if (!success)
+		return FALSE;
+
+	IApplication->SetApplicationAttrs(gd->app_id,
+		APPATTR_Hidden, TRUE,
+		TAG_END);
+
+	return TRUE;
 }
 
-static void gui_iconify_window(struct srec_gui *gd) {
+static BOOL gui_iconify_window(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct ApplicationIFace *IApplication = gd->iapplication;
+	uint32 success;
 
-	IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_ICONIFY, NULL);
+	success = IIntuition->IDoMethod(gd->obj[OID_WINDOW], WM_ICONIFY, NULL);
+	if (!success)
+		return FALSE;
+
+	IApplication->SetApplicationAttrs(gd->app_id,
+		APPATTR_Hidden, TRUE,
+		TAG_END);
+
+	return TRUE;
 }
 
 static void gui_about_requester(struct srec_gui *gd) {
@@ -1374,6 +1399,7 @@ static void gui_save_settings(struct srec_gui *gd) {
 int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	struct srec_gui *gd;
 	struct IntuitionIFace *IIntuition;
+	struct CommoditiesIFace *ICommodities;
 	uint32 signals, cx_sig, app_sig, srec_sig, window_sigs;
 	BOOL done = FALSE;
 	int rc = RETURN_ERROR;
@@ -1430,11 +1456,14 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	if (!gd->hidden && !gui_show_window(gd))
 		goto out;
 
-	IIntuition = gd->iintuition;
+	IIntuition   = gd->iintuition;
+	ICommodities = gd->icommodities;
 
 	cx_sig   = 1UL << gd->broker_mp->mp_SigBit;
 	app_sig  = 1UL << gd->app_mp->mp_SigBit;
 	srec_sig = 1UL << gd->srec_mp->mp_SigBit;
+
+	ICommodities->ActivateCxObj(gd->broker, TRUE);
 
 	while (!done) {
 		IIntuition->GetAttr(WINDOW_SigMask, gd->obj[OID_WINDOW], &window_sigs);
@@ -1444,7 +1473,6 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 			done = TRUE;
 
 		if (signals & cx_sig) {
-			struct CommoditiesIFace *ICommodities = gd->icommodities;
 			CxMsg *msg;
 			uint32 type, id;
 
@@ -1481,9 +1509,11 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 							case CXCMD_APPEAR:
 								gui_show_window(gd);
 								break;
-							case CXCMD_DISABLE:
 							case CXCMD_ENABLE:
-								ICommodities->ActivateCxObj(gd->broker, (id == CXCMD_ENABLE) ? TRUE : FALSE);
+								ICommodities->ActivateCxObj(gd->broker, TRUE);
+								break;
+							case CXCMD_DISABLE:
+								ICommodities->ActivateCxObj(gd->broker, FALSE);
 								break;
 						}
 						break;
