@@ -25,41 +25,95 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdarg.h>
+#include <proto/dos.h>
+
+#define MAX_INSTANCES 16
+static BPTR instances[MAX_INSTANCES];
 
 int xio_open(const void *pathname, int flags, ...) {
-	va_list ap;
-	int fd;
+	int fd, i;
+	int open_mode;
 
-	va_start(ap, flags);
+	fd = -1;
+	for (i = 0; i < MAX_INSTANCES; i++) {
+		if (instances[i] == ZERO) {
+			fd = i;
+			break;
+		}
+	}
+
+	if (fd == -1)
+		return -1;
 
 	if (flags & O_CREAT)
-		fd = open64(pathname, flags, va_arg(ap, mode_t));
+		open_mode = MODE_NEWFILE;
 	else
-		fd = open64(pathname, flags);
+		open_mode = MODE_OLDFILE;
 
-	va_end(ap);
+	instances[fd] = IDOS->FOpen(pathname, open_mode, 0);
+	if (instances[fd] == ZERO)
+		return -1;
 
 	return fd;
 }
 
 ssize_t xio_read(int fd, void *buf, size_t count) {
-	return read(fd, buf, count);
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+		return -1;
+
+	return IDOS->FRead(instances[fd], buf, 1, count);
 }
 
 ssize_t xio_write(int fd, const void *buf, size_t count) {
-	return write(fd, buf, count);
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+		return -1;
+
+	return IDOS->FWrite(instances[fd], buf, 1, count);
 }
 
 int xio_ftruncate(int fd, int64_t length) {
-	return ftruncate64(fd, length);
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+		return -1;
+
+	if (!IDOS->ChangeFileSize(instances[fd], length, OFFSET_BEGINNING))
+		return -1;
+
+	return 0;
 }
 
 int64_t xio_lseek(int fd, int64_t offset, int whence) {
-	return lseek64(fd, offset, whence);
+	int mode;
+
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+		return -1;
+
+	switch (whence) {
+		case SEEK_SET:
+			mode = OFFSET_BEGINNING;
+			break;
+		case SEEK_CUR:
+			mode = OFFSET_CURRENT;
+			break;
+		case SEEK_END:
+			mode = OFFSET_END;
+			break;
+		default:
+			return -1;
+	}
+
+	if (!IDOS->ChangeFilePosition(instances[fd], offset, mode))
+		return -1;
+
+	return IDOS->GetFilePosition(instances[fd]);
 }
 
 int xio_close(int fd) {
-	return close(fd);
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+		return -1;
+
+	if (!IDOS->FClose(instances[fd]))
+		return -1;
+
+	return 0;
 }
 
