@@ -27,8 +27,14 @@
 #include <unistd.h>
 #include <proto/dos.h>
 
+struct instance {
+	BPTR    fh;
+	int     flags;
+	int64_t file_pos;
+};
+
 #define MAX_INSTANCES 16
-static BPTR instances[MAX_INSTANCES];
+static struct instance instances[MAX_INSTANCES];
 
 int xio_open(const void *pathname, int flags, ...) {
 	int fd, i;
@@ -36,7 +42,7 @@ int xio_open(const void *pathname, int flags, ...) {
 
 	fd = -1;
 	for (i = 0; i < MAX_INSTANCES; i++) {
-		if (instances[i] == ZERO) {
+		if (instances[i].fh == ZERO) {
 			fd = i;
 			break;
 		}
@@ -50,68 +56,139 @@ int xio_open(const void *pathname, int flags, ...) {
 	else
 		open_mode = MODE_OLDFILE;
 
-	instances[fd] = IDOS->FOpen(pathname, open_mode, 0);
-	if (instances[fd] == ZERO)
+	instances[fd].fh = IDOS->FOpen(pathname, open_mode, 0);
+	if (instances[fd].fh == ZERO)
 		return -1;
+
+	instances[fd].flags    = flags;
+	instances[fd].file_pos = 0;
 
 	return fd;
 }
 
 ssize_t xio_read(int fd, void *buf, size_t count) {
-	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+	ssize_t nbytes;
+
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd].fh == ZERO)
 		return -1;
 
-	return IDOS->FRead(instances[fd], buf, 1, count);
+	nbytes = IDOS->FRead(instances[fd].fh, buf, 1, count);
+	if (nbytes == -1)
+		return -1;
+
+	instances[fd].file_pos += nbytes;
+	return nbytes;
 }
 
 ssize_t xio_write(int fd, const void *buf, size_t count) {
-	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+	ssize_t nbytes;
+
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd].fh == ZERO)
 		return -1;
 
-	return IDOS->FWrite(instances[fd], buf, 1, count);
+	nbytes = IDOS->FWrite(instances[fd].fh, buf, 1, count);
+	if (nbytes == -1)
+		return -1;
+
+	instances[fd].file_pos += nbytes;
+	return nbytes;
 }
 
 int xio_ftruncate(int fd, int64_t length) {
-	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd].fh == ZERO)
 		return -1;
 
-	if (!IDOS->ChangeFileSize(instances[fd], length, OFFSET_BEGINNING))
+	if (!IDOS->ChangeFileSize(instances[fd].fh, length, OFFSET_BEGINNING))
 		return -1;
+
+	if (instances[fd].file_pos > length)
+		instances[fd].file_pos = length;
+
+	return 0;
+}
+
+static int extend_file(BPTR fh, int64_t num_bytes) {
+	char buffer[1024];
+	size_t size;
+	ssize_t nbytes;
+
+	if (!IDOS->ChangeFilePosition(fh, 0, OFFSET_END))
+		return -1;
+
+	while (num_bytes > 0) {
+		size = sizeof(buffer);
+		if (size > num_bytes)
+			size = num_bytes;
+
+		nbytes = IDOS->Write(fh, buffer, size);
+		if (nbytes <= 0)
+			return -1;
+
+		num_bytes -= nbytes;
+	}
 
 	return 0;
 }
 
 int64_t xio_lseek(int fd, int64_t offset, int whence) {
-	int mode;
+	int64_t current_pos, new_pos, file_size;
 
-	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd].fh == ZERO)
 		return -1;
+
+	current_pos = instances[fd].file_pos;
+	file_size = IDOS->GetFileSize(instances[fd].fh);
 
 	switch (whence) {
 		case SEEK_SET:
-			mode = OFFSET_BEGINNING;
+			new_pos = offset;
 			break;
 		case SEEK_CUR:
-			mode = OFFSET_CURRENT;
+			new_pos = current_pos + offset;
 			break;
 		case SEEK_END:
-			mode = OFFSET_END;
+			if (file_size == -1)
+				return -1;
+			new_pos = file_size + offset;
 			break;
 		default:
 			return -1;
 	}
 
-	if (!IDOS->ChangeFilePosition(instances[fd], offset, mode))
+	if (new_pos == current_pos)
+		return new_pos;
+
+	if (new_pos < 0)
 		return -1;
 
-	return IDOS->GetFilePosition(instances[fd]);
+	if ((instances[fd].flags & O_ACCMODE) != O_RDONLY && file_size != -1 && new_pos > file_size) {
+		if (extend_file(instance[fd].fh, new_pos - file_size) < 0)
+			return -1;
+
+		instances[fd].file_pos = new_pos;
+		return new_pos;
+	}
+
+	if (!IDOS->ChangeFilePosition(instances[fd].fh, new_pos, OFFSET_BEGINNING))
+		return -1;
+
+	instances[fd].file_pos = new_pos;
+	return new_pos;
 }
 
 int xio_close(int fd) {
-	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd] == ZERO)
+	BPTR fh;
+
+	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd].fh == ZERO)
 		return -1;
 
-	if (!IDOS->FClose(instances[fd]))
+	fh = instances[fd].fh;
+
+	instances[fd].fh       = ZERO;
+	instances[fd].flags    = 0;
+	instances[fd].file_pos = 0;
+
+	if (!IDOS->FClose(fh))
 		return -1;
 
 	return 0;
