@@ -31,22 +31,12 @@ const char USED verstag[] = VERSTAG " alpha version";
 
 extern struct Interface *INewlib;
 
+/* Workaround for bug in newlib.library < 53.31 */
+const unsigned int __newlib_minversion __attribute__((weak,section(".gnu.linkonce.r.__NewlibVersion"))) = (52 << 16) | 20;
+
 int main(int argc, char **argv) {
-	struct DOSIFace *local_IDOS = NULL;
 	struct LocaleInfo loc;
 	int rc;
-
-	/* Workaround for weird newlib(?) bug */
-	if (IDOS == NULL) {
-		IExec->DebugPrintF("NULL IDOS detected in main(), using workaround code.\n");
-
-		local_IDOS = (struct DOSIFace *)OpenInterface("dos.library", 53, "main", 1);
-		if (local_IDOS == NULL)
-			return RETURN_FAIL;
-
-		IDOS    = local_IDOS;
-		DOSBase = local_IDOS->Data.LibBase;
-	}
 
 	signal(SIGINT, SIG_IGN);
 	signal(SIGTERM, SIG_IGN);
@@ -77,9 +67,6 @@ int main(int argc, char **argv) {
 out:
 
 	FreeLocaleInfo(&loc);
-
-	if (local_IDOS != NULL)
-		CloseInterface((struct Interface *)local_IDOS);
 
 	return rc;
 }
