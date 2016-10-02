@@ -8,7 +8,7 @@ VERSION := 2
 
 SYSTEM := $(shell uname -s)
 
-CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude -DENABLE_AVI
+CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude
 LDFLAGS := -static
 LIBS    := 
 

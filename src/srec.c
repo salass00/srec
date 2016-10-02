@@ -100,10 +100,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	uint64 timestamp = 0;
 	int rc = RETURN_ERROR;
 
-#ifdef ENABLE_AVI
 	/* AVI output */
 	avi_t *AVI = NULL;
-#endif
 
 	/* MKV output */
 	mk_Writer *writer = NULL;
@@ -126,22 +124,17 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	if (IIntuition == NULL || IGraphics == NULL || IIcon == NULL)
 		goto out;
 
-	if (!(args->width >= MIN_WIDTH && args->width <= MAX_WIDTH))
+	if (args->width < MIN_WIDTH || args->width > MAX_WIDTH)
 		goto out;
 
-	if (!(args->height >= MIN_HEIGHT && args->height <= MAX_HEIGHT))
+	if (args->height < MIN_HEIGHT || args->height > MAX_HEIGHT)
 		goto out;
 
-	if (!(args->fps >= MIN_FPS && args->fps <= MAX_FPS))
+	if (args->fps < MIN_FPS || args->fps > MAX_FPS)
 		goto out;
 
-#ifdef ENABLE_AVI
 	if (args->container != CONTAINER_AVI && args->container != CONTAINER_MKV)
 		goto out;
-#else
-	if (args->container != CONTAINER_MKV)
-		goto out;
-#endif
 
 	if (args->video_codec != VIDEO_CODEC_ZMBV || args->audio_codec != AUDIO_CODEC_NONE)
 		goto out;
@@ -153,16 +146,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	if (encoder == NULL)
 		goto out;
 
-#ifdef ENABLE_AVI
 	if (args->container == CONTAINER_AVI) {
 		AVI = AVI_open_output_file(args->output_file);
 		if (AVI == NULL)
 			goto out;
 
 		AVI_set_video(AVI, args->width, args->height, 24, args->fps, "ZMBV");
-	} else
-#endif
-	{
+	} else {
 		writer = mk_createWriter(args->output_file, 1000000LL, VLC_COMPAT);
 		if (writer == NULL)
 			goto out;
@@ -379,15 +369,12 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				if (!zmbv_encode(encoder, &frame, &framesize, &keyframe))
 					goto out;
 
-#ifdef ENABLE_AVI
 				if (args->container == CONTAINER_AVI) {
 					if (AVI_write_frame(AVI, frame, framesize, keyframe) != 0) {
 						IExec->DebugPrintF("error outputting frame #%lu\n", frames);
 						goto out;
 					}
-				} else
-#endif
-				{
+				} else {
 					if (mk_startFrame(writer, video_track) != 0 ||
 						mk_addFrameData(writer, video_track, frame, framesize) != 0 ||
 						mk_setFrameFlags(writer, video_track, timestamp, keyframe, duration_ns) != 0)
@@ -419,14 +406,11 @@ out:
 		CloseTimerDevice(tr);
 	}
 
-#ifdef ENABLE_AVI
 	if (args->container == CONTAINER_AVI) {
 		if (AVI != NULL) {
 			AVI_close(AVI);
 		}
-	} else
-#endif
-	{
+	} else {
 		if (writer != NULL) {
 			mk_close(writer);
 		}

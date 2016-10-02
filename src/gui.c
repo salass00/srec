@@ -557,9 +557,7 @@ static uint32 gui_map_cfg_val_to_chooser_index(const struct srec_gui *gd, uint32
 }
 
 const struct chooser_map container_map[] = {
-#ifdef ENABLE_AVI
 	{ CONTAINER_AVI, "AVI", MSG_CONTAINER_FORMAT_AVI },
-#endif
 	{ CONTAINER_MKV, "MKV", MSG_CONTAINER_FORMAT_MKV }
 };
 
