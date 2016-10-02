@@ -21,7 +21,7 @@ MSG_CTRL_C_TO_STOP
 CTRL-C per fermare la registrazione
 ; CTRL-C to stop recording.
 ;
-MSG_CX_DESCR
+MSG_DESCRIPTION
 Screen Recorder
 ; Screen Recorder
 ;

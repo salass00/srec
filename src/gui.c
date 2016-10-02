@@ -360,7 +360,7 @@ static BOOL gui_register_broker(struct srec_gui *gd) {
 	nb.nb_Version = NB_VERSION;
 	nb.nb_Name    = PROGNAME;
 	nb.nb_Title   = VERS;
-	nb.nb_Descr   = GetString(gd->locale_info, MSG_CX_DESCR);
+	nb.nb_Descr   = GetString(gd->locale_info, MSG_DESCRIPTION);
 	nb.nb_Unique  = NBU_UNIQUE | NBU_NOTIFY;
 	nb.nb_Flags   = COF_SHOW_HIDE;
 	nb.nb_Pri     = priority;
@@ -407,6 +407,7 @@ static BOOL gui_register_application(struct srec_gui *gd) {
 
 	gd->app_id = IApplication->RegisterApplication(PROGNAME,
 		REGAPP_URLIdentifier,     "a500.org",
+		REGAPP_Description,       GetString(gd->locale_info, MSG_DESCRIPTION),
 		REGAPP_UniqueApplication, TRUE,
 		REGAPP_Hidden,            gd->hidden,
 		REGAPP_LoadPrefs,         TRUE,
