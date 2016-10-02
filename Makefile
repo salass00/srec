@@ -12,8 +12,9 @@ CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude
 LDFLAGS := -static
 LIBS    := 
 
-SRCS := src/main.c src/locale.c src/cli.o src/gui.o src/srec.c src/interfaces.c src/timer.c src/zmbv.c src/zmbv_altivec.c
+SRCS := src/main.c src/locale.c src/cli.c src/gui.c src/srec.c src/interfaces.c src/timer.c src/zmbv.c src/zmbv_altivec.c
 OBJS := $(SRCS:.c=.o)
+DEPS := $(SRCS:.c=.d)
 
 AVILIB := avilib-0.6.10/libavi.a
 LIBMKV := libmkv/libmkv.a
@@ -28,24 +29,13 @@ $(TARGET): $(OBJS) $(AVILIB) $(LIBMKV)
 	$(CC) $(LDFLAGS) -o $@.debug $^ $(LIBS)
 	$(STRIP) -R.comment -o $@ $@.debug
 
-src/main.o: src/interfaces.h src/locale.h include/locale_strings.h src/cli.h src/gui.h SRec_rev.h
+%.o: %.c
+	$(CC) -MM -MP -MT $*.d -MT $@ -MF $*.d $(CFLAGS) $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-src/locale.o: src/locale.h include/locale_strings.h
-
-src/cli.o: src/cli.h src/locale.h include/locale_strings.h src/srec.h
-
-src/gui.o: src/gui.h src/locale.h include/locale_strings.h src/interfaces.h src/srec.h SRec_rev.h
-
-src/srec.o: src/srec.h src/interfaces.h src/timer.h include/libmkv.h src/zmbv.h SRec_rev.h
-
-src/interfaces.o: src/interfaces.h
-
-src/timer.o: src/timer.h
-
-src/zmbv.o: src/srec.h src/zmbv.h src/interfaces.h
-
-src/zmbv_altivec.o: src/zmbv.h
 src/zmbv_altivec.o: CFLAGS += -maltivec
+
+-include $(DEPS)
 
 include/locale_strings.h: catalogs/SRec.cd
 ifeq ($(SYSTEM),AmigaOS)
