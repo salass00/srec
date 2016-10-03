@@ -107,8 +107,8 @@ static void zmbv_endian_convert_generic(const struct zmbv_state *state,
 				for (j = 0; j != width; j++) {
 					uint32 x = *row;
 					__asm__("rlwinm %0,%1,8,0,31\n\t"
-					        "rlwimi %0,%1,16,8,15\n\t"
-					        "rlwimi %0,%1,16,24,31"
+					        "rlwimi %0,%1,24,8,15\n\t"
+					        "rlwimi %0,%1,24,24,31"
 					        : "=&r" (x)
 					        : "r" (x));
 					*row++ = x;
