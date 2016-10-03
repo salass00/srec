@@ -19,7 +19,8 @@ DEPS := $(SRCS:.c=.d)
 AVILIB := avilib-0.6.10/libavi.a
 LIBMKV := libmkv/libmkv.a
 
-CATALOGS := catalogs/italian/SRec.catalog
+CTFILES  := $(wildcard catalogs/*/SRec.ct)
+CATALOGS := $(CTFILES:.ct=.catalog)
 
 .PHONY: all revision clean catalogs
 
