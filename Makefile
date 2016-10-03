@@ -36,7 +36,7 @@ $(TARGET): $(OBJS) $(AVILIB) $(LIBMKV)
 
 src/zmbv_altivec.o: CFLAGS += -maltivec
 
--include $(DEPS)
+src/main.o src/cli.o src/gui.o src/locale.o: include/locale_strings.h
 
 include/locale_strings.h: catalogs/SRec.cd
 ifeq ($(SYSTEM),AmigaOS)
@@ -44,6 +44,8 @@ ifeq ($(SYSTEM),AmigaOS)
 else
 	catcomp --cfile $@ $<
 endif
+
+-include $(DEPS)
 
 $(LIBMKV):
 	make -C $(dir $@)
@@ -62,5 +64,5 @@ revision:
 clean:
 	make -C libmkv clean
 	make -C avilib-0.6.10 clean
-	$(RM) src/*.o $(TARGET).debug $(TARGET)
+	$(RM) src/*.[od] $(TARGET).debug $(TARGET)
 
