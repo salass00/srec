@@ -1,32 +1,21 @@
-## version $VER: SRec.catalog 2.1 (30.9.2016)
+## version $VER: SRec.catalog 2.1 (03.09.2016)
 ## codeset 0
-## language italiano
-## chunk AUTH Translated by Samir Hawamdeh (http://www.betatesting.it/backforthefuture)
-;
-; ATO Italia
-; Compiled with FlexCat 2.18 PPC (AmigaOS4)
-; flexcat SRec.cd SRec.ct catalog=SRec.catalog
-; 
-; Italian translation of SRec
-;
-; Traduzione italiana di SRec
-;
-; $VER: SRec 2.1 (20.9.2016)
+## language german
 ;
 MSG_TOO_OLD_OS_VERSION
-SRec %ld.%ld richiede %s o superiore!
+SRec %ld.%ld benötigt %s oder höher!
 ; SRec %ld.%ld requires %s or newer!
 ;
 MSG_CTRL_C_TO_STOP
-CTRL-C per fermare la registrazione
+CTRL-C um Aufnahme zu stoppen.
 ; CTRL-C to stop recording.
 ;
 MSG_DESCRIPTION
-Screen Recorder
+Bildschirmrecorder
 ; Screen Recorder
 ;
 MSG_ABOUT_WINDOW_TITLE
-Informazioni su %s
+Über - %s
 ; About - %s
 ;
 MSG_OK_GAD
@@ -38,55 +27,55 @@ MSG_WINDOW_TITLE
 ; %s: Hot Key = <%s>
 ;
 MSG_KEY_NONE
-nessuno
+Nichts
 ; none
 ;
 MSG_PROJECT_MENU
-Progetto
+Projekt
 ; Project
 ;
 MSG_PROJECT_ABOUT
-Informazioni...
+Über...
 ; About...
 ;
 MSG_PROJECT_HIDE
-Nascondi
+Verstecken
 ; Hide
 ;
 MSG_PROJECT_ICONIFY
-Iconifica
+Ikonifizieren
 ; Iconify
 ;
 MSG_PROJECT_QUIT
-Esci
+Beenden
 ; Quit
 ;
 MSG_SETTINGS_MENU
-Impostazioni
+Einstellungen
 ; Settings
 ;
 MSG_SETTINGS_SAVE_AS_DEFAULTS
-Salva come predefinito
+Als Standardeinstellungen speichern
 ; Save As Defaults
 ;
 MSG_OUTPUT_FILE_GAD
-Output
+Ausgabe
 ; Output
 ;
 MSG_FORMAT_TAB
-Formato
+Format
 ; Format
 ;
 MSG_POINTER_TAB
-Puntatore
+Mauzeiger
 ; Pointer
 ;
 MSG_MISC_TAB
-Varie
+Verschiedenes
 ; Misc
 ;
 MSG_CONTAINER_FORMAT_GAD
-Formato
+Format
 ; Format
 ;
 MSG_CONTAINER_FORMAT_MKV
@@ -94,7 +83,7 @@ MKV
 ; MKV
 ;
 MSG_VIDEO_CODEC_GAD
-Codec Video
+Video-Codec
 ; Video Codec
 ;
 MSG_VIDEO_CODEC_ZMBV
@@ -102,15 +91,15 @@ ZMBV
 ; ZMBV
 ;
 MSG_ASPECT_RATIO_GAD
-Aspect Ratio
+Seitenverhältnis
 ; Aspect Ratio
 ;
 MSG_ASPECT_RATIO_LIKE_WB
-Tipo WB
+Wie WB
 ; Like WB
 ;
 MSG_ASPECT_RATIO_CUSTOM
-Personalizzato
+Benutzerdefiniert
 ; Custom
 ;
 MSG_ASPECT_RATIO_4_3
@@ -130,27 +119,27 @@ MSG_ASPECT_RATIO_16_10
 ; 16 : 10
 ;
 MSG_VIDEO_WIDTH_GAD
-Larghezza
+Breite
 ; Width
 ;
 MSG_VIDEO_HEIGHT_GAD
-Altezza
+Höhe
 ; Height
 ;
 MSG_VIDEO_FPS_GAD
-Fotogrammi Per Secondo
+Bilder pro Sekunde
 ; Frames Per Second
 ;
 MSG_AUDIO_CODEC_GAD
-Codec Audio
+Audio-Codec
 ; Audio Codec
 ;
 MSG_AUDIO_CODEC_NONE
-Nessuno
+Nichts
 ; None
 ;
 MSG_AUDIO_SAMPLE_SIZE_GAD
-Dimensione Sample
+Samplequalität
 ; Sample Size
 ;
 MSG_AUDIO_SAMPLE_SIZE_8BIT
@@ -166,7 +155,7 @@ MSG_AUDIO_SAMPLE_SIZE_32BIT
 ; 32-bit
 ;
 MSG_AUDIO_CHANNELS_GAD
-Canali
+Kanäle
 ; Channels
 ;
 MSG_AUDIO_CHANNELS_MONO
@@ -178,7 +167,7 @@ Stereo
 ; Stereo
 ;
 MSG_AUDIO_SAMPLE_RATE_GAD
-Qualità Audio
+Samplerate
 ; Sample Rate
 ;
 MSG_AUDIO_SAMPLE_RATE_11025HZ
@@ -198,26 +187,26 @@ MSG_AUDIO_SAMPLE_RATE_48000HZ
 ; 48000 Hz
 ;
 MSG_ENABLE_POINTER_GAD
-Attiva Puntatore
+Aktiviere Mauszeiger
 ; Enable Pointer
 ;
 MSG_POINTER_FILE_GAD
-Puntatore Grafico
+Grafik vom Mauszeiger
 ; Pointer Graphic
 ;
 MSG_BUSY_POINTER_FILE_GAD
-Puntatore Occupato
+Grafik vom beschäftigten Mauszeiger
 ; Busy Pointer Graphic
 ;
 MSG_BILINEAR_FILTER_GAD
-Bilinear Filtering
+Bilineare Filterung
 ; Bilinear Filtering
 ;
 MSG_RECORD_GAD
-Registra
+Aufnahme
 ; Record
 ;
 MSG_STOP_GAD
-Stop
+Stopp
 ; Stop
 ;
