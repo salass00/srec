@@ -162,7 +162,7 @@ int64_t xio_lseek(int fd, int64_t offset, int whence) {
 		return -1;
 
 	if ((instances[fd].flags & O_ACCMODE) != O_RDONLY && file_size != -1 && new_pos > file_size) {
-		if (extend_file(instance[fd].fh, new_pos - file_size) < 0)
+		if (extend_file(instances[fd].fh, new_pos - file_size) < 0)
 			return -1;
 
 		instances[fd].file_pos = new_pos;
