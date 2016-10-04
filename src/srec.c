@@ -18,6 +18,7 @@
 
 #include "srec.h"
 #include "interfaces.h"
+#include "pointer.h"
 #include "timer.h"
 #include "avilib.h"
 #include "libmkv.h"
@@ -98,6 +99,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	uint32 duration_us;
 	uint64 duration_ns;
 	uint64 timestamp = 0;
+	struct srec_pointer *pointer = NULL;
+	struct srec_pointer *busy_pointer = NULL;
 	int rc = RETURN_ERROR;
 
 	/* AVI output */
@@ -138,6 +141,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 	if (args->video_codec != VIDEO_CODEC_ZMBV || args->audio_codec != AUDIO_CODEC_NONE)
 		goto out;
+
+	if (!args->no_pointer) {
+		pointer = load_pointer(&gd, args->pointer_file);
+		busy_pointer = load_pointer(&gd, args->busy_pointer_file);
+		if (pointer == NULL || busy_pointer == NULL)
+			goto out;
+	}
 
 	duration_us = (uint32)lroundf(1000.0f / (float)args->fps) * 1000UL;
 	duration_ns = duration_us * 1000UL;
@@ -418,6 +428,14 @@ out:
 
 	if (encoder != NULL)
 		zmbv_end(encoder);
+
+	if (!args->no_pointer) {
+		if (pointer != NULL)
+			free_pointer(&gd, pointer);
+
+		if (busy_pointer != NULL)
+			free_pointer(&gd, busy_pointer);
+	}
 
 	if (IIcon != NULL)
 		CloseInterface((struct Interface *)IIcon);
