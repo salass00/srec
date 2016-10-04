@@ -19,6 +19,7 @@
 #include "pointer.h"
 #include <workbench/icon.h>
 #include <proto/exec.h>
+#include <proto/dos.h>
 #include <proto/utility.h>
 #include <interfaces/icon.h>
 #include <string.h>
@@ -39,6 +40,7 @@ struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name
 	const uint8 *image;
 	uint32 width, height;
 	uint32 processed;
+	CONST_STRPTR tt;
 	APTR lock;
 	uint8 *buffer;
 	uint32 image_bpr, buffer_bpr;
@@ -71,6 +73,13 @@ struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name
 		TAG_END);
 	if (sp == NULL)
 		goto out;
+
+	tt = IIcon->FindToolType(icon->do_ToolTypes, "XOFFSET");
+	if (tt != NULL)
+		IDOS->StrToLong(tt, &sp->xoffs);
+	tt = IIcon->FindToolType(icon->do_ToolTypes, "YOFFSET");
+	if (tt != NULL)
+		IDOS->StrToLong(tt, &sp->yoffs);
 
 	sp->width  = width;
 	sp->height = height;

@@ -22,6 +22,7 @@
 #include "srec.h"
 
 struct srec_pointer {
+	int32          xoffs, yoffs;
 	uint32         width, height;
 	struct BitMap *user_bm;
 	uint8         *buffer;
