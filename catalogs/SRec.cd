@@ -43,19 +43,19 @@ MSG_SETTINGS_SAVE_AS_DEFAULTS (//)
 Save As Defaults
 ;
 MSG_OUTPUT_FILE_GAD (//)
-Output
+_Output
 ;
 MSG_FORMAT_TAB (//)
-Format
+_Format
 ;
 MSG_POINTER_TAB (//)
-Pointer
+_Pointer
 ;
 MSG_MISC_TAB (//)
-Misc
+_Misc
 ;
 MSG_CONTAINER_FORMAT_GAD (//)
-Format
+_Container
 ;
 MSG_CONTAINER_FORMAT_AVI (//)
 AVI
@@ -64,7 +64,7 @@ MSG_CONTAINER_FORMAT_MKV (//)
 MKV
 ;
 MSG_VIDEO_CODEC_GAD (//)
-Video Codec
+_Video Codec
 ;
 MSG_VIDEO_CODEC_ZMBV (//)
 ZMBV
@@ -91,16 +91,16 @@ MSG_ASPECT_RATIO_16_10 (//)
 16 : 10
 ;
 MSG_VIDEO_WIDTH_GAD (//)
-Width
+_Width
 ;
 MSG_VIDEO_HEIGHT_GAD (//)
-Height
+_Height
 ;
 MSG_VIDEO_FPS_GAD (//)
 Frames Per Second
 ;
 MSG_AUDIO_CODEC_GAD (//)
-Audio Codec
+_Audio Codec
 ;
 MSG_AUDIO_CODEC_NONE (//)
 None
@@ -142,7 +142,7 @@ MSG_AUDIO_SAMPLE_RATE_48000HZ (//)
 48000 Hz
 ;
 MSG_ENABLE_POINTER_GAD (//)
-Enable Pointer
+_Enable Pointer
 ;
 MSG_POINTER_FILE_GAD (//)
 Pointer Graphic
@@ -151,11 +151,11 @@ MSG_BUSY_POINTER_FILE_GAD (//)
 Busy Pointer Graphic
 ;
 MSG_BILINEAR_FILTER_GAD (//)
-Bilinear Filtering
+_Bilinear Filtering
 ;
 MSG_RECORD_GAD (//)
-Record
+_Record
 ;
 MSG_STOP_GAD (//)
-Stop
+_Stop
 ;
