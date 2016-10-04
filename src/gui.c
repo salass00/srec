@@ -1568,6 +1568,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 		if (signals & window_sigs) {
 			BOOL hide = FALSE;
 			BOOL iconify = FALSE;
+			BOOL uniconify = FALSE;
 			uint32 result;
 			uint16 code;
 			uint32 id;
@@ -1659,6 +1660,14 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 						}
 						break;
 
+					case WMHI_ICONIFY:
+						iconify = TRUE;
+						break;
+
+					case WMHI_UNICONIFY:
+						uniconify = TRUE;
+						break;
+
 					case WMHI_CLOSEWINDOW:
 						hide = TRUE;
 						break;
@@ -1669,6 +1678,8 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 				gui_hide_window(gd);
 			} else if (iconify) {
 				gui_iconify_window(gd);
+			} else if (uniconify) {
+				gui_show_window(gd);
 			}
 		}
 	}
