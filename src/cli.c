@@ -20,6 +20,7 @@
 #include "cli.h"
 #include "locale.h"
 #include "srec.h"
+#include "pointer.h"
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/utility.h>
@@ -69,6 +70,9 @@ int cli_main(struct LocaleInfo *loc) {
 
 	IUtility->Strlcpy(startup_msg->pointer_file, DEFAULT_POINTER_FILE, sizeof(startup_msg->pointer_file));
 	IUtility->Strlcpy(startup_msg->busy_pointer_file, DEFAULT_BUSY_POINTER_FILE, sizeof(startup_msg->busy_pointer_file));
+
+	strip_info_extension(startup_msg->pointer_file);
+	strip_info_extension(startup_msg->busy_pointer_file);
 
 	startup_msg->container   = DEFAULT_CONTAINER;
 	startup_msg->video_codec = DEFAULT_VIDEO_CODEC;

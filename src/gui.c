@@ -21,6 +21,7 @@
 #include "locale.h"
 #include "interfaces.h"
 #include "srec.h"
+#include "pointer.h"
 #include <intuition/menuclass.h>
 #include <classes/requester.h>
 #include <classes/window.h>
@@ -1236,6 +1237,9 @@ static void gui_start_recording(struct srec_gui *gd) {
 
 	IUtility->Strlcpy(sm->pointer_file, pointer_file, sizeof(sm->pointer_file));
 	IUtility->Strlcpy(sm->busy_pointer_file, busy_pointer_file, sizeof(sm->busy_pointer_file));
+
+	strip_info_extension(sm->pointer_file);
+	strip_info_extension(sm->busy_pointer_file);
 
 	sm->container   = gd->container;
 	sm->video_codec = gd->video_codec;
