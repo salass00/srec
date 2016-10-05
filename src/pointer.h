@@ -24,6 +24,7 @@
 void strip_info_extension(STRPTR name);
 struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name);
 void scale_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp);
+void render_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp, int32 mouse_x, int32 mouse_y);
 void free_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp);
 
 #endif

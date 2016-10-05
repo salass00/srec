@@ -76,15 +76,9 @@ static inline uint32_t h2le32(uint32_t x) {
 	return (x << 24) | ((x & 0xff00UL) << 8) | ((x & 0xff0000UL) >> 8) | (x >> 24);
 }
 
-typedef struct {
-	float x, y;
-	float s, t, w;
-} vertex_t;
-
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	struct ExecIFace *IExec = (struct ExecIFace *)sysbase->MainInterface;
 	struct Process *proc;
-	const struct SRecArgs *args;
 	struct SRecGlobal gd;
 	struct zmbv_state *encoder = NULL;
 	struct TimeRequest *tr = NULL;
@@ -92,8 +86,6 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	BOOL timer_in_use = FALSE;
 	struct Screen *current_screen = NULL;
 	struct BitMap *screen_bitmap = NULL;
-	struct BitMap *bitmap = NULL;
-	uint32 disp_width, disp_height;
 	vertex_t vertex_array[6];
 	uint32 frames = 0;
 	uint32 duration_us;
@@ -101,6 +93,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	uint64 timestamp = 0;
 	struct srec_pointer *pointer = NULL;
 	struct srec_pointer *busy_pointer = NULL;
+	int32 mouse_x = 0, mouse_y = 0;
 	BOOL use_busy_pointer = FALSE;
 	int rc = RETURN_ERROR;
 
@@ -113,21 +106,26 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	mk_TrackConfig video_conf;
 	mk_Track *video_track = NULL;
 
+	#define args        gd.args
+
+	#define IIntuition  gd.iintuition
+	#define IGraphics   gd.igraphics
+	#define IIcon       gd.iicon
+
+	#define bitmap      gd.bitmap
+	#define disp_width  gd.disp_width
+	#define disp_height gd.disp_height
+	#define scale_x     gd.scale_x
+	#define scale_y     gd.scale_y
+	#define min_x       gd.scaled_rect.min_x
+	#define min_y       gd.scaled_rect.min_y
+	#define max_x       gd.scaled_rect.max_x
+	#define max_y       gd.scaled_rect.max_y
+
 	proc = (struct Process *)IExec->FindTask(NULL);
 
 	IExec->WaitPort(&proc->pr_MsgPort);
 	args = (const struct SRecArgs *)IExec->GetMsg(&proc->pr_MsgPort);
-
-	#define IIntuition gd.iintuition
-	#define IGraphics  gd.igraphics
-	#define IIcon      gd.iicon
-
-	#define scale_x    gd.scale_x
-	#define scale_y    gd.scale_y
-	#define min_x      gd.scaled_rect.min_x
-	#define min_y      gd.scaled_rect.min_y
-	#define max_x      gd.scaled_rect.max_x
-	#define max_y      gd.scaled_rect.max_y
 
 	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
 	IGraphics  = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
@@ -232,7 +230,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 			struct Screen *first_screen;
 			struct Window *active_window;
 			uint32 ilock;
-			uint32 comp_err;
+			uint32 comp_err = 0;
 
 			if (timer_in_use)
 				IExec->WaitIO((struct IORequest *)tr);
@@ -363,6 +361,9 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 			}
 
 			if (!args->no_pointer) {
+				mouse_x = current_screen->MouseX;
+				mouse_y = current_screen->MouseY;
+
 				active_window = IntuitionBase->ActiveWindow;
 				if (active_window != NULL && active_window->ReqCount != 0)
 					use_busy_pointer = TRUE;
@@ -397,11 +398,9 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				}
 
 				if (!args->no_pointer) {
-					if (use_busy_pointer) {
-						//FIXME: Render busy pointer
-					} else {
-						//FIXME: Render normal pointer
-					}
+					struct srec_pointer *sp = use_busy_pointer ? busy_pointer : pointer;
+
+					render_pointer(&gd, sp, mouse_x, mouse_y);
 				}
 
 				if (!zmbv_encode(encoder, &frame, &framesize, &keyframe))

@@ -90,16 +90,23 @@ struct SRecArgs {
 	TEXT           busy_pointer_file[1024];
 };
 
+typedef struct {
+	float x, y;
+	float s, t, w;
+} vertex_t;
+
 struct float_rect {
 	float min_x, min_y, max_x, max_y;
 };
 
 struct SRecGlobal {
+	const struct SRecArgs *args;
 	struct IntuitionIFace *iintuition;
 	struct GraphicsIFace  *igraphics;
 	struct IconIFace      *iicon;
-	float                  scale_x;
-	float                  scale_y;
+	struct BitMap         *bitmap;
+	uint32                 disp_width, disp_height;
+	float                  scale_x, scale_y;
 	struct float_rect      scaled_rect;
 };
 
