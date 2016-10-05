@@ -70,7 +70,7 @@ MSG_VIDEO_CODEC_ZMBV (//)
 ZMBV
 ;
 MSG_ASPECT_RATIO_GAD (//)
-Aspect Ratio
+Aspect Rat_io
 ;
 MSG_ASPECT_RATIO_LIKE_WB (//)
 Like WB
@@ -97,7 +97,7 @@ MSG_VIDEO_HEIGHT_GAD (//)
 _Height
 ;
 MSG_VIDEO_FPS_GAD (//)
-Frames Per Second
+Fram_es Per Second
 ;
 MSG_AUDIO_CODEC_GAD (//)
 _Audio Codec
@@ -109,7 +109,7 @@ MSG_AUDIO_CODEC_PCM (//)
 PCM
 ;
 MSG_AUDIO_SAMPLE_SIZE_GAD (//)
-Sample Size
+Sample Si_ze
 ;
 MSG_AUDIO_SAMPLE_SIZE_8BIT (//)
 8-bit
@@ -121,7 +121,7 @@ MSG_AUDIO_SAMPLE_SIZE_32BIT (//)
 32-bit
 ;
 MSG_AUDIO_CHANNELS_GAD (//)
-Channels
+Channe_ls
 ;
 MSG_AUDIO_CHANNELS_MONO (//)
 Mono
@@ -130,7 +130,7 @@ MSG_AUDIO_CHANNELS_STEREO (//)
 Stereo
 ;
 MSG_AUDIO_SAMPLE_RATE_GAD (//)
-Sample Rate
+Sample Ra_te
 ;
 MSG_AUDIO_SAMPLE_RATE_11025HZ (//)
 11025 Hz
