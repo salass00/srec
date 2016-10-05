@@ -230,7 +230,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 			struct Screen *first_screen;
 			struct Window *active_window;
 			uint32 ilock;
-			uint32 comp_err = 0;
+			uint32 comp_err = COMPERR_Success;
 
 			if (timer_in_use)
 				IExec->WaitIO((struct IORequest *)tr);
