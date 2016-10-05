@@ -199,8 +199,8 @@ void render_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp, int32 
 	pointer_x = mouse_x + sp->xoffs;
 	pointer_y = mouse_y + sp->yoffs;
 
-	min_x = roundf((float)pointer_x * gd->scale_x);
-	min_y = roundf((float)pointer_y * gd->scale_y);
+	min_x = gd->scaled_rect.min_x + roundf((float)pointer_x * gd->scale_x);
+	min_y = gd->scaled_rect.min_y + roundf((float)pointer_y * gd->scale_y);
 	max_x = min_x + sp->scaled_width - 1.0f;
 	max_y = min_y + sp->scaled_height - 1.0f;
 
