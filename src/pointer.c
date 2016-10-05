@@ -39,12 +39,10 @@ struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name
 	uint32 format;
 	const uint8 *image;
 	uint32 width, height;
+	struct ColorRegister *palette;
 	uint32 processed;
 	CONST_STRPTR tt;
 	APTR lock;
-	uint8 *buffer;
-	uint32 image_bpr, buffer_bpr;
-	uint32 i;
 
 	icon = IIcon->GetIconTags(name,
 		ICONGETA_FailIfUnavailable,  TRUE,
@@ -63,7 +61,15 @@ struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name
 	if (processed != 4)
 		goto out;
 
-	if (format != IDFMT_DIRECTMAPPED)
+	if (format == IDFMT_DIRECTMAPPED) {
+		/* Do nothing */
+	} else if (format == IDFMT_PALETTEMAPPED) {
+		processed = IIcon->IconControl(icon,
+			ICONCTRLA_GetPalette1, &palette,
+			TAG_END);
+		if (processed != 1)
+			goto out;
+	} else
 		goto out;
 
 	sp = IExec->AllocVecTags(sizeof(*sp),
@@ -104,15 +110,38 @@ struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name
 	if (lock != NULL)
 		IGraphics->UnlockBitMap(lock);
 
-	buffer     = sp->buffer;
-	image_bpr  = width << 2;
-	buffer_bpr = sp->bpr;
+	if (format == IDFMT_DIRECTMAPPED) {
+		uint8 *buffer;
+		uint32 i, image_bpr, buffer_bpr;
 
-	for (i = 0; i != height; i++) {
-		IExec->CopyMem(image, buffer, image_bpr);
+		buffer     = sp->buffer;
+		image_bpr  = width << 2;
+		buffer_bpr = sp->bpr;
 
-		image  += image_bpr;
-		buffer += buffer_bpr;
+		for (i = 0; i != height; i++) {
+			IExec->CopyMem(image, buffer, image_bpr);
+
+			image  += image_bpr;
+			buffer += buffer_bpr;
+		}
+	} else {
+		uint8 *buffer;
+		uint32 i, j, p, buffer_mod;
+
+		buffer     = sp->buffer;
+		buffer_mod = sp->bpr - (width << 2);
+
+		for (i = 0; i != height; i++) {
+			for (j = 0; j != width; j++) {
+				p = *image++;
+				*buffer++ = (p != 0) ? 0xff : 0x00;
+				*buffer++ = palette[p].red;
+				*buffer++ = palette[p].green;
+				*buffer++ = palette[p].blue;
+			}
+
+			buffer += buffer_mod;
+		}
 	}
 
 	IIcon->FreeDiskObject(icon);
