@@ -22,6 +22,12 @@
 #include <proto/utility.h>
 #include <malloc.h>
 
+/*
+ * For an explanation of the Zip Movable Blocks Video encoding used here you
+ * can go to the following link:
+ * https://wiki.multimedia.cx/?title=DosBox_Capture_Codec
+ */
+
 #define BLKW 16
 #define BLKH 16
 
