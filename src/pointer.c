@@ -221,11 +221,11 @@ void render_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp, int32 
 	if (pointer_x < 0)
 		min_s -= (float)pointer_x;
 	if (pointer_x + sp->width > gd->disp_width)
-		max_s -= pointer_x + sp->width - gd->disp_width;
+		max_s -= (float)(pointer_x + sp->width - gd->disp_width);
 	if (pointer_y < 0)
 		min_t -= (float)pointer_y;
 	if (pointer_y + sp->height > gd->disp_height)
-		max_t -= pointer_y + sp->height - gd->disp_height;
+		max_t -= (float)(pointer_y + sp->height - gd->disp_height);
 
 	vertex_array[0].x = min_x;
 	vertex_array[0].y = min_y;
