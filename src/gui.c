@@ -653,11 +653,13 @@ static void gui_read_settings(struct srec_gui *gd) {
 static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct Gadget *gadget = (struct Gadget *)gd->obj[id];
-	struct Window *window = NULL;
+	struct Window *window;
 	struct TagItem *tags;
+	uint32 temp;
 	va_list ap;
 
-	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
+	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], &temp);
+	window = (struct Window *)temp;
 
 	va_startlinear(ap, id);
 	tags = va_getlinearva(ap, struct TagItem *);
@@ -1179,8 +1181,10 @@ static void gui_about_requester(struct srec_gui *gd) {
 	Object *requester;
 	TEXT requester_title[64];
 	TEXT body_text[1024];
+	uint32 temp;
 
-	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
+	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], &temp);
+	window = (struct Window *)temp;
 
 	IUtility->SNPrintf(requester_title, sizeof(requester_title),
 		GetString(loc, MSG_ABOUT_WINDOW_TITLE), PROGNAME);
@@ -1208,9 +1212,11 @@ static void gui_about_requester(struct srec_gui *gd) {
 
 static void gui_getfile_requester(struct srec_gui *gd, uint32 id) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
-	struct Window *window = NULL;
+	struct Window *window;
+	uint32 temp;
 
-	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], (uint32 *)&window);
+	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], &temp);
+	window = (struct Window *)temp;
 	if (window == NULL) {
 		/* Do nothing */
 		return;
@@ -1226,13 +1232,17 @@ static void gui_start_recording(struct srec_gui *gd) {
 	CONST_STRPTR pointer_file;
 	CONST_STRPTR busy_pointer_file;
 	struct Process *proc;
+	uint32 temp;
 
 	if (gui_is_recording(gd))
 		return;
 
-	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_OUTPUT_FILE], (uint32 *)&output_file);
-	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_POINTER_FILE], (uint32 *)&pointer_file);
-	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_BUSY_POINTER_FILE], (uint32 *)&busy_pointer_file);
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_OUTPUT_FILE], &temp);
+	output_file = (CONST_STRPTR)temp;
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_POINTER_FILE], &temp);
+	pointer_file = (CONST_STRPTR)temp;
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_BUSY_POINTER_FILE], &temp);
+	busy_pointer_file = (CONST_STRPTR)temp;
 
 	IUtility->Strlcpy(sm->output_file, output_file, sizeof(sm->output_file));
 
@@ -1287,12 +1297,15 @@ static void gui_save_settings(struct srec_gui *gd) {
 	CONST_STRPTR output_file;
 	CONST_STRPTR pointer_file;
 	CONST_STRPTR busy_pointer_file;
-	uint32 index;
+	uint32 temp, index;
 	PrefsObject *obj;
 
-	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_OUTPUT_FILE], (uint32 *)&output_file);
-	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_POINTER_FILE], (uint32 *)&pointer_file);
-	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_BUSY_POINTER_FILE], (uint32 *)&busy_pointer_file);
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_OUTPUT_FILE], &temp);
+	output_file = (CONST_STRPTR)temp;
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_POINTER_FILE], &temp);
+	pointer_file = (CONST_STRPTR)temp;
+	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_BUSY_POINTER_FILE], &temp);
+	busy_pointer_file = (CONST_STRPTR)temp;
 
 	obj = IPrefsObjects->PrefsString(NULL, NULL,
 		ALPO_Alloc,             NULL,
