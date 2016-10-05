@@ -101,6 +101,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	uint64 timestamp = 0;
 	struct srec_pointer *pointer = NULL;
 	struct srec_pointer *busy_pointer = NULL;
+	BOOL use_busy_pointer = FALSE;
 	int rc = RETURN_ERROR;
 
 	/* AVI output */
@@ -222,6 +223,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 		if (signals & timer_sig) {
 			struct IntuitionBase *IntuitionBase;
 			struct Screen *first_screen;
+			struct Window *active_window;
 			uint32 ilock;
 			uint32 comp_err;
 
@@ -340,6 +342,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						vertex_array[5].s = max_s;
 						vertex_array[5].t = max_t;
 						vertex_array[5].w = 1.0f;
+
+						//FIXME: Scale pointers as well
 					} else {
 						IGraphics->FreeBitMap(bitmap);
 						bitmap = NULL;
@@ -349,6 +353,12 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 					IExec->DebugPrintF("non-RTG or CLUT formats are not supported!\n");
 				}
 			}
+
+			active_window = IntuitionBase->ActiveWindow;
+			if (active_window != NULL && active_window->ReqCount != 0)
+				use_busy_pointer = TRUE;
+			else
+				use_busy_pointer = FALSE;
 
 			if (screen_bitmap != NULL && bitmap != NULL) {
 				uint32 comp_flags = COMPFLAG_SrcAlphaOverride | COMPFLAG_HardwareOnly | COMPFLAG_IgnoreDestAlpha;
@@ -374,6 +384,12 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				if (comp_err != COMPERR_Success) {
 					IExec->DebugPrintF("composite call failed, error = %lu!\n", comp_err);
 					goto out;
+				}
+
+				if (use_busy_pointer) {
+					//FIXME: Render busy pointer
+				} else {
+					//FIXME: Render normal pointer
 				}
 
 				if (!zmbv_encode(encoder, &frame, &framesize, &keyframe))
