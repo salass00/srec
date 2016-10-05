@@ -105,6 +105,9 @@ _Audio Codec
 MSG_AUDIO_CODEC_NONE (//)
 None
 ;
+MSG_AUDIO_CODEC_PCM (//)
+PCM
+;
 MSG_AUDIO_SAMPLE_SIZE_GAD (//)
 Sample Size
 ;
