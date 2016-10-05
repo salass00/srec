@@ -354,11 +354,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				}
 			}
 
-			active_window = IntuitionBase->ActiveWindow;
-			if (active_window != NULL && active_window->ReqCount != 0)
-				use_busy_pointer = TRUE;
-			else
-				use_busy_pointer = FALSE;
+			if (!args->no_pointer) {
+				active_window = IntuitionBase->ActiveWindow;
+				if (active_window != NULL && active_window->ReqCount != 0)
+					use_busy_pointer = TRUE;
+				else
+					use_busy_pointer = FALSE;
+			}
 
 			if (screen_bitmap != NULL && bitmap != NULL) {
 				uint32 comp_flags = COMPFLAG_SrcAlphaOverride | COMPFLAG_HardwareOnly | COMPFLAG_IgnoreDestAlpha;
@@ -386,10 +388,12 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 					goto out;
 				}
 
-				if (use_busy_pointer) {
-					//FIXME: Render busy pointer
-				} else {
-					//FIXME: Render normal pointer
+				if (!args->no_pointer) {
+					if (use_busy_pointer) {
+						//FIXME: Render busy pointer
+					} else {
+						//FIXME: Render normal pointer
+					}
 				}
 
 				if (!zmbv_encode(encoder, &frame, &framesize, &keyframe))
