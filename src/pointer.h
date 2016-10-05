@@ -21,17 +21,9 @@
 
 #include "srec.h"
 
-struct srec_pointer {
-	int32          xoffs, yoffs;
-	uint32         width, height;
-	struct BitMap *user_bm;
-	uint8         *buffer;
-	uint32         bpr;
-	struct BitMap *vram_bm;
-};
-
 void strip_info_extension(STRPTR name);
 struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name);
+void scale_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp);
 void free_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp);
 
 #endif

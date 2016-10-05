@@ -122,6 +122,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	#define IGraphics  gd.igraphics
 	#define IIcon      gd.iicon
 
+	#define scale_x    gd.scale_x
+	#define scale_y    gd.scale_y
+	#define min_x      gd.scaled_rect.min_x
+	#define min_y      gd.scaled_rect.min_y
+	#define max_x      gd.scaled_rect.max_x
+	#define max_y      gd.scaled_rect.max_y
+
 	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
 	IGraphics  = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
 	IIcon      = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1);
@@ -264,9 +271,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						uint32 width, height;
 						uint32 mode_id, info_len;
 						struct DimensionInfo diminfo;
-						float scale_x, scale_y;
 						float scaled_width, scaled_height;
-						float min_x, min_y, max_x, max_y;
 						float min_s, min_t, max_s, max_t;
 
 						IGraphics->InitRastPort(&temp_rp);
@@ -343,7 +348,10 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						vertex_array[5].t = max_t;
 						vertex_array[5].w = 1.0f;
 
-						//FIXME: Scale pointers as well
+						if (!args->no_pointer) {
+							scale_pointer(&gd, pointer);
+							scale_pointer(&gd, busy_pointer);
+						}
 					} else {
 						IGraphics->FreeBitMap(bitmap);
 						bitmap = NULL;

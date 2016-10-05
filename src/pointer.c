@@ -23,6 +23,20 @@
 #include <proto/utility.h>
 #include <interfaces/icon.h>
 #include <string.h>
+#include <math.h>
+
+struct srec_pointer {
+	int32          xoffs, yoffs;
+	uint32         width, height;
+	struct BitMap *user_bm;
+	uint8         *buffer;
+	uint32         bpr;
+	struct BitMap *vram_bm;
+	float          scaled_xoffs;
+	float          scaled_yoffs;
+	float          scaled_width;
+	float          scaled_height;
+};
 
 void strip_info_extension(STRPTR name) {
 	uint32 len = strlen(name);
@@ -165,6 +179,16 @@ out:
 		IIcon->FreeDiskObject(icon);
 
 	return NULL;
+}
+
+void scale_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp) {
+	float scale_x = gd->scale_x;
+	float scale_y = gd->scale_y;
+
+	sp->scaled_xoffs  = roundf((float)sp->xoffs  * scale_x);
+	sp->scaled_yoffs  = roundf((float)sp->yoffs  * scale_y);
+	sp->scaled_width  = roundf((float)sp->width  * scale_x);
+	sp->scaled_height = roundf((float)sp->height * scale_y);
 }
 
 void free_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp) {

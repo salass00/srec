@@ -90,10 +90,17 @@ struct SRecArgs {
 	TEXT           busy_pointer_file[1024];
 };
 
+struct float_rect {
+	float min_x, min_y, max_x, max_y;
+};
+
 struct SRecGlobal {
 	struct IntuitionIFace *iintuition;
 	struct GraphicsIFace  *igraphics;
 	struct IconIFace      *iicon;
+	float                  scale_x;
+	float                  scale_y;
+	struct float_rect      scaled_rect;
 };
 
 BOOL safe_signal_proc(uint32 pid, uint32 sigmask);
