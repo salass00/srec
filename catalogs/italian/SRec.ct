@@ -1,4 +1,4 @@
-## version $VER: SRec.catalog 2.1 (30.9.2016)
+## version $VER: SRec.catalog 2.1 (5.10.2016)
 ## codeset 0
 ## language italiano
 ## chunk AUTH Translated by Samir Hawamdeh (http://www.betatesting.it/backforthefuture)
@@ -22,7 +22,7 @@ CTRL-C per fermare la registrazione
 ; CTRL-C to stop recording.
 ;
 MSG_DESCRIPTION
-Screen Recorder
+Registratore schermo
 ; Screen Recorder
 ;
 MSG_ABOUT_WINDOW_TITLE
@@ -66,36 +66,40 @@ Impostazioni
 ; Settings
 ;
 MSG_SETTINGS_SAVE_AS_DEFAULTS
-Salva come predefinito
+Salva come predefinite
 ; Save As Defaults
 ;
 MSG_OUTPUT_FILE_GAD
-Output
-; Output
+_Output
+; _Output
 ;
 MSG_FORMAT_TAB
-Formato
-; Format
+_Codec
+; _Format
 ;
 MSG_POINTER_TAB
-Puntatore
-; Pointer
+_Puntatore
+; _Pointer
 ;
 MSG_MISC_TAB
-Varie
-; Misc
+Var_ie
+; _Misc
 ;
 MSG_CONTAINER_FORMAT_GAD
-Formato
-; Format
+_Formato
+; _Container
+;
+MSG_CONTAINER_FORMAT_AVI
+AVI
+; AVI
 ;
 MSG_CONTAINER_FORMAT_MKV
 MKV
 ; MKV
 ;
 MSG_VIDEO_CODEC_GAD
-Codec Video
-; Video Codec
+Codec _Video
+; _Video Codec
 ;
 MSG_VIDEO_CODEC_ZMBV
 ZMBV
@@ -130,20 +134,20 @@ MSG_ASPECT_RATIO_16_10
 ; 16 : 10
 ;
 MSG_VIDEO_WIDTH_GAD
-Larghezza
-; Width
+_Larghezza
+; _Width
 ;
 MSG_VIDEO_HEIGHT_GAD
-Altezza
-; Height
+_Altezza
+; _Height
 ;
 MSG_VIDEO_FPS_GAD
 Fotogrammi Per Secondo
 ; Frames Per Second
 ;
 MSG_AUDIO_CODEC_GAD
-Codec Audio
-; Audio Codec
+Codec A_udio
+; _Audio Codec
 ;
 MSG_AUDIO_CODEC_NONE
 Nessuno
@@ -198,26 +202,26 @@ MSG_AUDIO_SAMPLE_RATE_48000HZ
 ; 48000 Hz
 ;
 MSG_ENABLE_POINTER_GAD
-Attiva Puntatore
-; Enable Pointer
+_Attiva Puntatore
+; _Enable Pointer
 ;
 MSG_POINTER_FILE_GAD
-Puntatore Grafico
+Puntatore grafico
 ; Pointer Graphic
 ;
 MSG_BUSY_POINTER_FILE_GAD
-Puntatore Occupato
+Puntatore occupato
 ; Busy Pointer Graphic
 ;
 MSG_BILINEAR_FILTER_GAD
-Bilinear Filtering
-; Bilinear Filtering
+Bilinear _Filtering
+; _Bilinear Filtering
 ;
 MSG_RECORD_GAD
-Registra
-; Record
+_Registra
+; _Record
 ;
 MSG_STOP_GAD
-Stop
-; Stop
+_Stop
+; _Stop
 ;
