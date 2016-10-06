@@ -1,0 +1,44 @@
+set destdir `getenv AppDir/SRec`
+
+version file "$destdir/SRec" 2 >NIL:
+if warn
+  copystore SRec-xx.xx/SRec.info "$destdir"
+endif
+
+copystore SRec-xx.xx/SRec "$destdir"
+
+if exists "$destdir/srec.readme"
+  copy clone SRec-xx.xx/srec.readme "$destdir"
+endif
+
+if exists "$destdir/Changelog"
+  rename "$destdir/Changelog" "$destdir/releasenotes"
+  if exists "$destdir/Changelog.info"
+    rename "$destdir/Changelog.info" "$destdir/releasenotes.info"
+  endif
+endif
+
+if exists "$destdir/releasenotes"
+  copystore SRec-xx.xx/releasenotes "$destdir"
+endif
+
+if exists "$destdir/catalogs/german"
+copy clone SRec-xx.xx/catalogs/german/SRec.catalog "$destdir/catalogs/german/SRec.catalog"
+endif
+if exists "$destdir/catalogs/italian"
+copy clone SRec-xx.xx/catalogs/italian/SRec.catalog "$destdir/catalogs/italian/SRec.catalog"
+endif
+if exists "$destdir/catalogs/spanish"
+copy clone SRec-xx.xx/catalogs/spanish/SRec.catalog "$destdir/catalogs/spanish/SRec.catalog"
+endif
+
+if exists "LOCALE:catalogs/german/SRec.catalog"
+copy clone SRec-xx.xx/catalogs/german/SRec.catalog "LOCALE:catalogs/german/SRec.catalog"
+endif
+if exists "LOCALE:catalogs/italian/SRec.catalog"
+copy clone SRec-xx.xx/catalogs/italian/SRec.catalog "LOCALE:catalogs/italian/SRec.catalog"
+endif
+if exists "LOCALE:catalogs/spanish/SRec.catalog"
+copy clone SRec-xx.xx/catalogs/spanish/SRec.catalog "LOCALE:catalogs/spanish/SRec.catalog"
+endif
+
