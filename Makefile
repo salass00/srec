@@ -25,15 +25,15 @@ CATALOGS := $(CTFILES:.ct=.catalog)
 
 .PHONY: all revision clean catalogs
 
-all: $(TARGET)
-
-$(TARGET): $(OBJS) $(AVILIB) $(LIBMKV)
-	$(CC) $(LDFLAGS) -o $@.debug $^ $(LIBS)
-	$(STRIP) -R.comment -o $@ $@.debug
+all: $(TARGET) catalogs
 
 %.o: %.c
 	$(CC) -MM -MP -MT $*.d -MT $@ -MF $*.d $(CFLAGS) $<
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(TARGET): $(OBJS) $(AVILIB) $(LIBMKV)
+	$(CC) $(LDFLAGS) -o $@.debug $^ $(LIBS)
+	$(STRIP) -R.comment -o $@ $@.debug
 
 src/zmbv_altivec.o: CFLAGS += -maltivec
 
@@ -54,10 +54,10 @@ $(LIBMKV):
 $(AVILIB):
 	make -C $(dir $@)
 
-catalogs: $(CATALOGS)
-
 %.catalog: %.ct catalogs/SRec.cd
 	catcomp --catalog $@ catalogs/SRec.cd $<
+
+catalogs: $(CATALOGS)
 
 revision:
 	bumprev $(VERSION) $(TARGET)

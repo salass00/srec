@@ -1,0 +1,53 @@
+Short:        Screen Recorder
+Author:       Fredrik Wikstrom
+Uploader:     Fredrik Wikstrom <fredrik@a500.org>
+Type:         gfx/misc
+Version:      xx.xx
+Architecture: ppc-amigaos >= 4.1.7
+
+Requirements:
+
+- AmigaOS 4.1 Final Edition
+- Graphics card and driver with hardware compositing support
+
+Installation:
+
+Use the supplied Install script or just copy the executable where you want it
+on your harddrive.
+
+Usage:
+
+Make sure a filename is selected in the GUI.
+
+To start recording either:
+
+A) Bring up SRec's GUI by either using it's configured CX_POPKEY or double-
+   clicking on the program's icon and press the "Record" button.
+
+B) If you have configured a "RECORDKEY" (SRec tooltypes) you can use this to
+   start recording without using the GUI (you need to have an output file
+   selected though).
+   
+To stop recording:
+
+A) Press the "Stop" button in the GUI.
+
+B) If you have configured a "STOPKEY" you can use this to stop recording,
+   otherwise you can use the "RECORDKEY". Note that if you want the same key
+   combination to both start and stop recording then configure the "RECORDKEY"
+   but leave the "STOPKEY" disabled.
+
+It's also possible to record by running SRec from the CLI. To get the template
+for the CLI arguments just type in "SRec ?". Recording is then stopped with
+CTRL-C.
+
+Source code:
+
+The source code is available under GPL license on github:
+
+https://github.com/salass00/srec
+
+Changes:
+
+For a list of changes in this and earlier versions see the releasenotes file.
+

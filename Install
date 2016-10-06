@@ -1,0 +1,36 @@
+(welcome)
+(set parent_dir (askdir
+  (prompt "Where do you want to have SRec installed?\n"
+          "A drawer called SRec will be created there.")
+  (help "A new directory will be created to hold all files "
+        "belonging to SRec.")
+  (default @default-dest)
+))
+(set srec_dir (tackon srec_dir "SRec"))
+(makedir srec_dir (infos))
+(set @default-dest (expandpath srec_dir))
+(copyfiles
+  (prompt "Copying executable file")
+  (help @copyfiles-help)
+  (source "SRec")
+  (infos)
+  (dest srec_dir)
+)
+(copyfiles
+  (prompt "Copying text files")
+  (help @copyfiles-help)
+  (source "(srec.readme|releasenotes|COPYING)")
+  (infos)
+  (dest srec_dir)
+)
+(set catalogs_dir (tackon srec_dir "catalogs"))
+(makedir catalogs_dir)
+(copyfiles
+  (prompt "Copying locale catalogs")
+  (help @copyfiles-help)
+  (source "catalogs")
+  (pattern "~(#?.#?)")
+  (dest catalogs_dir)
+  (confirm)
+)
+(exit)
