@@ -1190,10 +1190,11 @@ static void gui_about_requester(struct srec_gui *gd) {
 		GetString(loc, MSG_ABOUT_WINDOW_TITLE), PROGNAME);
 
 	IUtility->SNPrintf(body_text, sizeof(body_text),
-		"%s version %lu.%lu (%s)\n\n"
-		"Copyright (C) 2016 Fredrik Wikstrom <fredrik@a500.org>\n\n"
+		"%s %s %lu.%lu (%s)\n\n"
+		"%s (C) 2016 Fredrik Wikstrom <fredrik@a500.org>\n\n"
 		"%s",
-		PROGNAME, VERSION, REVISION, DATE, gpl_license);
+		PROGNAME, GetString(loc, MSG_VERSION), VERSION, REVISION, DATE,
+		GetString(loc, MSG_COPYRIGHT), gpl_license);
 
 	requester = IIntuition->NewObject(gd->requesterclass, NULL,
 		REQ_Image,      REQIMAGE_INFO,

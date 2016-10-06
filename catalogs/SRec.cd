@@ -12,6 +12,12 @@ Screen Recorder
 MSG_ABOUT_WINDOW_TITLE (//)
 About - %s
 ;
+MSG_VERSION (//)
+version
+;
+MSG_COPYRIGHT (//)
+Copyright
+;
 MSG_OK_GAD (//)
 _Ok
 ;
