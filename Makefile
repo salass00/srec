@@ -55,7 +55,11 @@ $(AVILIB):
 	make -C $(dir $@)
 
 %.catalog: %.ct catalogs/SRec.cd
+ifeq ($(SYSTEM),AmigaOS)
+	CatComp CATALOG $@ catalogs/SRec.cd $<
+else
 	catcomp --catalog $@ catalogs/SRec.cd $<
+endif
 
 catalogs: $(CATALOGS)
 
