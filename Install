@@ -6,7 +6,7 @@
         "belonging to SRec.")
   (default @default-dest)
 ))
-(set srec_dir (tackon srec_dir "SRec"))
+(set srec_dir (tackon parent_dir "SRec"))
 (makedir srec_dir (infos))
 (set @default-dest (expandpath srec_dir))
 (copyfiles
