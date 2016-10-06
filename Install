@@ -5,6 +5,7 @@
   (help "A new directory will be created to hold all files "
         "belonging to SRec.")
   (default @default-dest)
+  (disk)
 ))
 (set srec_dir (tackon parent_dir "SRec"))
 (makedir srec_dir (infos))
@@ -19,12 +20,12 @@
 (copyfiles
   (prompt "Copying text files")
   (help @copyfiles-help)
-  (source "(srec.readme|releasenotes|COPYING)")
+  (source "")
+  (pattern "(srec.readme|releasenotes|COPYING)")
   (infos)
   (dest srec_dir)
 )
 (set catalogs_dir (tackon srec_dir "catalogs"))
-(makedir catalogs_dir)
 (copyfiles
   (prompt "Copying locale catalogs")
   (help @copyfiles-help)
