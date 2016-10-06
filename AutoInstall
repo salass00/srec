@@ -8,7 +8,7 @@ endif
 copystore SRec-xx.xx/SRec "$destdir"
 
 if exists "$destdir/srec.readme"
-  copy clone SRec-xx.xx/srec.readme "$destdir"
+  copystore SRec-xx.xx/srec.readme "$destdir"
 endif
 
 if exists "$destdir/Changelog"
@@ -20,6 +20,10 @@ endif
 
 if exists "$destdir/releasenotes"
   copystore SRec-xx.xx/releasenotes "$destdir"
+endif
+
+if exists "$destdir/COPYING"
+  copystore SRec-xx.xx/COPYING "$destdir"
 endif
 
 if exists "$destdir/catalogs/german"
