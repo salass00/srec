@@ -1077,7 +1077,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 
 	gd->obj[OID_WINDOW] = IIntuition->NewObject(gd->windowclass, NULL,
 		WA_Title,             gd->window_title,
-		WA_ScreenTitle,       VERS " (" DATE ")" " alpha version",
+		WA_ScreenTitle,       VERS " (" DATE ")",
 		WA_CloseGadget,       TRUE,
 		WA_DragBar,           TRUE,
 		WA_DepthGadget,       TRUE,

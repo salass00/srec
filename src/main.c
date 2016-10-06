@@ -27,7 +27,7 @@
 #include <signal.h>
 #include "SRec_rev.h"
 
-const char USED verstag[] = VERSTAG " alpha version";
+const char USED verstag[] = VERSTAG;
 
 extern struct Interface *INewlib;
 
