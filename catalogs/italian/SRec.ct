@@ -1,4 +1,4 @@
-## version $VER: SRec.catalog 2.1 (5.10.2016)
+## version $VER: SRec.catalog 2.1 (6.10.2016)
 ## codeset 0
 ## language italiano
 ## chunk AUTH Translated by Samir Hawamdeh (http://www.betatesting.it/backforthefuture)
@@ -82,7 +82,7 @@ _Puntatore
 ; _Pointer
 ;
 MSG_MISC_TAB
-Var_ie
+_Varie
 ; _Misc
 ;
 MSG_CONTAINER_FORMAT_GAD
@@ -98,7 +98,7 @@ MKV
 ; MKV
 ;
 MSG_VIDEO_CODEC_GAD
-Codec _Video
+Co_dec Video
 ; _Video Codec
 ;
 MSG_VIDEO_CODEC_ZMBV
@@ -142,7 +142,7 @@ _Altezza
 ; _Height
 ;
 MSG_VIDEO_FPS_GAD
-Fotogrammi Per Secondo
+FPS (Fotogrammi Per Secondo)
 ; Frames Per Second
 ;
 MSG_AUDIO_CODEC_GAD
@@ -152,6 +152,10 @@ Codec A_udio
 MSG_AUDIO_CODEC_NONE
 Nessuno
 ; None
+;
+MSG_AUDIO_CODEC_PCM
+PCM
+; PCM
 ;
 MSG_AUDIO_SAMPLE_SIZE_GAD
 Dimensione Sample
