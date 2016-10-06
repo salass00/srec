@@ -29,6 +29,14 @@ MSG_ABOUT_WINDOW_TITLE
 Informazioni su %s
 ; About - %s
 ;
+MSG_VERSION
+versione
+; version
+;
+MSG_COPYRIGHT
+Copyright
+; Copyright
+;
 MSG_OK_GAD
 _Ok
 ; _Ok
@@ -106,8 +114,8 @@ ZMBV
 ; ZMBV
 ;
 MSG_ASPECT_RATIO_GAD
-Aspect Ratio
-; Aspect Ratio
+Aspect Rat_io
+; Aspect Rat_io
 ;
 MSG_ASPECT_RATIO_LIKE_WB
 Tipo WB
@@ -142,8 +150,8 @@ _Altezza
 ; _Height
 ;
 MSG_VIDEO_FPS_GAD
-FPS (Fotogrammi Per Secondo)
-; Frames Per Second
+FPS (Fotogrammi Per S_econdo)
+; Fram_es Per Second
 ;
 MSG_AUDIO_CODEC_GAD
 Codec A_udio
@@ -158,8 +166,8 @@ PCM
 ; PCM
 ;
 MSG_AUDIO_SAMPLE_SIZE_GAD
-Dimensione Sample
-; Sample Size
+Di_mensione Audio
+; Sample Si_ze
 ;
 MSG_AUDIO_SAMPLE_SIZE_8BIT
 8-bit
@@ -174,8 +182,8 @@ MSG_AUDIO_SAMPLE_SIZE_32BIT
 ; 32-bit
 ;
 MSG_AUDIO_CHANNELS_GAD
-Canali
-; Channels
+Ca_nali
+; Channe_ls
 ;
 MSG_AUDIO_CHANNELS_MONO
 Mono
@@ -186,8 +194,8 @@ Stereo
 ; Stereo
 ;
 MSG_AUDIO_SAMPLE_RATE_GAD
-Qualità Audio
-; Sample Rate
+_Qualità Audio
+; Sample Ra_te
 ;
 MSG_AUDIO_SAMPLE_RATE_11025HZ
 11025 Hz
