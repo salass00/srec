@@ -125,6 +125,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	mk_TrackConfig video_conf;
 	mk_Track *video_track = NULL;
 
+	IUtility->ClearMem(&gd, sizeof(gd));
+
 	#define args        gd.args
 
 	#define IIntuition  gd.iintuition
