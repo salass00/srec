@@ -76,6 +76,25 @@ static inline uint32_t h2le32(uint32_t x) {
 	return (x << 24) | ((x & 0xff00UL) << 8) | ((x & 0xff0000UL) >> 8) | (x >> 24);
 }
 
+void get_screen_dimensions(struct GraphicsIFace *IGraphics,
+	const struct Screen *screen, uint32 *widthp, uint32 *heightp)
+{
+	struct DimensionInfo diminfo;
+	uint32 mode_id, info_len;
+	uint32 width  = screen->Width;
+	uint32 height = screen->Height;
+
+	mode_id  = IGraphics->GetVPModeID(&screen->ViewPort);
+	info_len = IGraphics->GetDisplayInfoData(NULL, &diminfo, sizeof(diminfo), DTAG_DIMS, mode_id);
+	if (info_len >= offsetof(struct DimensionInfo, MaxOScan)) {
+		width  = MIN(width,  (uint16)diminfo.Nominal.MaxX - (uint16)diminfo.Nominal.MinX + 1);
+		height = MIN(height, (uint16)diminfo.Nominal.MaxY - (uint16)diminfo.Nominal.MinY + 1);
+	}
+
+	*widthp  = width;
+	*heightp = height;
+}
+
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	struct ExecIFace *IExec = (struct ExecIFace *)sysbase->MainInterface;
 	struct Process *proc;
@@ -267,8 +286,6 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 					if (zmbv_set_source_bm(encoder, bitmap)) {
 						uint32 width, height;
-						uint32 mode_id, info_len;
-						struct DimensionInfo diminfo;
 						float scaled_width, scaled_height;
 						float min_s, min_t, max_s, max_t;
 
@@ -279,15 +296,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						height = IGraphics->GetBitMapAttr(bitmap, BMA_HEIGHT);
 						IGraphics->RectFillColor(&temp_rp, 0, 0, width - 1, height - 1, 0);
 
-						disp_width  = current_screen->Width;
-						disp_height = current_screen->Height;
-
-						mode_id  = IGraphics->GetVPModeID(&current_screen->ViewPort);
-						info_len = IGraphics->GetDisplayInfoData(NULL, &diminfo, sizeof(diminfo), DTAG_DIMS, mode_id);
-						if (info_len >= offsetof(struct DimensionInfo, MaxOScan)) {
-							disp_width  = MIN(disp_width,  (uint16)diminfo.Nominal.MaxX - (uint16)diminfo.Nominal.MinX + 1);
-							disp_height = MIN(disp_height, (uint16)diminfo.Nominal.MaxY - (uint16)diminfo.Nominal.MinY + 1);
-						}
+						get_screen_dimensions(IGraphics, current_screen, &disp_width, &disp_height);
 
 						scale_x = (float)args->width  / (float)disp_width;
 						scale_y = (float)args->height / (float)disp_height;

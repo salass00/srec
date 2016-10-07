@@ -123,6 +123,7 @@ enum {
 struct srec_gui {
 	struct LocaleInfo        *locale_info;
 	struct IntuitionIFace    *iintuition;
+	struct GraphicsIFace     *igraphics;
 	struct IconIFace         *iicon;
 	struct CommoditiesIFace  *icommodities;
 	struct ApplicationIFace  *iapplication;
@@ -201,7 +202,8 @@ struct srec_gui {
 static BOOL gui_open_libs(struct srec_gui *gd) {
 	BOOL error = 0;
 
-	error |= !(gd->iintuition = (struct IntuitionIFace   *)OpenInterface("intuition.library", 53, "main", 1));
+	error |= !(gd->iintuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1));
+	error |= !(gd->igraphics = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1));
 	error |= !(gd->iicon = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1));
 	error |= !(gd->icommodities = (struct CommoditiesIFace *)OpenInterface("commodities.library", 53, "main", 1));
 	error |= !(gd->iapplication = (struct ApplicationIFace *)OpenInterface("application.library", 53, "application", 2));
@@ -222,6 +224,9 @@ static void gui_close_libs(struct srec_gui *gd) {
 
 	if (gd->iicon != NULL)
 		CloseInterface((struct Interface *)gd->iicon);
+
+	if (gd->igraphics != NULL)
+		CloseInterface((struct Interface *)gd->igraphics);
 
 	if (gd->iintuition != NULL)
 		CloseInterface((struct Interface *)gd->iintuition);
@@ -674,7 +679,7 @@ static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...)
 	va_end(ap);
 }
 
-static BOOL gui_wb_dimensions(struct srec_gui *gd, uint32 *width, uint32 *height) {
+static BOOL gui_get_wb_dimensions(struct srec_gui *gd, uint32 *widthp, uint32 *heightp) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct Screen *screen;
 
@@ -682,9 +687,7 @@ static BOOL gui_wb_dimensions(struct srec_gui *gd, uint32 *width, uint32 *height
 	if (screen == NULL)
 		return FALSE;
 
-	//FIXME: This probably won't work with an autoscroll screen
-	*width  = screen->Width;
-	*height = screen->Height;
+	get_screen_dimensions(gd->igraphics, screen, widthp, heightp);
 
 	IIntuition->UnlockPubScreen(NULL, screen);
 
@@ -704,7 +707,7 @@ static void gui_enforce_aspect_ratio(struct srec_gui *gd, BOOL change_height) {
 	if (change_height) {
 		switch (gd->aspect_ratio) {
 			case ASPECT_RATIO_LIKE_WB:
-				if (gui_wb_dimensions(gd, &wb_w, &wb_h))
+				if (gui_get_wb_dimensions(gd, &wb_w, &wb_h))
 					height = width * wb_h / wb_w;
 				break;
 			case ASPECT_RATIO_4_3:
@@ -727,7 +730,7 @@ static void gui_enforce_aspect_ratio(struct srec_gui *gd, BOOL change_height) {
 	} else {
 		switch (gd->aspect_ratio) {
 			case ASPECT_RATIO_LIKE_WB:
-				if (gui_wb_dimensions(gd, &wb_w, &wb_h))
+				if (gui_get_wb_dimensions(gd, &wb_w, &wb_h))
 					width = height * wb_w / wb_h;
 				break;
 			case ASPECT_RATIO_4_3:

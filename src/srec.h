@@ -111,6 +111,8 @@ struct SRecGlobal {
 };
 
 BOOL safe_signal_proc(uint32 pid, uint32 sigmask);
+void get_screen_dimensions(struct GraphicsIFace *IGraphics,
+	const struct Screen *screen, uint32 *widthp, uint32 *heightp);
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase);
 
 #endif
