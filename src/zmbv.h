@@ -41,6 +41,7 @@ struct zmbv_state {
 	struct ZIFace         *iz;
 	z_stream               zstream;
 	uint32                 pixfmt;
+	BOOL                   convert;
 	uint8                  zmbv_fmt;
 	struct BitMap         *srec_bm;
 	struct BitMap         *prev_frame_bm;

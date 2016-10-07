@@ -234,18 +234,22 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	zmbv_free_frame_data(state);
 
 	state->keyframe_cnt = 0;
+	state->convert = FALSE;
 
 	pixfmt = IGraphics->GetBitMapAttr(bm, BMA_PIXELFORMAT);
 	switch (pixfmt) {
 		case PIXF_A8R8G8B8:
+			state->convert = TRUE;
 		case PIXF_B8G8R8A8:
 			state->zmbv_fmt = 8;
 			break;
 		case PIXF_R5G6B5:
+			state->convert = TRUE;
 		case PIXF_R5G6B5PC:
 			state->zmbv_fmt = 6;
 			break;
 		case PIXF_R5G5B5:
+			state->convert = TRUE;
 		case PIXF_R5G5B5PC:
 			state->zmbv_fmt = 5;
 			break;
@@ -422,7 +426,8 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		state->zstream.avail_out = out_space;
 		state->zstream.total_out = 0;
 
-		state->endian_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
+		if (state->convert)
+			state->endian_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
 
 		if (packed_bpr == padded_bpr) {
 			state->zstream.next_in  = ras;
@@ -457,7 +462,8 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 			}
 		}
 
-		state->endian_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
+		if (state->convert)
+			state->endian_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
 
 		*framep = state->frame_buffer;
 		*framesizep = 7 + state->zstream.total_out;
@@ -529,7 +535,8 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		}
 
 		block_data_len = data - (uint8 *)state->block_data_buffer;
-		state->endian_convert_func(state, state->block_data_buffer, block_data_len, 1, 0);
+		if (state->convert)
+			state->endian_convert_func(state, state->block_data_buffer, block_data_len, 1, 0);
 
 		state->zstream.next_in  = state->block_data_buffer;
 		state->zstream.avail_in = block_data_len;
