@@ -1241,6 +1241,10 @@ static void gui_start_recording(struct srec_gui *gd) {
 	if (gui_is_recording(gd))
 		return;
 
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_BusyPointer, TRUE,
+		TAG_END);
+
 	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_OUTPUT_FILE], &temp);
 	output_file = (CONST_STRPTR)temp;
 	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_POINTER_FILE], &temp);
@@ -1252,6 +1256,10 @@ static void gui_start_recording(struct srec_gui *gd) {
 
 	IUtility->Strlcpy(sm->pointer_file, pointer_file, sizeof(sm->pointer_file));
 	IUtility->Strlcpy(sm->busy_pointer_file, busy_pointer_file, sizeof(sm->busy_pointer_file));
+
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_BusyPointer, FALSE,
+		TAG_END);
 
 	strip_info_extension(sm->pointer_file);
 	strip_info_extension(sm->busy_pointer_file);
@@ -1303,6 +1311,10 @@ static void gui_save_settings(struct srec_gui *gd) {
 	CONST_STRPTR busy_pointer_file;
 	uint32 temp, index;
 	PrefsObject *obj;
+
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_BusyPointer, TRUE,
+		TAG_END);
 
 	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_OUTPUT_FILE], &temp);
 	output_file = (CONST_STRPTR)temp;
@@ -1416,6 +1428,10 @@ static void gui_save_settings(struct srec_gui *gd) {
 		WRITEPREFS_AppID,       gd->app_id,
 		WRITEPREFS_WriteENV,    TRUE,
 		WRITEPREFS_WriteENVARC, TRUE,
+		TAG_END);
+
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_BusyPointer, FALSE,
 		TAG_END);
 }
 
