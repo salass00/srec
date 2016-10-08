@@ -210,13 +210,13 @@ void render_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp, int32 
 	max_t = (float)sp->height - 1.0f;
 
 	if (min_x < gd->scaled_rect.min_x)
-		min_x += gd->scaled_rect.min_x - min_x;
+		min_x = gd->scaled_rect.min_x;
 	if (max_x > gd->scaled_rect.max_x)
-		max_x -= max_x - gd->scaled_rect.max_x;
+		max_x = gd->scaled_rect.max_x;
 	if (min_y < gd->scaled_rect.min_y)
-		min_y += gd->scaled_rect.min_y - min_y;
+		min_y = gd->scaled_rect.min_y;
 	if (max_y > gd->scaled_rect.max_y)
-		max_y -= max_y - gd->scaled_rect.max_y;
+		max_y = gd->scaled_rect.max_y;
 
 	if (pointer_x < 0)
 		min_s -= (float)pointer_x;
