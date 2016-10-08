@@ -25,13 +25,14 @@
 #include <proto/dos.h>
 #include <proto/utility.h>
 
-#define TEMPLATE "FILENAME/A,WIDTH/N,HEIGHT/N,FPS/N,NOFILTER/S,NOPOINTER/S,NOALTIVEC/S"
+#define TEMPLATE "FILENAME/A,WIDTH/N,HEIGHT/N,FPS/N,AVI/S,NOFILTER/S,NOPOINTER/S,NOALTIVEC/S"
 
 enum {
 	ARG_FILENAME,
 	ARG_WIDTH,
 	ARG_HEIGHT,
 	ARG_FPS,
+	ARG_AVI,
 	ARG_NOFILTER,
 	ARG_NOPOINTER,
 	ARG_NOALTIVEC,
@@ -92,6 +93,9 @@ int cli_main(struct LocaleInfo *loc) {
 
 	if ((APTR)args[ARG_FPS] != NULL)
 		startup_msg->fps = *(uint32 *)args[ARG_FPS];
+
+	if (args[ARG_AVI])
+		startup_msg->container = CONTAINER_AVI;
 
 	startup_msg->no_filter  = args[ARG_NOFILTER]  ? TRUE : FALSE;
 	startup_msg->no_pointer = args[ARG_NOPOINTER] ? TRUE : FALSE;
