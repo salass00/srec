@@ -620,7 +620,7 @@ static void gui_read_settings(struct srec_gui *gd) {
 	CONST_STRPTR cfg_str;
 	uint32 cfg_val;
 
-	gd->output_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "OutputFile", "");
+	gd->output_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "OutputFile", DEFAULT_OUTPUT_FILE);
 
 	cfg_str = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "ContainerFormat", NULL);
 	gd->container = gui_map_cfg_str_to_cfg_val(gd, cfg_str, container_map, ARRAY_LEN(container_map), DEFAULT_CONTAINER);
