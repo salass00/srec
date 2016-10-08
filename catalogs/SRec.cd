@@ -168,3 +168,6 @@ _Record
 MSG_STOP_GAD (//)
 _Stop
 ;
+MSG_DISABLE_ALTIVEC_GAD (//)
+Disable _Altivec
+;

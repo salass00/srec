@@ -113,6 +113,7 @@ enum {
 	OID_BUSY_POINTER_FILE,
 	OID_MISC_PAGE,
 	OID_BILINEAR_FILTER,
+	OID_DISABLE_ALTIVEC,
 	OID_RECORD_STOP_LAYOUT,
 	OID_RECORD,
 	OID_STOP,
@@ -1022,11 +1023,19 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		CHECKBOX_Checked, gd->enable_filter,
 		TAG_END);
 
+	gd->obj[OID_DISABLE_ALTIVEC] = IIntuition->NewObject(gd->checkboxclass, NULL,
+		GA_ID,            OID_DISABLE_ALTIVEC,
+		GA_RelVerify,     TRUE,
+		CHECKBOX_Checked, !gd->enable_altivec,
+		TAG_END);
+
 	gd->obj[OID_MISC_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
 		GA_ID,              OID_MISC_PAGE,
 		LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
 		LAYOUT_AddChild,    gd->obj[OID_BILINEAR_FILTER],
 		CHILD_Label,        LABEL(MSG_BILINEAR_FILTER_GAD),
+		LAYOUT_AddChild,    gd->obj[OID_DISABLE_ALTIVEC],
+		CHILD_Label,        LABEL(MSG_DISABLE_ALTIVEC_GAD),
 		LAYOUT_AddChild,    SPACE,
 		TAG_END);
 
@@ -1661,6 +1670,9 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								break;
 							case OID_BILINEAR_FILTER:
 								gd->enable_filter = code ? TRUE : FALSE;
+								break;
+							case OID_DISABLE_ALTIVEC:
+								gd->enable_altivec = code ? FALSE : TRUE;
 								break;
 							case OID_RECORD:
 								gui_start_recording(gd);
