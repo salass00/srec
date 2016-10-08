@@ -191,77 +191,42 @@ void render_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp, int32 
 	struct GraphicsIFace *IGraphics = gd->igraphics;
 	const struct SRecArgs *args = gd->args;
 	int32 pointer_x, pointer_y;
-	float min_x, min_y, max_x, max_y;
-	float min_s, min_t, max_s, max_t;
 	vertex_t vertex_array[6];
+	struct vertex_rect rect;
 	uint32 comp_flags;
 
 	pointer_x = mouse_x + sp->xoffs;
 	pointer_y = mouse_y + sp->yoffs;
 
-	min_x = gd->scaled_rect.min_x + roundf((float)pointer_x * gd->scale_x);
-	min_y = gd->scaled_rect.min_y + roundf((float)pointer_y * gd->scale_y);
-	max_x = min_x + sp->scaled_width - 1.0f;
-	max_y = min_y + sp->scaled_height - 1.0f;
+	rect.min_x = gd->scale_rect.min_x + roundf((float)pointer_x * gd->scale_x);
+	rect.min_y = gd->scale_rect.min_y + roundf((float)pointer_y * gd->scale_y);
+	rect.max_x = rect.min_x + sp->scaled_width;
+	rect.max_y = rect.min_y + sp->scaled_height;
 
-	min_s = 0.0f;
-	min_t = 0.0f;
-	max_s = (float)sp->width - 1.0f;
-	max_t = (float)sp->height - 1.0f;
+	rect.min_s = 0.0f;
+	rect.min_t = 0.0f;
+	rect.max_s = (float)sp->width;
+	rect.max_t = (float)sp->height;
 
-	if (min_x < gd->scaled_rect.min_x)
-		min_x = gd->scaled_rect.min_x;
-	if (max_x > gd->scaled_rect.max_x)
-		max_x = gd->scaled_rect.max_x;
-	if (min_y < gd->scaled_rect.min_y)
-		min_y = gd->scaled_rect.min_y;
-	if (max_y > gd->scaled_rect.max_y)
-		max_y = gd->scaled_rect.max_y;
+	if (rect.min_x < gd->scale_rect.min_x)
+		rect.min_x = gd->scale_rect.min_x;
+	if (rect.max_x > gd->scale_rect.max_x)
+		rect.max_x = gd->scale_rect.max_x;
+	if (rect.min_y < gd->scale_rect.min_y)
+		rect.min_y = gd->scale_rect.min_y;
+	if (rect.max_y > gd->scale_rect.max_y)
+		rect.max_y = gd->scale_rect.max_y;
 
 	if (pointer_x < 0)
-		min_s -= (float)pointer_x;
+		rect.min_s -= (float)pointer_x;
 	if (pointer_x + sp->width > gd->disp_width)
-		max_s -= (float)(pointer_x + sp->width - gd->disp_width);
+		rect.max_s -= (float)(pointer_x + sp->width - gd->disp_width);
 	if (pointer_y < 0)
-		min_t -= (float)pointer_y;
+		rect.min_t -= (float)pointer_y;
 	if (pointer_y + sp->height > gd->disp_height)
-		max_t -= (float)(pointer_y + sp->height - gd->disp_height);
+		rect.max_t -= (float)(pointer_y + sp->height - gd->disp_height);
 
-	vertex_array[0].x = min_x;
-	vertex_array[0].y = min_y;
-	vertex_array[0].s = min_s;
-	vertex_array[0].t = min_t;
-	vertex_array[0].w = 1.0f;
-
-	vertex_array[1].x = max_x;
-	vertex_array[1].y = min_y;
-	vertex_array[1].s = max_s;
-	vertex_array[1].t = min_t;
-	vertex_array[1].w = 1.0f;
-
-	vertex_array[2].x = min_x;
-	vertex_array[2].y = max_y;
-	vertex_array[2].s = min_s;
-	vertex_array[2].t = max_t;
-	vertex_array[2].w = 1.0f;
-
-	vertex_array[3].x = min_x;
-	vertex_array[3].y = max_y;
-	vertex_array[3].s = min_s;
-	vertex_array[3].t = max_t;
-	vertex_array[3].w = 1.0f;
-
-	vertex_array[4].x = max_x;
-	vertex_array[4].y = min_y;
-	vertex_array[4].s = max_s;
-	vertex_array[4].t = min_t;
-	vertex_array[4].w = 1.0f;
-
-	vertex_array[5].x = max_x;
-	vertex_array[5].y = max_y;
-	vertex_array[5].s = max_s;
-	vertex_array[5].t = max_t;
-	vertex_array[5].w = 1.0f;
+	set_rect_vertex_array(vertex_array, &rect);
 
 	comp_flags = COMPFLAG_HardwareOnly | COMPFLAG_IgnoreDestAlpha;
 

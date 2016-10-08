@@ -8,3 +8,5 @@ SRec 2.2 (xx.xx.2016)
 - Added "Disable Altivec" option in GUI equivalent to NOALTIVEC switch in
   command line interface.
 
+- Fixed vertex array init and pointer clipping.
+

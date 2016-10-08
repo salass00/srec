@@ -97,8 +97,9 @@ typedef struct {
 	float s, t, w;
 } vertex_t;
 
-struct float_rect {
+struct vertex_rect {
 	float min_x, min_y, max_x, max_y;
+	float min_s, min_t, max_s, max_t;
 };
 
 struct SRecGlobal {
@@ -109,12 +110,13 @@ struct SRecGlobal {
 	struct BitMap         *bitmap;
 	uint32                 disp_width, disp_height;
 	float                  scale_x, scale_y;
-	struct float_rect      scaled_rect;
+	struct vertex_rect     scale_rect;
 };
 
 BOOL safe_signal_proc(uint32 pid, uint32 sigmask);
 void get_screen_dimensions(struct GraphicsIFace *IGraphics,
 	const struct Screen *screen, uint32 *widthp, uint32 *heightp);
+void set_rect_vertex_array(vertex_t *vertex_array, const struct vertex_rect *rect);
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase);
 
 #endif
