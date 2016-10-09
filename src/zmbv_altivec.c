@@ -107,7 +107,7 @@ static inline uint32 get_prefetch_constant_simple(uint32 total_vectors) {
 }
 #endif
 
-void zmbv_endian_convert_altivec(const struct zmbv_state *state,
+void zmbv_format_convert_altivec(const struct zmbv_state *state,
 	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr)
 {
 	uint32 vectors = (packed_bpr + 15) >> 4;

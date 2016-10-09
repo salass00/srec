@@ -83,7 +83,7 @@ static uint8 zmbv_xor_block_generic(const struct zmbv_state *state,
 	}
 }
 
-static void zmbv_endian_convert_generic(const struct zmbv_state *state,
+static void zmbv_format_convert_generic(const struct zmbv_state *state,
 	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr)
 {
 	uint32 width = (packed_bpr + 3) >> 2;
@@ -157,7 +157,7 @@ struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs 
 	state->vector_unit = VECTORTYPE_NONE;
 
 	state->xor_block_func      = zmbv_xor_block_generic;
-	state->endian_convert_func = zmbv_endian_convert_generic;
+	state->format_convert_func = zmbv_format_convert_generic;
 
 	if (!args->no_altivec) {
 		IExec->GetCPUInfoTags(
@@ -427,7 +427,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		state->zstream.total_out = 0;
 
 		if (state->convert)
-			state->endian_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
+			state->format_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
 
 		if (packed_bpr == padded_bpr) {
 			state->zstream.next_in  = ras;
@@ -463,7 +463,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		}
 
 		if (state->convert)
-			state->endian_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
+			state->format_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
 
 		*framep = state->frame_buffer;
 		*framesizep = 7 + state->zstream.total_out;
@@ -536,7 +536,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 
 		block_data_len = data - (uint8 *)state->block_data_buffer;
 		if (state->convert)
-			state->endian_convert_func(state, state->block_data_buffer, block_data_len, 1, 0);
+			state->format_convert_func(state, state->block_data_buffer, block_data_len, 1, 0);
 
 		state->zstream.next_in  = state->block_data_buffer;
 		state->zstream.avail_in = block_data_len;
