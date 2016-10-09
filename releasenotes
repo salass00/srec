@@ -10,3 +10,5 @@ SRec 2.2 (xx.xx.2016)
 
 - Fixed vertex array init and pointer clipping.
 
+- Added support for RGBA32 and ABGR32 pixel formats.
+

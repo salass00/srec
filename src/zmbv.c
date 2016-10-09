@@ -106,6 +106,34 @@ static void zmbv_format_convert_generic(const struct zmbv_state *state,
 				ras += padded_bpr;
 			}
 			break;
+		case PIXF_R8G8B8A8:
+			for (i = 0; i != height; i++) {
+				row = (uint32 *)ras;
+				for (j = 0; j != width; j++) {
+					uint32 x = *row;
+					__asm__("rlwinm %0,%1,16,0,31\n\t"
+					        "rlwimi %0,%1,0,8,15\n\t"
+					        "rlwimi %0,%1,0,24,31"
+					        : "=&r" (x)
+					        : "r" (x));
+					*row++ = x;
+				}
+				ras += padded_bpr;
+			}
+			break;
+		case PIXF_A8B8G8R8:
+			for (i = 0; i != height; i++) {
+				row = (uint32 *)ras;
+				for (j = 0; j != width; j++) {
+					uint32 x = *row;
+					__asm__("rlwinm %0,%1,8,0,31"
+					        : "=&r" (x)
+					        : "r" (x));
+					*row++ = x;
+				}
+				ras += padded_bpr;
+			}
+			break;
 		case PIXF_R5G6B5:
 		case PIXF_R5G5B5:
 			for (i = 0; i != height; i++) {
@@ -239,6 +267,8 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	pixfmt = IGraphics->GetBitMapAttr(bm, BMA_PIXELFORMAT);
 	switch (pixfmt) {
 		case PIXF_A8R8G8B8:
+		case PIXF_R8G8B8A8:
+		case PIXF_A8B8G8R8:
 			state->convert = TRUE;
 		case PIXF_B8G8R8A8:
 			state->zmbv_fmt = 8;

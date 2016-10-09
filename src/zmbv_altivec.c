@@ -88,6 +88,8 @@ uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 
 static const vuint8 endian_swap_32bit = { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12 };
 static const vuint8 endian_swap_16bit = { 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 };
+static const vuint8 rgba32_to_bgra32  = { 2, 1, 0, 3, 6, 5, 4, 7, 10, 9, 8, 11, 14, 13, 12, 15 };
+static const vuint8 abgr32_to_bgra32  = { 1, 2, 3, 0, 5, 6, 7, 4, 9, 10, 11, 8, 13, 14, 15, 12 };
 
 #ifdef PREFETCH
 #define MAX_VECTORS (32UL * 256UL)
@@ -124,6 +126,12 @@ void zmbv_format_convert_altivec(const struct zmbv_state *state,
 	switch (state->pixfmt) {
 		case PIXF_A8R8G8B8:
 			perm_vector = endian_swap_32bit;
+			break;
+		case PIXF_R8G8B8A8:
+			perm_vector = rgba32_to_bgra32;
+			break;
+		case PIXF_A8B8G8R8:
+			perm_vector = abgr32_to_bgra32;
 			break;
 		case PIXF_R5G6B5:
 		case PIXF_R5G5B5:
