@@ -462,7 +462,7 @@ static void gui_free_menu(struct srec_gui *gd) {
 		IIntuition->DisposeObject(gd->obj[OID_MENUSTRIP]);
 }
 
-static inline BOOL gui_is_recording(struct srec_gui *gd) {
+static inline BOOL gui_is_recording(const struct srec_gui *gd) {
 	return (gd->srec_pid != 0) ? TRUE : FALSE;
 }
 
@@ -656,7 +656,7 @@ static void gui_read_settings(struct srec_gui *gd) {
 	gd->enable_altivec = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnableAltivec", TRUE);
 }
 
-static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...) {
+static VARARGS68K void gui_set_gadget_attrs(const struct srec_gui *gd, uint32 id, ...) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct Gadget *gadget = (struct Gadget *)gd->obj[id];
 	struct Window *window;
@@ -680,7 +680,7 @@ static VARARGS68K void gui_set_gadget_attrs(struct srec_gui *gd, uint32 id, ...)
 	va_end(ap);
 }
 
-static BOOL gui_get_wb_dimensions(struct srec_gui *gd, uint32 *widthp, uint32 *heightp) {
+static BOOL gui_get_wb_dimensions(const struct srec_gui *gd, uint32 *widthp, uint32 *heightp) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct Screen *screen;
 
@@ -1186,7 +1186,7 @@ static BOOL gui_iconify_window(struct srec_gui *gd) {
 	return TRUE;
 }
 
-static void gui_about_requester(struct srec_gui *gd) {
+static void gui_about_requester(const struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct LocaleInfo *loc = gd->locale_info;
 	struct Window *window;
@@ -1231,7 +1231,7 @@ static void gui_about_requester(struct srec_gui *gd) {
 		TAG_END);
 }
 
-static void gui_getfile_requester(struct srec_gui *gd, uint32 id) {
+static void gui_getfile_requester(const struct srec_gui *gd, uint32 id) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct Window *window;
 	uint32 temp;
@@ -1318,6 +1318,49 @@ static void gui_stop_recording(struct srec_gui *gd) {
 	if (gui_is_recording(gd)) {
 		safe_signal_proc(gd->srec_pid, SIGBREAKF_CTRL_C);
 	}
+}
+
+static void gui_srec_error_requester(const struct srec_gui *gd, const struct DeathMessage *dm) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct LocaleInfo *loc = gd->locale_info;
+	struct Window *window;
+	Object *requester;
+	TEXT requester_title[64];
+	TEXT body_text[128];
+	uint32 temp;
+
+	IIntuition->GetAttr(WINDOW_Window, gd->obj[OID_WINDOW], &temp);
+	window = (struct Window *)temp;
+
+	IUtility->SNPrintf(requester_title, sizeof(requester_title),
+		GetString(loc, MSG_ERROR_WINDOW_TITLE), PROGNAME);
+
+	IUtility->SNPrintf(body_text, sizeof(body_text),
+		"Screen Recorder process failed!\n\n"
+		"Return code: %ld Error: %ld",
+		dm->dm_ReturnCode, dm->dm_Result2);
+
+	requester = IIntuition->NewObject(gd->requesterclass, NULL,
+		REQ_Image,      REQIMAGE_ERROR,
+		REQ_CharSet,    loc->li_CodeSet,
+		REQ_TitleText,  requester_title,
+		REQ_BodyText,   body_text,
+		REQ_GadgetText, GetString(loc, MSG_OK_GAD),
+		TAG_END);
+
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_BusyPointer, TRUE,
+		TAG_END);
+
+	if (requester != NULL) {
+		IIntuition->IDoMethod(requester, RM_OPENREQ, NULL, window, NULL);
+
+		IIntuition->DisposeObject(requester);
+	}
+
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_BusyPointer, FALSE,
+		TAG_END);
 }
 
 static void gui_save_settings(struct srec_gui *gd) {
@@ -1611,7 +1654,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 				gui_update_record_stop_buttons(gd);
 
 				if (dm->dm_ReturnCode != RETURN_OK) {
-					//FIXME: Add error requester
+					gui_srec_error_requester(gd, dm);
 				}
 			}
 		}
@@ -1754,7 +1797,7 @@ out:
 			gd->srec_pid = 0;
 
 			if (dm->dm_ReturnCode != RETURN_OK) {
-				//FIXME: Add error requester
+				gui_srec_error_requester(gd, dm);
 			}
 		}
 

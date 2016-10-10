@@ -150,7 +150,8 @@ int cli_main(struct LocaleInfo *loc) {
 		if (ErrorOut == ZERO)
 			ErrorOut = IDOS->Output();
 
-		IDOS->FPrintf(ErrorOut, "Screen Recorder process failed! (rc: %ld IoErr(): %ld)\n",
+		IDOS->FPrintf(ErrorOut, "Screen Recorder process failed!\n"
+			"Return code: %ld Error: %ld\n",
 			dm->dm_ReturnCode, dm->dm_Result2);
 		goto out;
 	}

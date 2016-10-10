@@ -19,3 +19,6 @@ SRec 2.3 (xx.xx.2016)
 
 - Main window is now locked while about requester is open.
 
+- Added requesters for fatal recording errors like not being able to open the
+  specified output file.
+

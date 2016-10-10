@@ -171,3 +171,6 @@ _Stop
 MSG_DISABLE_ALTIVEC_GAD (//)
 Disable _Altivec
 ;
+MSG_ERROR_WINDOW_TITLE (//)
+Error - %s
+;
