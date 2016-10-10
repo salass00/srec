@@ -270,6 +270,9 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	uint8  *out       = state->frame_buffer;
 	uint32  out_space = state->max_frame_size;
 
+	if (state->srec_bm == NULL)
+		return FALSE;
+
 	get_frame_data(state->global_data, state->current_frame_bm, state->width, state->height, state->frame_bpr);
 
 	if (state->keyframe_cnt == 0) {

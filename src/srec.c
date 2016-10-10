@@ -159,7 +159,6 @@ void get_frame_data(const struct SRecGlobal *gd, struct BitMap *dest_bm, uint32 
 			TAG_END);
 	} else {
 		uint32 max_rows  = MAX_VRAM_TO_RAM_TRANSFER_SIZE / bpr;
-		uint32 width     = width;
 		uint32 rows_left = height;
 		uint32 y         = 0;
 
