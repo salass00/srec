@@ -22,3 +22,5 @@ SRec 2.3 (xx.xx.2016)
 - Added requesters for fatal recording errors like not being able to open the
   specified output file.
 
+- Added option to create icon files for recorded videos.
+

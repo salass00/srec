@@ -86,6 +86,7 @@ struct SRecArgs {
 	BOOL           no_filter;
 	BOOL           no_pointer;
 	BOOL           no_altivec;
+	BOOL           create_icon;
 	TEXT           output_file[1024];
 	TEXT           pointer_file[1024];
 	TEXT           busy_pointer_file[1024];

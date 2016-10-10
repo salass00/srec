@@ -174,3 +174,6 @@ Disable _Altivec
 MSG_ERROR_WINDOW_TITLE (//)
 Error - %s
 ;
+MSG_CREATE_ICON_GAD (//)
+Create _Icon
+;

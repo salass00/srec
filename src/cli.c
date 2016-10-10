@@ -25,7 +25,7 @@
 #include <proto/dos.h>
 #include <proto/utility.h>
 
-#define TEMPLATE "FILENAME/A,WIDTH/N,HEIGHT/N,FPS/N,AVI/S,NOFILTER/S,NOPOINTER/S,NOALTIVEC/S"
+#define TEMPLATE "FILENAME/A,WIDTH/N,HEIGHT/N,FPS/N,AVI/S,NOFILTER/S,NOPOINTER/S,NOALTIVEC/S,CREATEICON/S"
 
 enum {
 	ARG_FILENAME,
@@ -36,6 +36,7 @@ enum {
 	ARG_NOFILTER,
 	ARG_NOPOINTER,
 	ARG_NOALTIVEC,
+	ARG_CREATEICON,
 	ARG_MAX
 };
 
@@ -97,9 +98,10 @@ int cli_main(struct LocaleInfo *loc) {
 	if (args[ARG_AVI])
 		startup_msg->container = CONTAINER_AVI;
 
-	startup_msg->no_filter  = args[ARG_NOFILTER]  ? TRUE : FALSE;
-	startup_msg->no_pointer = args[ARG_NOPOINTER] ? TRUE : FALSE;
-	startup_msg->no_altivec = args[ARG_NOALTIVEC] ? TRUE : FALSE;
+	startup_msg->no_filter   = args[ARG_NOFILTER]   ? TRUE : FALSE;
+	startup_msg->no_pointer  = args[ARG_NOPOINTER]  ? TRUE : FALSE;
+	startup_msg->no_altivec  = args[ARG_NOALTIVEC]  ? TRUE : FALSE;
+	startup_msg->create_icon = args[ARG_CREATEICON] ? TRUE : FALSE;
 
 	mp = IExec->AllocSysObject(ASOT_PORT, NULL);
 	if (mp == NULL) {

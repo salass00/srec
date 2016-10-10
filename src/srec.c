@@ -23,6 +23,7 @@
 #include "avilib.h"
 #include "libmkv.h"
 #include "zmbv.h"
+#include <workbench/icon.h>
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include <proto/utility.h>
@@ -76,6 +77,62 @@ static inline uint16_t h2le16(uint16_t x) {
 
 static inline uint32_t h2le32(uint32_t x) {
 	return (x << 24) | ((x & 0xff00UL) << 8) | ((x & 0xff0000UL) >> 8) | (x >> 24);
+}
+
+static void create_icon(const struct SRecGlobal *gd, CONST_STRPTR path) {
+	struct IconIFace *IIcon = gd->iicon;
+	const struct SRecArgs *args = gd->args;
+	BOOL create_icon = FALSE;
+
+	if (args->create_icon) {
+		TEXT buffer[1024];
+
+		BPTR lock;
+
+		IUtility->SNPrintf(buffer, sizeof(buffer), "%s.info", path);
+
+		lock = IDOS->LockTags(
+			LK_Name,      buffer,
+			LK_ResolveSL, FALSE,
+			TAG_END);
+		if (lock != ZERO)
+			IDOS->UnLock(lock);
+
+		/* Only create a new icon if one doesn't already exist */
+		if (lock == ZERO && IDOS->IoErr() == ERROR_OBJECT_NOT_FOUND)
+			create_icon = TRUE;
+	}
+
+	if (create_icon) {
+		CONST_STRPTR container;
+		struct DiskObject *icon;
+
+		if (args->container == CONTAINER_AVI)
+			container = "avi";
+		else
+			container = "mkv";
+
+		icon = IIcon->GetIconTags(NULL,
+			ICONGETA_GetDefaultName, container,
+			ICONGETA_RemapIcon,      FALSE,
+			TAG_END);
+
+		if (icon == NULL) {
+			icon = IIcon->GetIconTags(NULL,
+				ICONGETA_GetDefaultName, "movie",
+				ICONGETA_GetDefaultType, WBPROJECT,
+				ICONGETA_RemapIcon,      FALSE,
+				TAG_END);
+		}
+
+		if (icon != NULL) {
+			IIcon->PutIconTags(path, icon,
+				ICONPUTA_NotifyWorkbench, TRUE,
+				TAG_END);
+
+			IIcon->FreeDiskObject(icon);
+		}
+	}
 }
 
 static int64 get_uptime_micros(const struct SRecGlobal *gd) {
@@ -342,6 +399,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 		if (mk_writeHeader(writer, VERS) != 0)
 			goto out;
 	}
+
+	create_icon(&gd, args->output_file);
 
 	prev_time = get_uptime_micros(&gd);
 	total_diff = 0;

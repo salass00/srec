@@ -114,6 +114,7 @@ enum {
 	OID_MISC_PAGE,
 	OID_BILINEAR_FILTER,
 	OID_DISABLE_ALTIVEC,
+	OID_CREATE_ICON,
 	OID_RECORD_STOP_LAYOUT,
 	OID_RECORD,
 	OID_STOP,
@@ -187,6 +188,7 @@ struct srec_gui {
 	BOOL                      enable_pointer;
 	BOOL                      enable_filter;
 	BOOL                      enable_altivec;
+	BOOL                      create_icon;
 
 	struct MsgPort           *wb_mp;
 	Object                   *obj[OID_MAX];
@@ -649,11 +651,12 @@ static void gui_read_settings(struct srec_gui *gd) {
 
 	gd->enable_pointer = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnablePointer", TRUE);
 
-	gd->pointer_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "PointerFile", DEFAULT_POINTER_FILE);
+	gd->pointer_file      = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "PointerFile", DEFAULT_POINTER_FILE);
 	gd->busy_pointer_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "BusyPointerFile", DEFAULT_BUSY_POINTER_FILE);
 
 	gd->enable_filter  = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "BilinearFilter", TRUE);
 	gd->enable_altivec = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnableAltivec", TRUE);
+	gd->create_icon    = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "CreateIcon", TRUE);
 }
 
 static VARARGS68K void gui_set_gadget_attrs(const struct srec_gui *gd, uint32 id, ...) {
@@ -1029,6 +1032,12 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		CHECKBOX_Checked, !gd->enable_altivec,
 		TAG_END);
 
+	gd->obj[OID_CREATE_ICON] = IIntuition->NewObject(gd->checkboxclass, NULL,
+		GA_ID,            OID_CREATE_ICON,
+		GA_RelVerify,     TRUE,
+		CHECKBOX_Checked, gd->create_icon,
+		TAG_END);
+
 	gd->obj[OID_MISC_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
 		GA_ID,              OID_MISC_PAGE,
 		LAYOUT_Orientation, LAYOUT_ORIENT_VERT,
@@ -1036,6 +1045,8 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		CHILD_Label,        LABEL(MSG_BILINEAR_FILTER_GAD),
 		LAYOUT_AddChild,    gd->obj[OID_DISABLE_ALTIVEC],
 		CHILD_Label,        LABEL(MSG_DISABLE_ALTIVEC_GAD),
+		LAYOUT_AddChild,    gd->obj[OID_CREATE_ICON],
+		CHILD_Label,        LABEL(MSG_CREATE_ICON_GAD),
 		LAYOUT_AddChild,    SPACE,
 		TAG_END);
 
@@ -1293,6 +1304,7 @@ static void gui_start_recording(struct srec_gui *gd) {
 	sm->no_filter   = !gd->enable_filter;
 	sm->no_pointer  = !gd->enable_pointer;
 	sm->no_altivec  = !gd->enable_altivec;
+	sm->create_icon = gd->create_icon;
 
 	proc = IDOS->CreateNewProcTags(
 		NP_Name,                 SREC_PROCNAME,
@@ -1724,6 +1736,9 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								break;
 							case OID_DISABLE_ALTIVEC:
 								gd->enable_altivec = code ? FALSE : TRUE;
+								break;
+							case OID_CREATE_ICON:
+								gd->create_icon = code ? TRUE : FALSE;
 								break;
 							case OID_RECORD:
 								gui_start_recording(gd);
