@@ -124,6 +124,8 @@ enum {
 /* Global data structure for GUI */
 struct srec_gui {
 	struct LocaleInfo        *locale_info;
+	uint32                    vector_unit;
+
 	struct IntuitionIFace    *iintuition;
 	struct GraphicsIFace     *igraphics;
 	struct IconIFace         *iicon;
@@ -1123,6 +1125,12 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 	if (gd->obj[OID_TAB_PAGES] == NULL || gd->obj[OID_WINDOW] == NULL)
 		return FALSE;
 
+	if (gd->vector_unit != VECTORTYPE_ALTIVEC) {
+		gui_set_gadget_attrs(gd, OID_DISABLE_ALTIVEC,
+			GA_Disabled, TRUE,
+			TAG_END);
+	}
+
 	gui_enforce_aspect_ratio(gd, TRUE);
 	gui_update_audio_gadgets(gd);
 	gui_update_pointer_gadgets(gd);
@@ -1526,6 +1534,11 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 		goto out;
 
 	gd->locale_info = loc;
+	gd->vector_unit = VECTORTYPE_NONE;
+
+	IExec->GetCPUInfoTags(
+		GCIT_VectorUnit, &gd->vector_unit,
+		TAG_END);
 
 	if (!gui_open_libs(gd))
 		goto out;
