@@ -50,13 +50,13 @@ uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp)
 {
-	vuint8 result = vec_splat_u8(0);
+	vuint8  result = vec_splat_u8(0);
 	#ifdef PREFETCH
-	uint32 prefetch;
+	uint32  prefetch;
 	#endif
-	uint8 *out = *outp;
-	uint32 i;
-	vuint8 x;
+	uint8  *out = *outp;
+	uint32  i;
+	vuint8  x;
 
 	#ifdef PREFETCH
 	prefetch = get_prefetch_constant((blk_w + 15) >> 4, blk_h, bpr);
@@ -112,16 +112,16 @@ static inline uint32 get_prefetch_constant_simple(uint32 total_vectors) {
 void zmbv_format_convert_altivec(const struct zmbv_state *state,
 	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr)
 {
-	uint32 vectors = (packed_bpr + 15) >> 4;
-	vuint8 perm_vector;
+	vuint8  perm_vector;
+	uint32  vectors;
 	#ifdef PREFETCH
-	uint32 max_prefetch;
-	uint32 prefetch;
-	uint32 num_max, k;
+	uint32  max_prefetch;
+	uint32  prefetch;
+	uint32  num_max, k;
 	#endif
-	uint8 *row;
-	uint32 i, j;
-	vuint8 x, y;
+	uint8  *row;
+	uint32  i, j;
+	vuint8  x, y;
 
 	switch (state->pixfmt) {
 		case PIXF_A8R8G8B8:
@@ -138,9 +138,12 @@ void zmbv_format_convert_altivec(const struct zmbv_state *state,
 			perm_vector = endian_swap_16bit;
 			break;
 		default:
-			/* Do nothing */
+			/* Fall back on non-Altivec code for unsupported formats */
+			zmbv_format_convert_generic(state, ras, packed_bpr, height, padded_bpr);
 			return;
 	}
+
+	vectors = (packed_bpr + 15) >> 4;
 
 	#ifdef PREFETCH
 	max_prefetch = get_prefetch_constant(32, 256, 512);

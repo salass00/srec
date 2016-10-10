@@ -60,13 +60,13 @@ static inline uint32 zmbv_xor_row_generic(const struct zmbv_state *state, uint8 
 	return result;
 }
 
-static uint8 zmbv_xor_block_generic(const struct zmbv_state *state,
+uint8 zmbv_xor_block_generic(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp)
 {
-	uint8 *out = *outp;
-	uint32 result = 0;
-	uint32 i;
+	uint8  *out = *outp;
+	uint32  result = 0;
+	uint32  i;
 
 	for (i = 0; i != blk_h; i++) {
 		result |= zmbv_xor_row_generic(state, out, ras1, ras2, blk_w);
@@ -83,12 +83,12 @@ static uint8 zmbv_xor_block_generic(const struct zmbv_state *state,
 	}
 }
 
-static void zmbv_format_convert_generic(const struct zmbv_state *state,
+void zmbv_format_convert_generic(const struct zmbv_state *state,
 	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr)
 {
-	uint32 width = (packed_bpr + 3) >> 2;
+	uint32  width = (packed_bpr + 3) >> 2;
 	uint32 *row;
-	uint32 i, j;
+	uint32  i, j;
 
 	switch (state->pixfmt) {
 		case PIXF_A8R8G8B8:
@@ -291,7 +291,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	uint32 num_blk_w, num_blk_h, num_blk;
 	uint32 compare_bpr;
 	uint32 block_data_offset, frame_buffer_offset;
-	APTR lock;
+	APTR   lock;
 
 	zmbv_free_frame_data(state);
 
@@ -308,11 +308,13 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 			state->zmbv_fmt = 8;
 			break;
 		case PIXF_R5G6B5:
+		case PIXF_B5G6R5PC:
 			state->convert = TRUE;
 		case PIXF_R5G6B5PC:
 			state->zmbv_fmt = 6;
 			break;
 		case PIXF_R5G5B5:
+		case PIXF_B5G5R5PC:
 			state->convert = TRUE;
 		case PIXF_R5G5B5PC:
 			state->zmbv_fmt = 5;

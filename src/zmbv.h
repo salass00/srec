@@ -60,6 +60,11 @@ struct zmbv_state {
 	uint32                 vector_unit;
 };
 
+uint8 zmbv_xor_block_generic(const struct zmbv_state *state,
+	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
+	uint32 bpr, uint8 **outp);
+void zmbv_format_convert_generic(const struct zmbv_state *state,
+	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr);
 struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs *args);
 BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm);
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
