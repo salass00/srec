@@ -1,4 +1,4 @@
-## version $VER: SRec.catalog 2.2 (8.10.2016)
+## version $VER: SRec.catalog 2.2 (10.10.2016)
 ## codeset 0
 ## language italiano
 ## chunk AUTH Translated by Samir Hawamdeh (http://www.betatesting.it/backforthefuture)
@@ -11,7 +11,7 @@
 ;
 ; Traduzione italiana di SRec
 ;
-; $VER: SRec 2.1 (6.10.2016)
+; $VER: SRec 2.2 (10.10.2016)
 ;
 MSG_TOO_OLD_OS_VERSION
 SRec %ld.%ld richiede %s o superiore!
@@ -240,4 +240,8 @@ _Stop
 MSG_DISABLE_ALTIVEC_GAD
 Disattiva _Altivec
 ; Disable _Altivec
+;
+MSG_ERROR_WINDOW_TITLE
+Errore - %s
+; Error - %s
 ;
