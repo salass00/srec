@@ -385,8 +385,8 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 {
 	struct GraphicsIFace *IGraphics = state->igraphics;
 	struct ZIFace *IZ = state->iz;
-	uint8 *out = state->frame_buffer;
-	uint32 out_space = state->max_frame_size;
+	uint8  *out       = state->frame_buffer;
+	uint32  out_space = state->max_frame_size;
 
 	if (state->srec_bm == NULL)
 		return FALSE;
@@ -434,9 +434,9 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	}
 
 	if (state->keyframe_cnt == 0) {
-		uint8 *ras        = state->current_frame;
-		uint32 packed_bpr = state->width * state->frame_bpp;
-		uint32 padded_bpr = state->frame_bpr;
+		uint8  *ras        = state->current_frame;
+		uint32  packed_bpr = state->width * state->frame_bpp;
+		uint32  padded_bpr = state->frame_bpr;
 
 		state->keyframe_cnt = state->fps * 5; // keyframe every 5 seconds
 
@@ -447,13 +447,11 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		out[4] = state->zmbv_fmt; // video format
 		out[5] = BLKW;
 		out[6] = BLKH;
-		out += 7;
-		out_space -= 7;
 
 		IZ->DeflateReset(&state->zstream);
 
-		state->zstream.next_out = out;
-		state->zstream.avail_out = out_space;
+		state->zstream.next_out = out + 7;
+		state->zstream.avail_out = out_space - 7;
 		state->zstream.total_out = 0;
 
 		if (state->convert)
@@ -495,25 +493,25 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		if (state->convert)
 			state->format_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
 
-		*framep = state->frame_buffer;
+		*framep = out;
 		*framesizep = 7 + state->zstream.total_out;
 		*keyframep = TRUE;
 	} else {
 		zmbv_xor_block_func_t xor_block_func = state->xor_block_func;
-		uint8 *current_ras = state->current_frame;
-		uint8 *prev_ras    = state->prev_frame;
-		uint8 *info        = state->block_info_buffer;
-		uint8 *data        = state->block_data_buffer;
-		uint32 num_blk_w   = state->width / BLKW;
-		uint32 last_blk_w  = (state->width % BLKW) * state->frame_bpp;
-		uint32 num_blk_h   = state->height / BLKH;
-		uint32 last_blk_h  = state->height % BLKH;
-		uint32 blk_w       = BLKW * state->frame_bpp;
-		uint32 blk_h       = BLKH;
-		uint32 bpr         = state->frame_bpr;
-		uint32 blk_mod     = (bpr * BLKH) - (num_blk_w * blk_w);
-		uint32 block_data_len;
-		uint32 i, j;
+		uint8  *current_ras = state->current_frame;
+		uint8  *prev_ras    = state->prev_frame;
+		uint8  *info        = state->block_info_buffer;
+		uint8  *data        = state->block_data_buffer;
+		uint32  num_blk_w   = state->width / BLKW;
+		uint32  last_blk_w  = (state->width % BLKW) * state->frame_bpp;
+		uint32  num_blk_h   = state->height / BLKH;
+		uint32  last_blk_h  = state->height % BLKH;
+		uint32  blk_w       = BLKW * state->frame_bpp;
+		uint32  blk_h       = BLKH;
+		uint32  bpr         = state->frame_bpr;
+		uint32  blk_mod     = (bpr * BLKH) - (num_blk_w * blk_w);
+		uint32  block_data_len;
+		uint32  i, j;
 
 		state->keyframe_cnt--;
 
@@ -550,11 +548,9 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		}
 
 		out[0] = 0; // interframe
-		out++;
-		out_space--;
 
-		state->zstream.next_out  = out;
-		state->zstream.avail_out = out_space;
+		state->zstream.next_out  = out + 1;
+		state->zstream.avail_out = out_space - 1;
 		state->zstream.total_out = 0;
 
 		state->zstream.next_in  = state->block_info_buffer;
@@ -575,7 +571,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 			return FALSE;
 		}
 
-		*framep = state->frame_buffer;
+		*framep = out;
 		*framesizep = 1 + state->zstream.total_out;
 		*keyframep = FALSE;
 	}
@@ -593,6 +589,34 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		state->current_frame = state->prev_frame;
 		state->prev_frame = temp_frame;
 	}
+
+	return TRUE;
+}
+
+BOOL zmbv_encode_dup(struct zmbv_state *state, void **framep, uint32 *framesizep) {
+	struct ZIFace *IZ = state->iz;
+	uint8  *out       = state->frame_buffer;
+	uint32  out_space = state->max_frame_size;
+	uint8  *info      = state->block_info_buffer;
+	uint32  info_size = state->block_info_size;
+
+	IUtility->ClearMem(info, info_size);
+
+	out[0] = 0; // interframe
+
+	state->zstream.next_out  = out + 1;
+	state->zstream.avail_out = out_space - 1;
+	state->zstream.total_out = 0;
+
+	state->zstream.next_in  = info;
+	state->zstream.avail_in = info_size;
+	if (IZ->Deflate(&state->zstream, Z_SYNC_FLUSH) != Z_OK) {
+		IExec->DebugPrintF("deflate failed!\n");
+		return FALSE;
+	}
+
+	*framep = out;
+	*framesizep = 1 + state->zstream.total_out;
 
 	return TRUE;
 }

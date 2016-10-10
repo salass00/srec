@@ -64,6 +64,7 @@ struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs 
 BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm);
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	BOOL *keyframep);
+BOOL zmbv_encode_dup(struct zmbv_state *state, void **framep, uint32 *framesizep);
 void zmbv_end(struct zmbv_state *state);
 
 uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,

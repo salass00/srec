@@ -12,3 +12,5 @@ SRec 2.2 (xx.xx.2016)
 
 - Added support for RGBA32 and ABGR32 pixel formats.
 
+- Added frame skipping code.
+

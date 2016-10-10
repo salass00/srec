@@ -76,6 +76,15 @@ static inline uint32_t h2le32(uint32_t x) {
 	return (x << 24) | ((x & 0xff00UL) << 8) | ((x & 0xff0000UL) >> 8) | (x >> 24);
 }
 
+static int64 get_uptime_micros(const struct SRecGlobal *gd) {
+	struct TimerIFace *ITimer = gd->itimer;
+	struct TimeVal tv;
+
+	ITimer->GetUpTime(&tv);
+
+	return ((uint64)tv.Seconds * 1000000ULL) + (uint64)tv.Microseconds;
+}
+
 void get_screen_dimensions(struct GraphicsIFace *IGraphics,
 	const struct Screen *screen, uint32 *widthp, uint32 *heightp)
 {
@@ -144,7 +153,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	struct Screen *current_screen = NULL;
 	struct BitMap *screen_bitmap = NULL;
 	vertex_t vertex_array[6];
-	uint32 frames = 0;
+	uint32 frames = 0, skipped = 0;
 	uint32 duration_us;
 	uint64 duration_ns;
 	uint64 timestamp = 0;
@@ -152,6 +161,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	struct srec_pointer *busy_pointer = NULL;
 	int32 mouse_x = 0, mouse_y = 0;
 	BOOL use_busy_pointer = FALSE;
+	uint64 current_time, prev_time;
+	int64 current_diff, total_diff;
 	int rc = RETURN_ERROR;
 
 	/* AVI output */
@@ -284,6 +295,9 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 			goto out;
 	}
 
+	prev_time = get_uptime_micros(&gd);
+	total_diff = 0;
+
 	timer_sig = 1UL << tr->Request.io_Message.mn_ReplyPort->mp_SigBit;
 	IExec->Signal(IExec->FindTask(NULL), timer_sig);
 
@@ -303,6 +317,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 			if (timer_in_use)
 				IExec->WaitIO((struct IORequest *)tr);
 
+			/* Calculate time difference for frame skipping */
+			current_time = get_uptime_micros(&gd);
+			current_diff = current_time - prev_time - duration_us;
+			if (current_diff > 0)
+				total_diff += current_diff;
+			prev_time = current_time;
+
 			tr->Request.io_Command = TR_ADDREQUEST;
 			tr->Time.Seconds       = 0UL;
 			tr->Time.Microseconds  = duration_us;
@@ -313,6 +334,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 			ilock = IIntuition->LockIBase(0);
 
+			/* Check if the frontmost screen has changed and handle that */
 			first_screen = IntuitionBase->FirstScreen;
 			if (first_screen != current_screen) {
 				if (bitmap != NULL) {
@@ -422,7 +444,6 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 				if (!args->no_pointer) {
 					struct srec_pointer *sp = use_busy_pointer ? busy_pointer : pointer;
-
 					render_pointer(&gd, sp, mouse_x, mouse_y);
 				}
 
@@ -445,8 +466,37 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				}
 
 				timestamp += duration_ns;
-
 				frames++;
+
+				/* Skip frames if time difference is too large */
+				while (total_diff >= (int64)duration_us) {
+					total_diff -= (int64)duration_us;
+
+					if (!zmbv_encode_dup(encoder, &frame, &framesize))
+						goto out;
+
+					if (args->container == CONTAINER_AVI) {
+						if (AVI_write_frame(AVI, frame, framesize, FALSE) != 0) {
+							IExec->DebugPrintF("error outputting frame #%lu\n", frames);
+							goto out;
+						}
+					} else {
+						if (mk_startFrame(writer, video_track) != 0 ||
+							mk_addFrameData(writer, video_track, frame, framesize) != 0 ||
+							mk_setFrameFlags(writer, video_track, timestamp, FALSE, duration_ns) != 0)
+						{
+							IExec->DebugPrintF("error outputting frame #%lu\n", frames);
+							goto out;
+						}
+					}
+
+					timestamp += duration_ns;
+					frames++;
+					skipped++;
+				}
+			} else {
+				/* If there's nothing to output don't worry about skipping frames */
+				total_diff = 0;
 			}
 		}
 	}
