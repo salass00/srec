@@ -462,7 +462,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						BMATags_Friend, screen_bitmap,
 						TAG_END);
 
-					if (zmbv_set_source_bm(encoder, bitmap)) {
+					if (bitmap != NULL && zmbv_set_source_bm(encoder, bitmap)) {
 						uint32 width, height;
 						float scaled_width, scaled_height;
 

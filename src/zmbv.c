@@ -145,6 +145,9 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	state->keyframe_cnt = 0;
 	state->convert = FALSE;
 
+	if (bm == NULL)
+		return FALSE;
+
 	pixfmt = IGraphics->GetBitMapAttr(bm, BMA_PIXELFORMAT);
 	switch (pixfmt) {
 		case PIXF_A8R8G8B8: // ARGB32
