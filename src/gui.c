@@ -1216,11 +1216,19 @@ static void gui_about_requester(struct srec_gui *gd) {
 		REQ_GadgetText, GetString(loc, MSG_OK_GAD),
 		TAG_END);
 
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_BusyPointer, TRUE,
+		TAG_END);
+
 	if (requester != NULL) {
 		IIntuition->IDoMethod(requester, RM_OPENREQ, NULL, window, NULL);
 
 		IIntuition->DisposeObject(requester);
 	}
+
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_BusyPointer, FALSE,
+		TAG_END);
 }
 
 static void gui_getfile_requester(struct srec_gui *gd, uint32 id) {

@@ -14,3 +14,8 @@ SRec 2.2 (10.10.2016)
 
 - Added support for RGBA32, ABGR32, BGR16PC and BGR15PC pixel formats.
 
+
+SRec 2.3 (xx.xx.2016)
+
+- Main window is now locked while about requester is open.
+
