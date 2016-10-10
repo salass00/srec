@@ -157,7 +157,7 @@ void zmbv_format_convert_altivec(const struct zmbv_state *state,
 			break;
 		default:
 			/* Fall back on non-Altivec code for unsupported formats */
-			zmbv_format_convert_generic(state, ras, packed_bpr, height, padded_bpr);
+			zmbv_format_convert_ppc(state, ras, packed_bpr, height, padded_bpr);
 			return;
 	}
 
