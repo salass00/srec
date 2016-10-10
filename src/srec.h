@@ -23,6 +23,7 @@
 #include <interfaces/intuition.h>
 #include <interfaces/graphics.h>
 #include <interfaces/icon.h>
+#include <interfaces/timer.h>
 
 #define PROGNAME "SRec"
 
@@ -107,6 +108,7 @@ struct SRecGlobal {
 	struct IntuitionIFace *iintuition;
 	struct GraphicsIFace  *igraphics;
 	struct IconIFace      *iicon;
+	struct TimerIFace     *itimer;
 	struct BitMap         *bitmap;
 	uint32                 disp_width, disp_height;
 	float                  scale_x, scale_y;

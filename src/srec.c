@@ -170,6 +170,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	#define IIntuition  gd.iintuition
 	#define IGraphics   gd.igraphics
 	#define IIcon       gd.iicon
+	#define ITimer      gd.itimer
 
 	#define bitmap      gd.bitmap
 	#define disp_width  gd.disp_width
@@ -190,12 +191,6 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	IExec->WaitPort(&proc->pr_MsgPort);
 	args = (const struct SRecArgs *)IExec->GetMsg(&proc->pr_MsgPort);
 
-	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
-	IGraphics  = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
-	IIcon      = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1);
-	if (IIntuition == NULL || IGraphics == NULL || IIcon == NULL)
-		goto out;
-
 	if (args->width < MIN_WIDTH || args->width > MAX_WIDTH)
 		goto out;
 
@@ -209,6 +204,20 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 		goto out;
 
 	if (args->video_codec != VIDEO_CODEC_ZMBV || args->audio_codec != AUDIO_CODEC_NONE)
+		goto out;
+
+	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
+	IGraphics  = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
+	IIcon      = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1);
+	if (IIntuition == NULL || IGraphics == NULL || IIcon == NULL)
+		goto out;
+
+	tr = OpenTimerDevice(UNIT_MICROHZ);
+	if (tr == NULL)
+		goto out;
+
+	ITimer = (struct TimerIFace *)IExec->GetInterface((struct Library *)tr->Request.io_Device, "main", 1, NULL);
+	if (ITimer == NULL)
 		goto out;
 
 	if (!args->no_pointer) {
@@ -274,10 +283,6 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 		if (mk_writeHeader(writer, VERS) != 0)
 			goto out;
 	}
-
-	tr = OpenTimerDevice(UNIT_MICROHZ);
-	if (tr == NULL)
-		goto out;
 
 	timer_sig = 1UL << tr->Request.io_Message.mn_ReplyPort->mp_SigBit;
 	IExec->Signal(IExec->FindTask(NULL), timer_sig);
@@ -452,15 +457,6 @@ out:
 	if (bitmap != NULL)
 		IGraphics->FreeBitMap(bitmap);
 
-	if (tr != NULL) {
-		if (timer_in_use) {
-			if (IExec->CheckIO((struct IORequest *)tr) == NULL)
-				IExec->AbortIO((struct IORequest *)tr);
-			IExec->WaitIO((struct IORequest *)tr);
-		}
-		CloseTimerDevice(tr);
-	}
-
 	if (args->container == CONTAINER_AVI) {
 		if (AVI != NULL) {
 			AVI_close(AVI);
@@ -480,6 +476,18 @@ out:
 
 		if (busy_pointer != NULL)
 			free_pointer(&gd, busy_pointer);
+	}
+
+	if (ITimer != NULL)
+		IExec->DropInterface((struct Interface *)ITimer);
+
+	if (tr != NULL) {
+		if (timer_in_use) {
+			if (IExec->CheckIO((struct IORequest *)tr) == NULL)
+				IExec->AbortIO((struct IORequest *)tr);
+			IExec->WaitIO((struct IORequest *)tr);
+		}
+		CloseTimerDevice(tr);
 	}
 
 	if (IIcon != NULL)
