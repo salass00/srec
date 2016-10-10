@@ -3,7 +3,7 @@ SRec 2.1 (6.10.2016)
 - First released version.
 
 
-SRec 2.2 (xx.xx.2016)
+SRec 2.2 (10.10.2016)
 
 - Added "Disable Altivec" option in GUI equivalent to NOALTIVEC switch in
   command line interface.
