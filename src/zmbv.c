@@ -147,26 +147,26 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 
 	pixfmt = IGraphics->GetBitMapAttr(bm, BMA_PIXELFORMAT);
 	switch (pixfmt) {
-		case PIXF_A8R8G8B8:
-		case PIXF_R8G8B8A8:
-		case PIXF_A8B8G8R8:
+		case PIXF_A8R8G8B8: // ARGB32
+		case PIXF_R8G8B8A8: // RGBA32
+		case PIXF_A8B8G8R8: // ABGR32
 			state->convert = TRUE;
-		case PIXF_B8G8R8A8:
+		case PIXF_B8G8R8A8: // BGRA32
 			state->zmbv_fmt = 8;
 			break;
-		case PIXF_R5G6B5:
-		case PIXF_B5G6R5PC:
+		case PIXF_R5G6B5:   // RGB16
+		case PIXF_B5G6R5PC: // BGR16PC
 			state->convert = TRUE;
-		case PIXF_R5G6B5PC:
+		case PIXF_R5G6B5PC: // RGB16PC
 			state->zmbv_fmt = 6;
 			break;
-		case PIXF_R5G5B5:
-		case PIXF_B5G5R5PC:
+		case PIXF_R5G5B5:   // RGB15
+		case PIXF_B5G5R5PC: // BGR15PC
 			state->convert = TRUE;
-		case PIXF_R5G5B5PC:
+		case PIXF_R5G5B5PC: // RGB15PC
 			state->zmbv_fmt = 5;
 			break;
-		default:
+		default:            // Unsupported
 			IExec->DebugPrintF("unsupported pixel format: %lu!\n", pixfmt);
 			state->zmbv_fmt = (uint8)-1;
 			return FALSE;

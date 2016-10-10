@@ -73,7 +73,7 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 	uint32  i, j;
 
 	switch (state->pixfmt) {
-		case PIXF_A8R8G8B8:
+		case PIXF_A8R8G8B8: // ARGB32
 			for (i = 0; i != height; i++) {
 				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
@@ -88,7 +88,7 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 				ras += padded_bpr;
 			}
 			break;
-		case PIXF_R8G8B8A8:
+		case PIXF_R8G8B8A8: // RGBA32
 			for (i = 0; i != height; i++) {
 				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
@@ -103,7 +103,7 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 				ras += padded_bpr;
 			}
 			break;
-		case PIXF_A8B8G8R8:
+		case PIXF_A8B8G8R8: // ABGR32
 			for (i = 0; i != height; i++) {
 				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
@@ -116,8 +116,8 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 				ras += padded_bpr;
 			}
 			break;
-		case PIXF_R5G6B5:
-		case PIXF_R5G5B5:
+		case PIXF_R5G6B5:   // RGB16
+		case PIXF_R5G5B5:   // RGB15
 			for (i = 0; i != height; i++) {
 				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
@@ -132,7 +132,7 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 				ras += padded_bpr;
 			}
 			break;
-		case PIXF_B5G6R5PC:
+		case PIXF_B5G6R5PC: // BGR16PC
 			for (i = 0; i != height; i++) {
 				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
@@ -149,7 +149,7 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 				ras += padded_bpr;
 			}
 			break;
-		case PIXF_B5G5R5PC:
+		case PIXF_B5G5R5PC: // BGR15PC
 			for (i = 0; i != height; i++) {
 				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {

@@ -142,17 +142,17 @@ void zmbv_format_convert_altivec(const struct zmbv_state *state,
 	vuint8  x, y;
 
 	switch (state->pixfmt) {
-		case PIXF_A8R8G8B8:
+		case PIXF_A8R8G8B8: // ARGB32
 			perm_vector = endian_swap_32bit;
 			break;
-		case PIXF_R8G8B8A8:
+		case PIXF_R8G8B8A8: // RGBA32
 			perm_vector = rgba32_to_bgra32;
 			break;
-		case PIXF_A8B8G8R8:
+		case PIXF_A8B8G8R8: // ABGR32
 			perm_vector = abgr32_to_bgra32;
 			break;
-		case PIXF_R5G6B5:
-		case PIXF_R5G5B5:
+		case PIXF_R5G6B5:   // RGB16
+		case PIXF_R5G5B5:   // RGB15
 			perm_vector = endian_swap_16bit;
 			break;
 		default:
