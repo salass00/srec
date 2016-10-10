@@ -31,8 +31,6 @@
 #define SREC_PRIORITY  (0)
 #define SREC_STACKSIZE (64UL << 10)
 
-#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (256UL << 10)
-
 enum {
 	CONTAINER_AVI = 1,
 	CONTAINER_MKV,
@@ -119,6 +117,7 @@ BOOL safe_signal_proc(uint32 pid, uint32 sigmask);
 void get_screen_dimensions(struct GraphicsIFace *IGraphics,
 	const struct Screen *screen, uint32 *widthp, uint32 *heightp);
 void set_rect_vertex_array(vertex_t *vertex_array, const struct vertex_rect *rect);
+void get_frame_data(const struct SRecGlobal *gd, struct BitMap *dest_bm, uint32 width, uint32 height, uint32 bpr);
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase);
 
 #endif

@@ -56,7 +56,8 @@ struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs 
 	if (state == NULL)
 		goto out;
 
-	state->igraphics = gd->igraphics;
+	state->global_data = gd;
+	state->igraphics   = gd->igraphics;
 
 	state->width  = args->width;
 	state->height = args->height;
@@ -265,55 +266,11 @@ out:
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	BOOL *keyframep)
 {
-	struct GraphicsIFace *IGraphics = state->igraphics;
 	struct ZIFace *IZ = state->iz;
 	uint8  *out       = state->frame_buffer;
 	uint32  out_space = state->max_frame_size;
 
-	if (state->srec_bm == NULL)
-		return FALSE;
-
-	if (MAX_VRAM_TO_RAM_TRANSFER_SIZE == 0 ||
-	    MAX_VRAM_TO_RAM_TRANSFER_SIZE >= (state->frame_bpr * state->height))
-	{
-		IGraphics->BltBitMapTags(
-			BLITA_Source, state->srec_bm,
-			BLITA_Dest,   state->current_frame_bm,
-			BLITA_Width,  state->width,
-			BLITA_Height, state->height,
-			TAG_END);
-	} else {
-		uint32 max_rows  = MAX_VRAM_TO_RAM_TRANSFER_SIZE / state->frame_bpr;
-		uint32 width     = state->width;
-		uint32 rows_left = state->height;
-		uint32 y         = 0;
-
-		if (max_rows == 0)
-			max_rows = 1;
-
-		while (rows_left > max_rows) {
-			IGraphics->BltBitMapTags(
-				BLITA_Source, state->srec_bm,
-				BLITA_Dest,   state->current_frame_bm,
-				BLITA_SrcY,   y,
-				BLITA_DestY,  y,
-				BLITA_Width,  width,
-				BLITA_Height, max_rows,
-				TAG_END);
-
-			y += max_rows;
-			rows_left -= max_rows;
-		}
-
-		IGraphics->BltBitMapTags(
-			BLITA_Source, state->srec_bm,
-			BLITA_Dest,   state->current_frame_bm,
-			BLITA_SrcY,   y,
-			BLITA_DestY,  y,
-			BLITA_Width,  width,
-			BLITA_Height, rows_left,
-			TAG_END);
-	}
+	get_frame_data(state->global_data, state->current_frame_bm, state->width, state->height, state->frame_bpr);
 
 	if (state->keyframe_cnt == 0) {
 		uint8  *ras        = state->current_frame;

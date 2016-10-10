@@ -30,6 +30,8 @@
 #include <math.h>
 #include "SRec_rev.h"
 
+#define MAX_VRAM_TO_RAM_TRANSFER_SIZE (256UL << 10)
+
 #define VLC_COMPAT 1
 
 static int32 sighookfunc(struct Hook *hook, uint32 pid, struct Process *proc) {
@@ -140,6 +142,53 @@ void set_rect_vertex_array(vertex_t *vertex_array, const struct vertex_rect *rec
 	vertex_array[5].s = rect->max_s;
 	vertex_array[5].t = rect->max_t;
 	vertex_array[5].w = 1.0f;
+}
+
+void get_frame_data(const struct SRecGlobal *gd, struct BitMap *dest_bm, uint32 width, uint32 height, uint32 bpr) {
+	struct GraphicsIFace *IGraphics = gd->igraphics;
+	struct BitMap *src_bm = gd->bitmap;
+
+	if (MAX_VRAM_TO_RAM_TRANSFER_SIZE == 0 ||
+	    MAX_VRAM_TO_RAM_TRANSFER_SIZE >= (bpr * height))
+	{
+		IGraphics->BltBitMapTags(
+			BLITA_Source, src_bm,
+			BLITA_Dest,   dest_bm,
+			BLITA_Width,  width,
+			BLITA_Height, height,
+			TAG_END);
+	} else {
+		uint32 max_rows  = MAX_VRAM_TO_RAM_TRANSFER_SIZE / bpr;
+		uint32 width     = width;
+		uint32 rows_left = height;
+		uint32 y         = 0;
+
+		if (max_rows == 0)
+			max_rows = 1;
+
+		while (rows_left > max_rows) {
+			IGraphics->BltBitMapTags(
+				BLITA_Source, src_bm,
+				BLITA_Dest,   dest_bm,
+				BLITA_SrcY,   y,
+				BLITA_DestY,  y,
+				BLITA_Width,  width,
+				BLITA_Height, max_rows,
+				TAG_END);
+
+			y += max_rows;
+			rows_left -= max_rows;
+		}
+
+		IGraphics->BltBitMapTags(
+			BLITA_Source, src_bm,
+			BLITA_Dest,   dest_bm,
+			BLITA_SrcY,   y,
+			BLITA_DestY,  y,
+			BLITA_Width,  width,
+			BLITA_Height, rows_left,
+			TAG_END);
+	}
 }
 
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
