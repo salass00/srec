@@ -150,6 +150,40 @@ static void zmbv_format_convert_generic(const struct zmbv_state *state,
 				ras += padded_bpr;
 			}
 			break;
+		case PIXF_B5G6R5PC:
+			for (i = 0; i != height; i++) {
+				row = (uint32 *)ras;
+				for (j = 0; j != width; j++) {
+					uint32 x = *row;
+					__asm__("mr     %0,%1\n\t"
+					        "rlwimi %0,%1,5,3,7\n\t"
+					        "rlwimi %0,%1,27,8,12\n\t"
+					        "rlwimi %0,%1,5,19,23\n\t"
+					        "rlwimi %0,%1,27,24,28"
+					        : "=&r" (x)
+					        : "r" (x));
+					*row++ = x;
+				}
+				ras += padded_bpr;
+			}
+			break;
+		case PIXF_B5G5R5PC:
+			for (i = 0; i != height; i++) {
+				row = (uint32 *)ras;
+				for (j = 0; j != width; j++) {
+					uint32 x = *row;
+					__asm__("mr     %0,%1\n\t"
+					        "rlwimi %0,%1,6,3,7\n\t"
+					        "rlwimi %0,%1,26,9,13\n\t"
+					        "rlwimi %0,%1,6,19,23\n\t"
+					        "rlwimi %0,%1,26,25,29"
+					        : "=&r" (x)
+					        : "r" (x));
+					*row++ = x;
+				}
+				ras += padded_bpr;
+			}
+			break;
 		default:
 			/* Do nothing */
 			break;
