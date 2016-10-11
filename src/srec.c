@@ -268,6 +268,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	BOOL use_busy_pointer = FALSE;
 	uint64 current_time, prev_time;
 	int64 current_diff, total_diff;
+	uint64 encode_time = 0;
 	int rc = RETURN_ERROR;
 
 	/* AVI output */
@@ -543,6 +544,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				void *frame;
 				uint32 framesize;
 				BOOL keyframe;
+				uint64 before, after;
 
 				if (comp_err != COMPERR_Success) {
 					IExec->DebugPrintF("composite call failed, error = %lu!\n", comp_err);
@@ -554,8 +556,11 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 					render_pointer(&gd, sp, mouse_x, mouse_y);
 				}
 
+				before = get_uptime_micros(&gd);
 				if (!zmbv_encode(encoder, &frame, &framesize, &keyframe))
 					goto out;
+				after = get_uptime_micros(&gd);
+				encode_time += after - before;
 
 				if (args->container == CONTAINER_AVI) {
 					if (AVI_write_frame(AVI, frame, framesize, keyframe) != 0) {
@@ -609,6 +614,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	}
 
 	rc = RETURN_OK;
+
+	IExec->DebugPrintF("Frames recorded: %lu\n"
+		"Frames skipped: %lu\n"
+		"Total: %lu\n",
+		frames - skipped, skipped, frames);
+	IExec->DebugPrintF("Avg time spent in encoder per frame: %lu microseconds\n",
+		(uint32)(encode_time / (frames - skipped)));
 
 out:
 	if (bitmap != NULL)
