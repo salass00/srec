@@ -128,18 +128,19 @@ static inline uint32 get_prefetch_constant_simple(uint32 total_vectors) {
 #endif
 
 void zmbv_format_convert_altivec(const struct zmbv_state *state,
-	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr)
+	const uint8 *src, uint8 *dst, uint32 packed_bpr, uint32 height,
+	uint32 padded_bpr)
 {
-	vuint8  perm_vector;
-	uint32  vectors;
+	vuint8 perm_vector;
+	uint32 vectors;
+	uint32 mod;
 	#ifdef PREFETCH
-	uint32  max_prefetch;
-	uint32  prefetch;
-	uint32  num_max, k;
+	uint32 max_prefetch;
+	uint32 prefetch;
+	uint32 num_max, k;
 	#endif
-	uint8  *row;
-	uint32  i, j;
-	vuint8  x, y;
+	uint32 i, j;
+	vuint8 x, y;
 
 	switch (state->pixfmt) {
 		case PIXF_A8R8G8B8: // ARGB32
@@ -157,11 +158,12 @@ void zmbv_format_convert_altivec(const struct zmbv_state *state,
 			break;
 		default:
 			/* Fall back on non-Altivec code for unsupported formats */
-			zmbv_format_convert_ppc(state, ras, packed_bpr, height, padded_bpr);
+			zmbv_format_convert_ppc(state, src, dst, packed_bpr, height, padded_bpr);
 			return;
 	}
 
 	vectors = (packed_bpr + 15) >> 4;
+	mod = (padded_bpr - packed_bpr) & ~15;
 
 	#ifdef PREFETCH
 	max_prefetch = get_prefetch_constant(32, 256, 512);
@@ -172,37 +174,44 @@ void zmbv_format_convert_altivec(const struct zmbv_state *state,
 	#endif
 
 	for (i = 0; i != height; i++) {
-		row = ras;
-
 		#ifdef PREFETCH
 		for (j = 0; j != num_max; j++) {
-			vec_dstst(row, max_prefetch, 0);
+			if (src == dst)
+				vec_dstst(src, max_prefetch, 0);
+			else
+				vec_dst(src, max_prefetch, 0);
 
 			for (k = 0; k != MAX_VECTORS; k++) {
-				x = vec_ld(0, row);
+				x = vec_ld(0, src);
 				y = vec_perm(x, x, perm_vector);
-				vec_st(y, 0, row);
+				vec_st(y, 0, dst);
 
-				row += 16;
+				src += 16;
+				dst += 16;
 			}
 		}
 		#endif
 
 		if (vectors != 0) {
 			#ifdef PREFETCH
-			vec_dstst(row, prefetch, 0);
+			if (src == dst)
+				vec_dstst(src, prefetch, 0);
+			else
+				vec_dst(src, prefetch, 0);
 			#endif
 
 			for (j = 0; j != vectors; j++) {
-				x = vec_ld(0, row);
+				x = vec_ld(0, src);
 				y = vec_perm(x, x, perm_vector);
-				vec_st(y, 0, row);
+				vec_st(y, 0, dst);
 
-				row += 16;
+				src += 16;
+				dst += 16;
 			}
 		}
 
-		ras += padded_bpr;
+		src += mod;
+		dst += mod;
 	}
 
 	#ifdef PREFETCH

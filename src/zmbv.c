@@ -279,7 +279,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	get_frame_data(state->global_data, state->current_frame_bm, state->width, state->height, state->frame_bpr);
 
 	if (state->keyframe_cnt == 0) {
-		uint8  *ras        = state->current_frame;
+		uint8  *ras        = state->prev_frame;
 		uint32  packed_bpr = state->width * state->frame_bpp;
 		uint32  padded_bpr = state->frame_bpr;
 
@@ -299,8 +299,10 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		state->zstream.avail_out = out_space - 7;
 		state->zstream.total_out = 0;
 
-		if (state->convert)
-			state->format_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
+		if (state->convert) {
+			state->format_convert_func(state, state->current_frame, ras,
+				packed_bpr, state->height, padded_bpr);
+		}
 
 		if (packed_bpr == padded_bpr) {
 			state->zstream.next_in  = ras;
@@ -334,9 +336,6 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 				return FALSE;
 			}
 		}
-
-		if (state->convert)
-			state->format_convert_func(state, state->current_frame, packed_bpr, state->height, padded_bpr);
 
 		*framep = out;
 		*framesizep = 7 + state->zstream.total_out;
@@ -406,8 +405,10 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		}
 
 		block_data_len = data - (uint8 *)state->block_data_buffer;
-		if (state->convert)
-			state->format_convert_func(state, state->block_data_buffer, block_data_len, 1, 0);
+		if (state->convert) {
+			state->format_convert_func(state, state->block_data_buffer,
+				state->block_data_buffer, block_data_len, 1, 0);
+		}
 
 		state->zstream.next_in  = state->block_data_buffer;
 		state->zstream.avail_in = block_data_len;

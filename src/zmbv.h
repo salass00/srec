@@ -30,7 +30,8 @@ typedef uint8 (*zmbv_xor_block_func_t)(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp);
 typedef void (*zmbv_endian_convert_t)(const struct zmbv_state *state,
-	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr);
+	const uint8 *src, uint8 *dst, uint32 packed_bpr, uint32 height,
+	uint32 padded_bpr);
 
 struct zmbv_state {
 	uint8                    unaligned_mask_vector[16];
@@ -72,13 +73,15 @@ uint8 zmbv_xor_block_ppc(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp);
 void zmbv_format_convert_ppc(const struct zmbv_state *state,
-	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr);
+	const uint8 *src, uint8 *dst, uint32 packed_bpr, uint32 height,
+	uint32 padded_bpr);
 
 uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp);
 void zmbv_format_convert_altivec(const struct zmbv_state *state,
-	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr);
+	const uint8 *src, uint8 *dst, uint32 packed_bpr, uint32 height,
+	uint32 padded_bpr);
 
 #endif
 

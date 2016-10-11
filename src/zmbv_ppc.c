@@ -66,77 +66,85 @@ uint8 zmbv_xor_block_ppc(const struct zmbv_state *state,
 }
 
 void zmbv_format_convert_ppc(const struct zmbv_state *state,
-	uint8 *ras, uint32 packed_bpr, uint32 height, uint32 padded_bpr)
+	const uint8 *src, uint8 *dst, uint32 packed_bpr, uint32 height,
+	uint32 padded_bpr)
 {
-	uint32  width = (packed_bpr + 3) >> 2;
-	uint32 *row;
-	uint32  i, j;
+	uint32 width = (packed_bpr + 3) >> 2;
+	uint32 mod = (padded_bpr - packed_bpr) & ~3;
+	uint32 i, j;
 
 	switch (state->pixfmt) {
 		case PIXF_A8R8G8B8: // ARGB32
 			for (i = 0; i != height; i++) {
-				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
-					uint32 x = *row;
+					uint32 x = *(const uint32 *)src;
 					__asm__("rlwinm %0,%1,24,0,31\n\t"
 					        "rlwimi %0,%1,8,8,15\n\t"
 					        "rlwimi %0,%1,8,24,31"
 					        : "=&r" (x)
 					        : "r" (x));
-					*row++ = x;
+					*(uint32 *)dst = x;
+					src += 4;
+					dst += 4;
 				}
-				ras += padded_bpr;
+				src += mod;
+				dst += mod;
 			}
 			break;
 		case PIXF_R8G8B8A8: // RGBA32
 			for (i = 0; i != height; i++) {
-				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
-					uint32 x = *row;
+					uint32 x = *(const uint32 *)src;
 					__asm__("rlwinm %0,%1,16,0,31\n\t"
 					        "rlwimi %0,%1,0,8,15\n\t"
 					        "rlwimi %0,%1,0,24,31"
 					        : "=&r" (x)
 					        : "r" (x));
-					*row++ = x;
+					*(uint32 *)dst = x;
+					src += 4;
+					dst += 4;
 				}
-				ras += padded_bpr;
+				src += mod;
+				dst += mod;
 			}
 			break;
 		case PIXF_A8B8G8R8: // ABGR32
 			for (i = 0; i != height; i++) {
-				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
-					uint32 x = *row;
+					uint32 x = *(const uint32 *)src;
 					__asm__("rlwinm %0,%1,8,0,31"
 					        : "=&r" (x)
 					        : "r" (x));
-					*row++ = x;
+					*(uint32 *)dst = x;
+					src += 4;
+					dst += 4;
 				}
-				ras += padded_bpr;
+				src += mod;
+				dst += mod;
 			}
 			break;
 		case PIXF_R5G6B5:   // RGB16
 		case PIXF_R5G5B5:   // RGB15
 			for (i = 0; i != height; i++) {
-				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
-					uint32 x = *row;
+					uint32 x = *(const uint32 *)src;
 					__asm__("rlwinm %0,%1,8,0,31\n\t"
 					        "rlwimi %0,%1,24,8,15\n\t"
 					        "rlwimi %0,%1,24,24,31"
 					        : "=&r" (x)
 					        : "r" (x));
-					*row++ = x;
+					*(uint32 *)dst = x;
+					src += 4;
+					dst += 4;
 				}
-				ras += padded_bpr;
+				src += mod;
+				dst += mod;
 			}
 			break;
 		case PIXF_B5G6R5PC: // BGR16PC
 			for (i = 0; i != height; i++) {
-				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
-					uint32 x = *row;
+					uint32 x = *(const uint32 *)src;
 					__asm__("mr     %0,%1\n\t"
 					        "rlwimi %0,%1,5,3,7\n\t"
 					        "rlwimi %0,%1,27,8,12\n\t"
@@ -144,16 +152,18 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 					        "rlwimi %0,%1,27,24,28"
 					        : "=&r" (x)
 					        : "r" (x));
-					*row++ = x;
+					*(uint32 *)dst = x;
+					src += 4;
+					dst += 4;
 				}
-				ras += padded_bpr;
+				src += mod;
+				dst += mod;
 			}
 			break;
 		case PIXF_B5G5R5PC: // BGR15PC
 			for (i = 0; i != height; i++) {
-				row = (uint32 *)ras;
 				for (j = 0; j != width; j++) {
-					uint32 x = *row;
+					uint32 x = *(const uint32 *)src;
 					__asm__("mr     %0,%1\n\t"
 					        "rlwimi %0,%1,6,3,7\n\t"
 					        "rlwimi %0,%1,26,9,13\n\t"
@@ -161,9 +171,12 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 					        "rlwimi %0,%1,26,25,29"
 					        : "=&r" (x)
 					        : "r" (x));
-					*row++ = x;
+					*(uint32 *)dst = x;
+					src += 4;
+					dst += 4;
 				}
-				ras += padded_bpr;
+				src += mod;
+				dst += mod;
 			}
 			break;
 		default:

@@ -24,3 +24,5 @@ SRec 2.3 (xx.xx.2016)
 
 - Added option to create icon files for recorded videos.
 
+- No longer does pixel format conversions twice for key frames.
+
