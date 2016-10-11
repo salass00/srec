@@ -1,4 +1,4 @@
-## version $VER: SRec.catalog 2.2 (10.10.2016)
+## version $VER: SRec.catalog 2.3 (11.10.2016)
 ## codeset 0
 ## language italiano
 ## chunk AUTH Translated by Samir Hawamdeh (http://www.betatesting.it/backforthefuture)
@@ -166,7 +166,7 @@ PCM
 ; PCM
 ;
 MSG_AUDIO_SAMPLE_SIZE_GAD
-Di_mensione Audio
+Dim. Ca_mpione
 ; Sample Si_ze
 ;
 MSG_AUDIO_SAMPLE_SIZE_8BIT
@@ -218,7 +218,7 @@ _Attiva Puntatore
 ; _Enable Pointer
 ;
 MSG_POINTER_FILE_GAD
-Puntatore grafico
+Puntatore standard
 ; Pointer Graphic
 ;
 MSG_BUSY_POINTER_FILE_GAD
@@ -244,4 +244,8 @@ Disattiva _Altivec
 MSG_ERROR_WINDOW_TITLE
 Errore - %s
 ; Error - %s
+;
+MSG_CREATE_ICON_GAD
+Crea _Icona
+; Create _Icon
 ;
