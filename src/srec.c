@@ -119,7 +119,7 @@ static void create_icon(const struct SRecGlobal *gd, CONST_STRPTR path) {
 
 		if (icon == NULL) {
 			icon = IIcon->GetIconTags(NULL,
-				ICONGETA_GetDefaultName, "movie",
+				ICONGETA_GetDefaultName, "video",
 				ICONGETA_GetDefaultType, WBPROJECT,
 				ICONGETA_RemapIcon,      FALSE,
 				TAG_END);
