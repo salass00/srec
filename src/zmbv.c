@@ -398,7 +398,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		state->zstream.avail_out = out_space - 1;
 		state->zstream.total_out = 0;
 
-		block_data_len = data - (uint8 *)state->block_data_buffer;
+		block_data_len = data - block_data;
 
 		state->zstream.next_in  = state->block_info_buffer;
 		state->zstream.avail_in = state->block_info_size;
