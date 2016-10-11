@@ -128,9 +128,9 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 			for (i = 0; i != height; i++) {
 				for (j = 0; j != width; j++) {
 					uint32 x = *(const uint32 *)src;
-					__asm__("rlwinm %0,%1,8,0,31\n\t"
-					        "rlwimi %0,%1,24,8,15\n\t"
-					        "rlwimi %0,%1,24,24,31"
+					__asm__("rlwinm %0,%1,24,0,31\n\t"
+					        "rlwimi %0,%1,8,0,7\n\t"
+					        "rlwimi %0,%1,8,16,23"
 					        : "=&r" (x)
 					        : "r" (x));
 					*(uint32 *)dst = x;
