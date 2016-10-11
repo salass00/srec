@@ -1103,25 +1103,26 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		TAG_END);
 
 	gd->obj[OID_WINDOW] = IIntuition->NewObject(gd->windowclass, NULL,
-		WA_Title,             gd->window_title,
-		WA_ScreenTitle,       VERS " (" DATE ")",
-		WA_CloseGadget,       TRUE,
-		WA_DragBar,           TRUE,
-		WA_DepthGadget,       TRUE,
-		WA_Activate,          TRUE,
-		WA_NoCareRefresh,     TRUE,
-		WA_IDCMP,             IDCMP_GADGETUP | IDCMP_MENUPICK | IDCMP_CLOSEWINDOW,
-		WINDOW_UniqueID,      "main",
-		WINDOW_CharSet,       loc->li_CodeSet,
-		WINDOW_Position,      WPOS_TOPLEFT,
-		WINDOW_MenuStrip,     gd->obj[OID_MENUSTRIP],
-		WINDOW_AppPort,       gd->wb_mp,
-		WINDOW_IconifyGadget, TRUE,
-		WINDOW_IconTitle,     PROGNAME,
-		WINDOW_Icon,          gd->icon,
-		WINDOW_IconNoDispose, TRUE,
-		WINDOW_PopupGadget,   TRUE,
-		WINDOW_Layout,        gd->obj[OID_ROOT_LAYOUT],
+		WA_Title,               gd->window_title,
+		WA_ScreenTitle,         VERS " (" DATE ")",
+		WA_CloseGadget,         TRUE,
+		WA_DragBar,             TRUE,
+		WA_DepthGadget,         TRUE,
+		WA_Activate,            TRUE,
+		WA_NoCareRefresh,       TRUE,
+		WA_IDCMP,               IDCMP_GADGETUP | IDCMP_MENUPICK | IDCMP_CLOSEWINDOW,
+		WINDOW_UniqueID,        "main",
+		WINDOW_CharSet,         loc->li_CodeSet,
+		WINDOW_Position,        WPOS_TOPLEFT,
+		WINDOW_MenuStrip,       gd->obj[OID_MENUSTRIP],
+		WINDOW_AppPort,         gd->wb_mp,
+		WINDOW_IconifyGadget,   TRUE,
+		WINDOW_IconTitle,       PROGNAME,
+		WINDOW_Icon,            gd->icon,
+		WINDOW_IconNoDispose,   TRUE,
+		WINDOW_PopupGadget,     TRUE,
+		WINDOW_JumpScreensMenu, TRUE,
+		WINDOW_Layout,          gd->obj[OID_ROOT_LAYOUT],
 		TAG_END);
 
 	if (gd->obj[OID_TAB_PAGES] == NULL || gd->obj[OID_WINDOW] == NULL)
@@ -1205,6 +1206,30 @@ static BOOL gui_iconify_window(struct srec_gui *gd) {
 	IApplication->SetApplicationAttrs(gd->app_id,
 		APPATTR_Hidden, TRUE,
 		TAG_END);
+
+	return TRUE;
+}
+
+static BOOL gui_jump_screen(struct srec_gui *gd) {
+	struct IntuitionIFace *IIntuition = gd->iintuition;
+	struct Screen *new_screen;
+	uint32 temp;
+
+	IIntuition->GetAttr(WA_PubScreen, gd->obj[OID_WINDOW], &temp);
+	new_screen = (struct Screen *)temp;
+
+	if (new_screen == NULL)
+		return FALSE;
+
+	if (!gui_hide_window(gd))
+		return FALSE;
+
+	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
+		WA_PubScreen, new_screen,
+		TAG_END);
+
+	if (!gui_show_window(gd))
+		return FALSE;
 
 	return TRUE;
 }
@@ -1784,6 +1809,10 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 									break;
 							}
 						}
+						break;
+
+					case WMHI_JUMPSCREEN:
+						gui_jump_screen(gd);
 						break;
 
 					case WMHI_ICONIFY:

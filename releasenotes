@@ -26,3 +26,5 @@ SRec 2.3 (xx.xx.2016)
 
 - No longer does pixel format conversions twice for key frames.
 
+- Added window snapshot and jump screen functionality.
+
