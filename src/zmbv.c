@@ -354,6 +354,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		uint32  blk_h       = BLKH;
 		uint32  bpr         = state->frame_bpr;
 		uint32  blk_mod     = (bpr * BLKH) - (num_blk_w * blk_w);
+		uint8  *block_data  = data;
 		uint32  block_data_len;
 		uint32  i, j;
 
@@ -397,24 +398,32 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		state->zstream.avail_out = out_space - 1;
 		state->zstream.total_out = 0;
 
+		block_data_len = data - (uint8 *)state->block_data_buffer;
+
 		state->zstream.next_in  = state->block_info_buffer;
 		state->zstream.avail_in = state->block_info_size;
-		if (IZ->Deflate(&state->zstream, Z_NO_FLUSH) != Z_OK) {
-			IExec->DebugPrintF("deflate failed!\n");
-			return FALSE;
-		}
+		if (block_data_len == 0) {
+			if (IZ->Deflate(&state->zstream, Z_SYNC_FLUSH) != Z_OK) {
+				IExec->DebugPrintF("deflate failed!\n");
+				return FALSE;
+			}
+		} else {
+			if (IZ->Deflate(&state->zstream, Z_NO_FLUSH) != Z_OK) {
+				IExec->DebugPrintF("deflate failed!\n");
+				return FALSE;
+			}
 
-		block_data_len = data - (uint8 *)state->block_data_buffer;
-		if (state->convert) {
-			state->format_convert_func(state, state->block_data_buffer,
-				state->block_data_buffer, block_data_len, 1, 0);
-		}
+			if (state->convert) {
+				state->format_convert_func(state, block_data, block_data,
+					block_data_len, 1, block_data_len);
+			}
 
-		state->zstream.next_in  = state->block_data_buffer;
-		state->zstream.avail_in = block_data_len;
-		if (IZ->Deflate(&state->zstream, Z_SYNC_FLUSH) != Z_OK) {
-			IExec->DebugPrintF("deflate failed!\n");
-			return FALSE;
+			state->zstream.next_in  = block_data;
+			state->zstream.avail_in = block_data_len;
+			if (IZ->Deflate(&state->zstream, Z_SYNC_FLUSH) != Z_OK) {
+				IExec->DebugPrintF("deflate failed!\n");
+				return FALSE;
+			}
 		}
 
 		*framep = out;
