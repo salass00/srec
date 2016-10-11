@@ -1111,6 +1111,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		WA_Activate,          TRUE,
 		WA_NoCareRefresh,     TRUE,
 		WA_IDCMP,             IDCMP_GADGETUP | IDCMP_MENUPICK | IDCMP_CLOSEWINDOW,
+		WINDOW_UniqueID,      "main",
 		WINDOW_CharSet,       loc->li_CodeSet,
 		WINDOW_Position,      WPOS_TOPLEFT,
 		WINDOW_MenuStrip,     gd->obj[OID_MENUSTRIP],
@@ -1119,6 +1120,7 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		WINDOW_IconTitle,     PROGNAME,
 		WINDOW_Icon,          gd->icon,
 		WINDOW_IconNoDispose, TRUE,
+		WINDOW_PopupGadget,   TRUE,
 		WINDOW_Layout,        gd->obj[OID_ROOT_LAYOUT],
 		TAG_END);
 
