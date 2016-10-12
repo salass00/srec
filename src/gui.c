@@ -385,6 +385,14 @@ static BOOL gui_register_broker(struct srec_gui *gd) {
 	gd->recordkey = IIcon->FindToolType(tta, "RECORDKEY");
 	gd->stopkey   = IIcon->FindToolType(tta, "STOPKEY");
 
+	/* Set to NULL for empty strings */
+	if (gd->popkey[0] == '\0')
+		gd->popkey = NULL;
+	if (gd->recordkey[0] == '\0')
+		gd->recordkey = NULL;
+	if (gd->stopkey[0] == '\0')
+		gd->stopkey = NULL;
+
 	error |= !gui_add_cx_event(gd, gd->popkey, EVT_POPKEY);
 	error |= !gui_add_cx_event(gd, gd->recordkey, EVT_RECORDKEY);
 	error |= !gui_add_cx_event(gd, gd->stopkey, EVT_STOPKEY);
@@ -1642,6 +1650,10 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								gui_show_window(gd);
 								break;
 							case EVT_RECORDKEY:
+								if (gui_is_recording(gd) && gd->stopkey == NULL)
+									gui_stop_recording(gd);
+									break;
+								}
 								gui_start_recording(gd);
 								break;
 							case EVT_STOPKEY:

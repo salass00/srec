@@ -28,3 +28,5 @@ SRec 2.3 (xx.xx.2016)
 
 - Added window snapshot and jump screen functionality.
 
+- RECORDKEY now also stops recording if there is no STOPKEY defined.
+
