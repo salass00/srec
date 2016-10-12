@@ -1650,7 +1650,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								gui_show_window(gd);
 								break;
 							case EVT_RECORDKEY:
-								if (gui_is_recording(gd) && gd->stopkey == NULL)
+								if (gui_is_recording(gd) && gd->stopkey == NULL) {
 									gui_stop_recording(gd);
 									break;
 								}
