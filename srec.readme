@@ -8,7 +8,9 @@ Architecture: ppc-amigaos >= 4.1.7
 Requirements:
 
 - AmigaOS 4.1 Final Edition
-- Graphics card and driver with hardware compositing support
+- Graphics card and driver with hardware compositing support.
+- NOTE: the Radeon HD lite driver included on the AmigaOS 4.1 FE CD is not
+  usable with SRec as it has support for hardware compositing disabled.
 
 Installation:
 
