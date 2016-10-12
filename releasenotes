@@ -15,7 +15,7 @@ SRec 2.2 (10.10.2016)
 - Added support for RGBA32, ABGR32, BGR16PC and BGR15PC pixel formats.
 
 
-SRec 2.3 (xx.xx.2016)
+SRec 2.3 (12.10.2016)
 
 - Main window is now locked while about requester is open.
 
@@ -24,7 +24,7 @@ SRec 2.3 (xx.xx.2016)
 
 - Added option to create icon files for recorded videos.
 
-- No longer does pixel format conversions twice for key frames.
+- No longer does pixel format conversion twice for key frames.
 
 - Added window snapshot and jump screen functionality.
 
