@@ -386,11 +386,11 @@ static BOOL gui_register_broker(struct srec_gui *gd) {
 	gd->stopkey   = IIcon->FindToolType(tta, "STOPKEY");
 
 	/* Set to NULL for empty strings */
-	if (gd->popkey[0] == '\0')
+	if (gd->popkey != NULL && gd->popkey[0] == '\0')
 		gd->popkey = NULL;
-	if (gd->recordkey[0] == '\0')
+	if (gd->recordkey != NULL && gd->recordkey[0] == '\0')
 		gd->recordkey = NULL;
-	if (gd->stopkey[0] == '\0')
+	if (gd->stopkey != NULL && gd->stopkey[0] == '\0')
 		gd->stopkey = NULL;
 
 	error |= !gui_add_cx_event(gd, gd->popkey, EVT_POPKEY);
