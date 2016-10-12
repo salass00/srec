@@ -29,14 +29,14 @@ static inline vuint8 zmbv_xor_row_altivec(const struct zmbv_state *state, uint8 
 	uint32 vectors = row_len >> 4;
 	uint32 remains = row_len & 15;
 	vuint8 result = vec_splat_u8(0);
+	vuint8 x, y, z;
 
 	while (vectors--) {
-		vuint8 r1, r2, x;
-		r1 = vec_ld(0, row1);
-		r2 = vec_ld(0, row2);
-		x = vec_xor(r1, r2);
-		vec_st(x, 0, out);
-		result = vec_or(x, result);
+		x = vec_ld(0, row1);
+		y = vec_ld(0, row2);
+		z = vec_xor(x, y);
+		vec_st(z, 0, out);
+		result = vec_or(z, result);
 
 		row1 += 16;
 		row2 += 16;
@@ -44,13 +44,13 @@ static inline vuint8 zmbv_xor_row_altivec(const struct zmbv_state *state, uint8 
 	}
 
 	if (remains) {
-		vuint8 mask, r1, r2, x;
+		vuint8 mask;
 		mask = vec_ld(0, state->unaligned_mask_vector);
-		r1 = vec_ld(0, row1);
-		r2 = vec_ld(0, row2);
-		x = vec_and(vec_xor(r1, r2), mask);
-		vec_st(x, 0, out);
-		result = vec_or(x, result);
+		x = vec_ld(0, row1);
+		y = vec_ld(0, row2);
+		z = vec_and(vec_xor(x, y), mask);
+		vec_st(z, 0, out);
+		result = vec_or(z, result);
 	}
 
 	return result;
