@@ -56,6 +56,58 @@ static inline vuint8 zmbv_xor_row_altivec(const struct zmbv_state *state, uint8 
 	return result;
 }
 
+static inline vuint8 zmbv_xor_row_altivec_unaligned(const struct zmbv_state *state, uint8 *out,
+	const uint8 *row1, const uint8 *row2, uint32 row_len)
+{
+	uint32 vectors = row_len >> 4;
+	uint32 remains = row_len & 15;
+	vuint8 result = vec_splat_u8(0);
+	vuint8 perm_vector;
+	vuint8 store_mask;
+	vuint8 low;
+	vuint8 x, y, z;
+
+	perm_vector = vec_lvsr(0, out);
+	store_mask = vec_perm(vec_splat_u8(0), vec_splat_u8(-1), perm_vector);
+	low = vec_ld(0, out);
+
+	while (vectors--) {
+		x = vec_ld(0, row1);
+		y = vec_ld(0, row2);
+		z = vec_xor(x, y);
+		result = vec_or(z, result);
+
+		z = vec_perm(z, z, perm_vector);
+		low = vec_sel(z, low, store_mask);
+		vec_st(low, 0, out);
+		low = vec_sel(vec_splat_u8(0), z, store_mask);
+
+		row1 += 16;
+		row2 += 16;
+		out  += 16;
+	}
+
+	if (remains) {
+		vuint8 mask;
+		mask = vec_ld(0, state->unaligned_mask_vector);
+		x = vec_ld(0, row1);
+		y = vec_ld(0, row2);
+		z = vec_and(vec_xor(x, y), mask);
+		result = vec_or(z, result);
+
+		z = vec_perm(z, z, perm_vector);
+		low = vec_sel(z, low, store_mask);
+		vec_st(low, 0, out);
+		low = vec_sel(vec_splat_u8(0), z, store_mask);
+
+		out += 16;
+	}
+
+	vec_st(low, 0, out);
+
+	return result;
+}
+
 #ifdef PREFETCH
 static inline uint32 get_prefetch_constant(uint32 block_size_in_vectors, uint32 block_count, uint32 block_stride) {
 	return ((block_size_in_vectors << 24) & 0x1f000000) |
@@ -83,7 +135,11 @@ uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 	#endif
 
 	for (i = 0; i != blk_h; i++) {
-		x = zmbv_xor_row_altivec(state, out, ras1, ras2, blk_w);
+		if (((uint32)out & 16) == 0)
+			x = zmbv_xor_row_altivec(state, out, ras1, ras2, blk_w);
+		else
+			x = zmbv_xor_row_altivec_unaligned(state, out, ras1, ras2, blk_w);
+
 		result = vec_or(x, result);
 
 		ras1 += bpr;
