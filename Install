@@ -8,7 +8,14 @@
   (disk)
 ))
 (set srec_dir (tackon parent_dir "SRec"))
-(makedir srec_dir (infos))
+(makedir srec_dir)
+(copyfiles
+  (prompt "Copying drawer icon")
+  (help @copyfiles-help)
+  (source "icons/SRec_drawer.info")
+  (dest parent_dir)
+  (newname "SRec.info")
+)
 (set @default-dest (expandpath srec_dir))
 (copyfiles
   (prompt "Copying executable file")
