@@ -18,8 +18,8 @@ copy clone srec.readme ${destdir}/SRec-$numvers
 copy clone COPYING ${destdir}/SRec-$numvers
 copy clone releasenotes ${destdir}/SRec-$numvers
 copy clone SRec ${destdir}/SRec-$numvers
-copy clone SRec.info ${destdir}/SRec-$numvers
-copy clone SRec_drawer.info ${destdir}/SRec-$numvers/icons
+copy clone icons/SRec.info ${destdir}/SRec-$numvers
+copy clone icons/SRec_drawer.info ${destdir}/SRec-$numvers/icons
 copy clone catalogs/german/SRec.catalog ${destdir}/SRec-$numvers/catalogs/german
 copy clone catalogs/italian/SRec.catalog ${destdir}/SRec-$numvers/catalogs/italian
 copy clone catalogs/spanish/SRec.catalog ${destdir}/SRec-$numvers/catalogs/spanish
@@ -27,7 +27,7 @@ copy clone catalogs/spanish/SRec.catalog ${destdir}/SRec-$numvers/catalogs/spani
 sed -i "s/SRec-xx.xx/SRec-$numvers/" ${destdir}/AutoInstall
 sed -i "s/^Version:      xx.xx/Version:      $numvers/" ${destdir}/SRec-$numvers/srec.readme
 
-copy clone SRec_drawer.info ${destdir}/SRec-$numvers.info
+copy clone icons/SRec_drawer.info ${destdir}/SRec-$numvers.info
 copy clone ENV:Sys/def_install.info ${destdir}/SRec-$numvers/Install.info
 copy clone ENV:Sys/def_ascii.info ${destdir}/SRec-$numvers/srec.readme.info
 copy clone ENV:Sys/def_ascii.info ${destdir}/SRec-$numvers/COPYING.info
