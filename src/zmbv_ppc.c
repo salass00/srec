@@ -22,21 +22,30 @@ static inline uint32 zmbv_xor_row_ppc(const struct zmbv_state *state, uint8 *out
 	const uint8 *row1, const uint8 *row2, uint32 row_len)
 {
 	uint32 longs = row_len >> 2;
-	uint32 bytes = row_len & 3;
+	uint32 remains = row_len & 3;
 	uint32 result = 0;
+	uint32 x, y, z;
 
 	while (longs--) {
-		result |= (*(uint32 *)out = *(uint32 *)row1 ^ *(uint32 *)row2);
+		x = *(const uint32 *)row1;
+		y = *(const uint32 *)row2;
+		z = x ^ y;
+		*(uint32 *)out = z;
+		result |= z;
+
 		row1 += 4;
 		row2 += 4;
 		out  += 4;
 	}
 
-	while (bytes--) {
-		result |= (*out = *row1 ^ *row2);
-		out  += 1;
-		row1 += 1;
-		row2 += 1;
+	if (remains) {
+		uint32 mask;
+		mask = -1UL << ((4 - remains) << 3);
+		x = *(const uint32 *)row1;
+		y = *(const uint32 *)row2;
+		z = (x ^ y) & mask;
+		*(uint32 *)out = z;
+		result |= z;
 	}
 
 	return result;
