@@ -7,3 +7,5 @@ SRec
 SRec.debug
 # Ignore generated catalog files
 *.catalog
+# Ignore release archives
+*.lha
