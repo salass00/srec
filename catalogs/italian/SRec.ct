@@ -1,4 +1,4 @@
-## version $VER: SRec.catalog 2.3 (11.10.2016)
+## version $VER: SRec.catalog 2.4 (13.10.2016)
 ## codeset 0
 ## language italiano
 ## chunk AUTH Translated by Samir Hawamdeh (http://www.betatesting.it/backforthefuture)
@@ -11,7 +11,7 @@
 ;
 ; Traduzione italiana di SRec
 ;
-; $VER: SRec 2.2 (10.10.2016)
+; $VER: SRec 2.3 (12.10.2016)
 ;
 MSG_TOO_OLD_OS_VERSION
 SRec %ld.%ld richiede %s o superiore!
@@ -42,7 +42,7 @@ _Ok
 ; _Ok
 ;
 MSG_WINDOW_TITLE
-%s: Hot Key = <%s>
+%s: Richiamo = <%s>
 ; %s: Hot Key = <%s>
 ;
 MSG_KEY_NONE
@@ -248,4 +248,20 @@ Errore - %s
 MSG_CREATE_ICON_GAD
 Crea _Icona
 ; Create _Icon
+;
+MSG_HOT_KEYS_TAB
+_Tasti
+; Hot _Keys
+;
+MSG_POPUP_KEY_GAD
+Tasto Popup
+; Popup Key
+;
+MSG_RECORD_KEY_GAD
+Tasto Registra
+; Record Key
+;
+MSG_STOP_KEY_GAD
+Tasto Stop
+; Stop Key
 ;
