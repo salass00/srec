@@ -177,3 +177,15 @@ Error - %s
 MSG_CREATE_ICON_GAD (//)
 Create _Icon
 ;
+MSG_HOT_KEYS_TAB (//)
+Hot _Keys
+;
+MSG_POPUP_KEY_GAD (//)
+Popup Key
+;
+MSG_RECORD_KEY_GAD (//)
+Record Key
+;
+MSG_STOP_KEY_GAD (//)
+Stop Key
+;

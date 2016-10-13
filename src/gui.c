@@ -111,6 +111,10 @@ enum {
 	OID_POINTER_FILE,
 	OID_BUSY_POINTER_FILE_LAYOUT,
 	OID_BUSY_POINTER_FILE,
+	OID_HOT_KEYS_PAGE,
+	OID_POPUP_KEY,
+	OID_RECORD_KEY,
+	OID_STOP_KEY,
 	OID_MISC_PAGE,
 	OID_BILINEAR_FILTER,
 	OID_DISABLE_ALTIVEC,
@@ -816,7 +820,7 @@ static void gui_update_record_stop_buttons(struct srec_gui *gd) {
 static BOOL gui_create_window(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct LocaleInfo *loc = gd->locale_info;
-	CONST_STRPTR tab_titles[4];
+	CONST_STRPTR tab_titles[5];
 	BOOL result;
 	BOOL error;
 
@@ -1032,6 +1036,39 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		LAYOUT_AddChild,      SPACE,
 		TAG_END);
 
+	gd->obj[OID_POPUP_KEY] = IIntuition->NewObject(gd->buttonclass, NULL,
+		GA_ID,       OID_POPUP_KEY,
+		GA_ReadOnly, TRUE,
+		GA_Text,     gd->popkey ? gd->popkey : GetString(loc, MSG_KEY_NONE),
+		TAG_END);
+
+	gd->obj[OID_RECORD_KEY] = IIntuition->NewObject(gd->buttonclass, NULL,
+		GA_ID,       OID_RECORD_KEY,
+		GA_ReadOnly, TRUE,
+		GA_Text,     gd->recordkey ? gd->recordkey : GetString(loc, MSG_KEY_NONE),
+		TAG_END);
+
+	gd->obj[OID_STOP_KEY] = IIntuition->NewObject(gd->buttonclass, NULL,
+		GA_ID,       OID_STOP_KEY,
+		GA_ReadOnly, TRUE,
+		GA_Text,     gd->stopkey ? gd->stopkey : GetString(loc, MSG_KEY_NONE),
+		TAG_END);
+
+	gd->obj[OID_HOT_KEYS_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
+		GA_ID,                OID_HOT_KEYS_PAGE,
+		LAYOUT_Orientation,   LAYOUT_ORIENT_VERT,
+		LAYOUT_AddChild,      gd->obj[OID_POPUP_KEY],
+		CHILD_Label,          LABEL(MSG_POPUP_KEY_GAD),
+		CHILD_WeightedHeight, 0,
+		LAYOUT_AddChild,      gd->obj[OID_RECORD_KEY],
+		CHILD_Label,          LABEL(MSG_RECORD_KEY_GAD),
+		CHILD_WeightedHeight, 0,
+		LAYOUT_AddChild,      gd->obj[OID_STOP_KEY],
+		CHILD_Label,          LABEL(MSG_STOP_KEY_GAD),
+		CHILD_WeightedHeight, 0,
+		LAYOUT_AddChild,      SPACE,
+		TAG_END);
+
 	gd->obj[OID_BILINEAR_FILTER] = IIntuition->NewObject(gd->checkboxclass, NULL,
 		GA_ID,            OID_BILINEAR_FILTER,
 		GA_RelVerify,     TRUE,
@@ -1066,14 +1103,16 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		GA_ID,        OID_TAB_PAGES,
 		PAGE_Add,     gd->obj[OID_FORMAT_PAGE],
 		PAGE_Add,     gd->obj[OID_POINTER_PAGE],
+		PAGE_Add,     gd->obj[OID_HOT_KEYS_PAGE],
 		PAGE_Add,     gd->obj[OID_MISC_PAGE],
 		PAGE_Current, 0,
 		TAG_END);
 
 	tab_titles[0] = GetString(loc, MSG_FORMAT_TAB);
 	tab_titles[1] = GetString(loc, MSG_POINTER_TAB);
-	tab_titles[2] = GetString(loc, MSG_MISC_TAB);
-	tab_titles[3] = NULL;
+	tab_titles[2] = GetString(loc, MSG_HOT_KEYS_TAB);
+	tab_titles[3] = GetString(loc, MSG_MISC_TAB);
+	tab_titles[4] = NULL;
 
 	gd->obj[OID_TABS] = IIntuition->NewObject(gd->clicktabclass, NULL,
 		GA_ID,              OID_TABS,

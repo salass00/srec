@@ -39,3 +39,5 @@ SRec 2.4 (xx.xx.2016)
   pointer as will be the case if width times bytes per pixel is not a multiple
   of 16 (untested).
 
+- Added "Hot Keys" tab which shows all the configured hot keys.
+
