@@ -30,3 +30,12 @@ SRec 2.3 (12.10.2016)
 
 - RECORDKEY now also stops recording if there is no STOPKEY defined.
 
+
+SRec 2.4 (xx.xx.2016)
+
+- The jump screen function now brings the new screen to front.
+
+- The altivec xor block code should now correctly handle an unaligned out
+  pointer as will be the case if width times bytes per pixel is not a multiple
+  of 16 (untested).
+
