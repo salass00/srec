@@ -189,3 +189,9 @@ Record Key
 MSG_STOP_KEY_GAD (//)
 Stop Key
 ;
+MSG_RECORDING_STARTED (//)
+Recording started.
+;
+MSG_RECORDING_STOPPED (//)
+Recording stopped.
+;

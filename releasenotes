@@ -41,3 +41,5 @@ SRec 2.4 (xx.xx.2016)
 
 - Added "Hot Keys" tab which shows all the configured hot keys.
 
+- Added Ringhio notifications for when recording is started and stopped.
+

@@ -1344,6 +1344,18 @@ static void gui_getfile_requester(const struct srec_gui *gd, uint32 id) {
 	IIntuition->IDoMethod(gd->obj[id], GFILE_REQUEST, window);
 }
 
+static void gui_notify(const struct srec_gui *gd, int32 msg_id) {
+	struct ApplicationIFace *IApplication = gd->iapplication;
+	struct LocaleInfo *loc = gd->locale_info;
+
+	IApplication->Notify(gd->app_id,
+		APPNOTIFY_Title,         PROGNAME,
+		APPNOTIFY_Update,        TRUE,
+		APPNOTIFY_PubScreenName, "FRONT",
+		APPNOTIFY_Text,          GetString(loc, msg_id),
+		TAG_END);
+}
+
 static void gui_start_recording(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct SRecArgs *sm = gd->startup_msg;
@@ -1409,6 +1421,8 @@ static void gui_start_recording(struct srec_gui *gd) {
 
 	gd->srec_pid = IDOS->GetPID(proc, GPID_PROCESS);
 	IExec->PutMsg(&proc->pr_MsgPort, &sm->message);
+
+	gui_notify(gd, MSG_RECORDING_STARTED);
 
 	gui_update_record_stop_buttons(gd);
 }
@@ -1761,6 +1775,8 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 			if (dm != NULL) {
 				gd->srec_pid = 0;
 
+				gui_notify(gd, MSG_RECORDING_STOPPED);
+
 				gui_update_record_stop_buttons(gd);
 
 				if (dm->dm_ReturnCode != RETURN_OK) {
@@ -1901,6 +1917,10 @@ out:
 			dm = (struct DeathMessage *)IExec->GetMsg(gd->srec_mp);
 
 			gd->srec_pid = 0;
+
+			gui_notify(gd, MSG_RECORDING_STOPPED);
+
+			gui_update_record_stop_buttons(gd);
 
 			if (dm->dm_ReturnCode != RETURN_OK) {
 				gui_srec_error_requester(gd, dm);
