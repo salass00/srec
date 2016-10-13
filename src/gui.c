@@ -1170,7 +1170,7 @@ static void gui_free_window(struct srec_gui *gd) {
 	gui_free_menu(gd);
 }
 
-static BOOL gui_show_window(struct srec_gui *gd) {
+static BOOL gui_show_window(struct srec_gui *gd, BOOL screen_to_front) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
 	struct ApplicationIFace *IApplication = gd->iapplication;
 	struct Window *window;
@@ -1182,6 +1182,9 @@ static BOOL gui_show_window(struct srec_gui *gd) {
 	IApplication->SetApplicationAttrs(gd->app_id,
 		APPATTR_Hidden, FALSE,
 		TAG_END);
+
+	if (screen_to_front)
+		IIntuition->ScreenToFront(window->WScreen);
 
 	return TRUE;
 }
@@ -1236,7 +1239,7 @@ static BOOL gui_jump_screen(struct srec_gui *gd) {
 		WA_PubScreen, new_screen,
 		TAG_END);
 
-	if (!gui_show_window(gd))
+	if (!gui_show_window(gd, TRUE))
 		return FALSE;
 
 	return TRUE;
@@ -1614,7 +1617,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	if (!gui_create_window(gd))
 		goto out;
 
-	if (!gd->hidden && !gui_show_window(gd))
+	if (!gd->hidden && !gui_show_window(gd, TRUE))
 		goto out;
 
 	IIntuition   = gd->iintuition;
@@ -1647,7 +1650,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 					case CXM_IEVENT:
 						switch (id) {
 							case EVT_POPKEY:
-								gui_show_window(gd);
+								gui_show_window(gd, TRUE);
 								break;
 							case EVT_RECORDKEY:
 								if (gui_is_recording(gd) && gd->stopkey == NULL) {
@@ -1672,7 +1675,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 								break;
 							case CXCMD_UNIQUE:
 							case CXCMD_APPEAR:
-								gui_show_window(gd);
+								gui_show_window(gd, TRUE);
 								break;
 							case CXCMD_ENABLE:
 								ICommodities->ActivateCxObj(gd->broker, TRUE);
@@ -1703,8 +1706,10 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 						gui_hide_window(gd);
 						break;
 					case APPLIBMT_Unhide:
+						gui_show_window(gd, FALSE);
+						break;
 					case APPLIBMT_ToFront:
-						gui_show_window(gd);
+						gui_show_window(gd, TRUE);
 						break;
 				}
 			}
@@ -1832,7 +1837,7 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 						break;
 
 					case WMHI_UNICONIFY:
-						gui_show_window(gd);
+						gui_show_window(gd, TRUE);
 						break;
 
 					case WMHI_CLOSEWINDOW:
