@@ -16,7 +16,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "zmbv.h"
+#include "zmbv_internal.h"
 
 static inline uint32 zmbv_xor_row_ppc(const struct zmbv_state *state, uint8 *out,
 	const uint8 *row1, const uint8 *row2, uint32 row_len)

@@ -19,8 +19,13 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include <workbench/startup.h>
+#ifndef LOCALE_H
 #include "locale.h"
+#endif
+
+#ifndef WORKBENCH_STARTUP_H
+#include <workbench/startup.h>
+#endif
 
 int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs);
 

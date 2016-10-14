@@ -16,7 +16,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "zmbv.h"
+#include "zmbv_internal.h"
 #include <altivec.h>
 
 typedef __vector uint8 vuint8;

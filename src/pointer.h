@@ -19,7 +19,9 @@
 #ifndef POINTER_H
 #define POINTER_H
 
+#ifndef SREC_H
 #include "srec.h"
+#endif
 
 void strip_info_extension(STRPTR name);
 struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name);

@@ -19,7 +19,9 @@
 #ifndef LOCALE_H
 #define LOCALE_H
 
+#ifndef LOCALE_STRINGS_H
 #include "locale_strings.h"
+#endif
 
 struct LocaleInfo {
 	struct Library     *li_LocaleBase;

@@ -17,6 +17,7 @@
  */
 
 #include "pointer.h"
+#include "srec_internal.h"
 #include <workbench/icon.h>
 #include <proto/exec.h>
 #include <proto/dos.h>

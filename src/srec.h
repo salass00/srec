@@ -19,11 +19,15 @@
 #ifndef SREC_H
 #define SREC_H
 
-#include <exec/exec.h>
-#include <interfaces/intuition.h>
+#ifndef EXEC_PORTS_H
+#include <exec/ports.h>
+#endif
+#ifndef INTUITION_SCREENS_H
+#include <intuition/screens.h>
+#endif
+#ifndef INTERFACES_GRAPHICS_H
 #include <interfaces/graphics.h>
-#include <interfaces/icon.h>
-#include <interfaces/timer.h>
+#endif
 
 #define PROGNAME "SRec"
 
@@ -92,33 +96,11 @@ struct SRecArgs {
 	TEXT           busy_pointer_file[1024];
 };
 
-typedef struct {
-	float x, y;
-	float s, t, w;
-} vertex_t;
-
-struct vertex_rect {
-	float min_x, min_y, max_x, max_y;
-	float min_s, min_t, max_s, max_t;
-};
-
-struct SRecGlobal {
-	const struct SRecArgs *args;
-	struct IntuitionIFace *iintuition;
-	struct GraphicsIFace  *igraphics;
-	struct IconIFace      *iicon;
-	struct TimerIFace     *itimer;
-	struct BitMap         *bitmap;
-	uint32                 disp_width, disp_height;
-	float                  scale_x, scale_y;
-	struct vertex_rect     scale_rect;
-};
+struct SRecGlobal;
 
 BOOL safe_signal_proc(uint32 pid, uint32 sigmask);
 void get_screen_dimensions(struct GraphicsIFace *IGraphics,
 	const struct Screen *screen, uint32 *widthp, uint32 *heightp);
-void set_rect_vertex_array(vertex_t *vertex_array, const struct vertex_rect *rect);
-void get_frame_data(const struct SRecGlobal *gd, struct BitMap *dest_bm, uint32 width, uint32 height, uint32 bpr);
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase);
 
 #endif

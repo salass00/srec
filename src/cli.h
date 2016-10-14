@@ -19,7 +19,9 @@
 #ifndef CLI_H
 #define CLI_H
 
+#ifndef LOCALE_H
 #include "locale.h"
+#endif
 
 int cli_main(struct LocaleInfo *loc);
 
