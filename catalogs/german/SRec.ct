@@ -1,4 +1,4 @@
-## version $VER: SRec.catalog 2.1 (03.09.2016)
+## version $VER: SRec.catalog 2.4 (14.10.2016)
 ## codeset 0
 ## language german
 ;
@@ -17,6 +17,14 @@ Bildschirmrecorder
 MSG_ABOUT_WINDOW_TITLE
 Über - %s
 ; About - %s
+;
+MSG_VERSION
+Version
+; version
+;
+MSG_COPYRIGHT
+Urheberrecht
+; Copyright
 ;
 MSG_OK_GAD
 _Ok
@@ -59,40 +67,44 @@ Als Standardeinstellungen speichern
 ; Save As Defaults
 ;
 MSG_OUTPUT_FILE_GAD
-Ausgabe
-; Output
+A_usgabe
+; _Output
 ;
 MSG_FORMAT_TAB
-Format
-; Format
+_Codec
+; _Format
 ;
 MSG_POINTER_TAB
-Mauzeiger
-; Pointer
+_Mauzeiger
+; _Pointer
 ;
 MSG_MISC_TAB
-Verschiedenes
-; Misc
+V_erschiedenes
+; _Misc
 ;
 MSG_CONTAINER_FORMAT_GAD
-Format
-; Format
+_Format
+; _Format
+;
+MSG_CONTAINER_FORMAT_AVI
+AVI
+; AVI
 ;
 MSG_CONTAINER_FORMAT_MKV
 MKV
 ; MKV
 ;
 MSG_VIDEO_CODEC_GAD
-Video-Codec
-; Video Codec
+_Video-Codec
+; _Video Codec
 ;
 MSG_VIDEO_CODEC_ZMBV
 ZMBV
 ; ZMBV
 ;
 MSG_ASPECT_RATIO_GAD
-Seitenverhältnis
-; Aspect Ratio
+_Seitenverhältnis
+; Aspect Rat_io
 ;
 MSG_ASPECT_RATIO_LIKE_WB
 Wie WB
@@ -119,28 +131,32 @@ MSG_ASPECT_RATIO_16_10
 ; 16 : 10
 ;
 MSG_VIDEO_WIDTH_GAD
-Breite
-; Width
+_Breite
+; _Width
 ;
 MSG_VIDEO_HEIGHT_GAD
-Höhe
-; Height
+_Höhe
+; _Height
 ;
 MSG_VIDEO_FPS_GAD
-Bilder pro Sekunde
-; Frames Per Second
+Bil_der pro Sekunde
+; Fram_es Per Second
 ;
 MSG_AUDIO_CODEC_GAD
-Audio-Codec
-; Audio Codec
+_Audio-Codec
+;_ Audio Codec
 ;
 MSG_AUDIO_CODEC_NONE
 Nichts
 ; None
 ;
+MSG_AUDIO_CODEC_PCM
+PCM
+; PCM
+;
 MSG_AUDIO_SAMPLE_SIZE_GAD
-Samplequalität
-; Sample Size
+Sample_qualität
+; Sample Si_ze
 ;
 MSG_AUDIO_SAMPLE_SIZE_8BIT
 8-bit
@@ -155,8 +171,8 @@ MSG_AUDIO_SAMPLE_SIZE_32BIT
 ; 32-bit
 ;
 MSG_AUDIO_CHANNELS_GAD
-Kanäle
-; Channels
+_Kanäle
+; Channe_ls
 ;
 MSG_AUDIO_CHANNELS_MONO
 Mono
@@ -167,8 +183,8 @@ Stereo
 ; Stereo
 ;
 MSG_AUDIO_SAMPLE_RATE_GAD
-Samplerate
-; Sample Rate
+Sample_rate
+; Sample Ra_te
 ;
 MSG_AUDIO_SAMPLE_RATE_11025HZ
 11025 Hz
@@ -187,8 +203,8 @@ MSG_AUDIO_SAMPLE_RATE_48000HZ
 ; 48000 Hz
 ;
 MSG_ENABLE_POINTER_GAD
-Aktiviere Mauszeiger
-; Enable Pointer
+_Aktiviere Mauszeiger
+; _Enable Pointer
 ;
 MSG_POINTER_FILE_GAD
 Grafik vom Mauszeiger
@@ -199,14 +215,42 @@ Grafik vom beschäftigten Mauszeiger
 ; Busy Pointer Graphic
 ;
 MSG_BILINEAR_FILTER_GAD
-Bilineare Filterung
-; Bilinear Filtering
+Bilineare _Filterung
+; _Bilinear Filtering
 ;
 MSG_RECORD_GAD
-Aufnahme
-; Record
+Auf_nahme
+; _Record
 ;
 MSG_STOP_GAD
-Stopp
-; Stop
+St_opp
+; _Stop
+;
+MSG_DISABLE_ALTIVEC_GAD
+Deaktiviere _Altivec
+; Disable _Altivec
+;
+MSG_ERROR_WINDOW_TITLE
+Fehler - %s
+; Error - %s
+;
+MSG_CREATE_ICON_GAD
+Erstelle _Icon
+; Create _Icon
+;
+MSG_HOT_KEYS_TAB
+Hot _Keys
+; Hot _Keys
+;
+MSG_POPUP_KEY_GAD
+Popup Taste
+; Popup Key
+;
+MSG_RECORD_KEY_GAD
+Aufnahmetaste
+; Record Key
+;
+MSG_STOP_KEY_GAD
+Stopp Taste
+; Stop Key
 ;
