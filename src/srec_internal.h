@@ -38,9 +38,8 @@ typedef struct {
 	float s, t, w;
 } vertex_t;
 
-struct vertex_rect {
-	float min_x, min_y, max_x, max_y;
-	float min_s, min_t, max_s, max_t;
+struct VertexRectangle {
+	vertex_t min, max;
 };
 
 struct SRecGlobal {
@@ -52,10 +51,10 @@ struct SRecGlobal {
 	struct BitMap         *bitmap;
 	uint32                 disp_width, disp_height;
 	float                  scale_x, scale_y;
-	struct vertex_rect     scale_rect;
+	struct VertexRectangle scale_rect;
 };
 
-void set_rect_vertex_array(vertex_t *vertex_array, const struct vertex_rect *rect);
+void init_vertex_array_from_rect(vertex_t *vertex_array, const struct VertexRectangle *rect);
 void get_frame_data(const struct SRecGlobal *gd, struct BitMap *dest_bm, uint32 width, uint32 height, uint32 bpr);
 
 #endif

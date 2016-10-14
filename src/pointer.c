@@ -193,41 +193,41 @@ void render_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp, int32 
 	const struct SRecArgs *args = gd->args;
 	int32 pointer_x, pointer_y;
 	vertex_t vertex_array[6];
-	struct vertex_rect rect;
+	struct VertexRectangle rect;
 	uint32 comp_flags;
 
 	pointer_x = mouse_x + sp->xoffs;
 	pointer_y = mouse_y + sp->yoffs;
 
-	rect.min_x = gd->scale_rect.min_x + roundf((float)pointer_x * gd->scale_x);
-	rect.min_y = gd->scale_rect.min_y + roundf((float)pointer_y * gd->scale_y);
-	rect.max_x = rect.min_x + sp->scaled_width;
-	rect.max_y = rect.min_y + sp->scaled_height;
+	rect.min.x = gd->scale_rect.min.x + roundf((float)pointer_x * gd->scale_x);
+	rect.min.y = gd->scale_rect.min.y + roundf((float)pointer_y * gd->scale_y);
+	rect.max.x = rect.min.x + sp->scaled_width;
+	rect.max.y = rect.min.y + sp->scaled_height;
 
-	rect.min_s = 0.0f;
-	rect.min_t = 0.0f;
-	rect.max_s = (float)sp->width;
-	rect.max_t = (float)sp->height;
+	rect.min.s = 0.0f;
+	rect.min.t = 0.0f;
+	rect.max.s = (float)sp->width;
+	rect.max.t = (float)sp->height;
 
-	if (rect.min_x < gd->scale_rect.min_x)
-		rect.min_x = gd->scale_rect.min_x;
-	if (rect.max_x > gd->scale_rect.max_x)
-		rect.max_x = gd->scale_rect.max_x;
-	if (rect.min_y < gd->scale_rect.min_y)
-		rect.min_y = gd->scale_rect.min_y;
-	if (rect.max_y > gd->scale_rect.max_y)
-		rect.max_y = gd->scale_rect.max_y;
+	if (rect.min.x < gd->scale_rect.min.x)
+		rect.min.x = gd->scale_rect.min.x;
+	if (rect.max.x > gd->scale_rect.max.x)
+		rect.max.x = gd->scale_rect.max.x;
+	if (rect.min.y < gd->scale_rect.min.y)
+		rect.min.y = gd->scale_rect.min.y;
+	if (rect.max.y > gd->scale_rect.max.y)
+		rect.max.y = gd->scale_rect.max.y;
 
 	if (pointer_x < 0)
-		rect.min_s -= (float)pointer_x;
+		rect.min.s -= (float)pointer_x;
 	if (pointer_x + sp->width > gd->disp_width)
-		rect.max_s -= (float)(pointer_x + sp->width - gd->disp_width);
+		rect.max.s -= (float)(pointer_x + sp->width - gd->disp_width);
 	if (pointer_y < 0)
-		rect.min_t -= (float)pointer_y;
+		rect.min.t -= (float)pointer_y;
 	if (pointer_y + sp->height > gd->disp_height)
-		rect.max_t -= (float)(pointer_y + sp->height - gd->disp_height);
+		rect.max.t -= (float)(pointer_y + sp->height - gd->disp_height);
 
-	set_rect_vertex_array(vertex_array, &rect);
+	init_vertex_array_from_rect(vertex_array, &rect);
 
 	comp_flags = COMPFLAG_HardwareOnly | COMPFLAG_IgnoreDestAlpha;
 

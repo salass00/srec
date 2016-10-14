@@ -163,41 +163,41 @@ void get_screen_dimensions(struct GraphicsIFace *IGraphics,
 	*heightp = height;
 }
 
-void set_rect_vertex_array(vertex_t *vertex_array, const struct vertex_rect *rect) {
-	vertex_array[0].x = rect->min_x;
-	vertex_array[0].y = rect->min_y;
-	vertex_array[0].s = rect->min_s;
-	vertex_array[0].t = rect->min_t;
+void init_vertex_array_from_rect(vertex_t *vertex_array, const struct VertexRectangle *rect) {
+	vertex_array[0].x = rect->min.x;
+	vertex_array[0].y = rect->min.y;
+	vertex_array[0].s = rect->min.s;
+	vertex_array[0].t = rect->min.t;
 	vertex_array[0].w = 1.0f;
 
-	vertex_array[1].x = rect->max_x;
-	vertex_array[1].y = rect->min_y;
-	vertex_array[1].s = rect->max_s;
-	vertex_array[1].t = rect->min_t;
+	vertex_array[1].x = rect->max.x;
+	vertex_array[1].y = rect->min.y;
+	vertex_array[1].s = rect->max.s;
+	vertex_array[1].t = rect->min.t;
 	vertex_array[1].w = 1.0f;
 
-	vertex_array[2].x = rect->min_x;
-	vertex_array[2].y = rect->max_y;
-	vertex_array[2].s = rect->min_s;
-	vertex_array[2].t = rect->max_t;
+	vertex_array[2].x = rect->min.x;
+	vertex_array[2].y = rect->max.y;
+	vertex_array[2].s = rect->min.s;
+	vertex_array[2].t = rect->max.t;
 	vertex_array[2].w = 1.0f;
 
-	vertex_array[3].x = rect->min_x;
-	vertex_array[3].y = rect->max_y;
-	vertex_array[3].s = rect->min_s;
-	vertex_array[3].t = rect->max_t;
+	vertex_array[3].x = rect->min.x;
+	vertex_array[3].y = rect->max.y;
+	vertex_array[3].s = rect->min.s;
+	vertex_array[3].t = rect->max.t;
 	vertex_array[3].w = 1.0f;
 
-	vertex_array[4].x = rect->max_x;
-	vertex_array[4].y = rect->min_y;
-	vertex_array[4].s = rect->max_s;
-	vertex_array[4].t = rect->min_t;
+	vertex_array[4].x = rect->max.x;
+	vertex_array[4].y = rect->min.y;
+	vertex_array[4].s = rect->max.s;
+	vertex_array[4].t = rect->min.t;
 	vertex_array[4].w = 1.0f;
 
-	vertex_array[5].x = rect->max_x;
-	vertex_array[5].y = rect->max_y;
-	vertex_array[5].s = rect->max_s;
-	vertex_array[5].t = rect->max_t;
+	vertex_array[5].x = rect->max.x;
+	vertex_array[5].y = rect->max.y;
+	vertex_array[5].s = rect->max.s;
+	vertex_array[5].t = rect->max.t;
 	vertex_array[5].w = 1.0f;
 }
 
@@ -294,14 +294,14 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	#define disp_height gd.disp_height
 	#define scale_x     gd.scale_x
 	#define scale_y     gd.scale_y
-	#define min_x       gd.scale_rect.min_x
-	#define min_y       gd.scale_rect.min_y
-	#define max_x       gd.scale_rect.max_x
-	#define max_y       gd.scale_rect.max_y
-	#define min_s       gd.scale_rect.min_s
-	#define min_t       gd.scale_rect.min_t
-	#define max_s       gd.scale_rect.max_s
-	#define max_t       gd.scale_rect.max_t
+	#define min_x       gd.scale_rect.min.x
+	#define min_y       gd.scale_rect.min.y
+	#define max_x       gd.scale_rect.max.x
+	#define max_y       gd.scale_rect.max.y
+	#define min_s       gd.scale_rect.min.s
+	#define min_t       gd.scale_rect.min.t
+	#define max_s       gd.scale_rect.max.s
+	#define max_t       gd.scale_rect.max.t
 
 	proc = (struct Process *)IExec->FindTask(NULL);
 
@@ -497,7 +497,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						max_s = (float)disp_width;
 						max_t = (float)disp_height;
 
-						set_rect_vertex_array(vertex_array, &gd.scale_rect);
+						init_vertex_array_from_rect(vertex_array, &gd.scale_rect);
 
 						if (!args->no_pointer) {
 							scale_pointer(&gd, pointer);
