@@ -1,4 +1,4 @@
-## version $VER: SRec.catalog 2.4 (13.10.2016)
+## version $VER: SRec.catalog 2.4 (14.10.2016)
 ## codeset 0
 ## language italiano
 ## chunk AUTH Translated by Samir Hawamdeh (http://www.betatesting.it/backforthefuture)
@@ -18,7 +18,7 @@ SRec %ld.%ld richiede %s o superiore!
 ; SRec %ld.%ld requires %s or newer!
 ;
 MSG_CTRL_C_TO_STOP
-CTRL-C per fermare la registrazione
+CTRL-C per stoppare la registrazione
 ; CTRL-C to stop recording.
 ;
 MSG_DESCRIPTION
@@ -226,7 +226,7 @@ Puntatore occupato
 ; Busy Pointer Graphic
 ;
 MSG_BILINEAR_FILTER_GAD
-Bilinear _Filtering
+Filtro _Bilineare
 ; _Bilinear Filtering
 ;
 MSG_RECORD_GAD
@@ -264,4 +264,12 @@ Tasto Registra
 MSG_STOP_KEY_GAD
 Tasto Stop
 ; Stop Key
+;
+MSG_RECORDING_STARTED
+Registrazione avviata
+; Recording started.
+;
+MSG_RECORDING_STOPPED
+Registrazione stoppata
+; Recording stopped.
 ;
