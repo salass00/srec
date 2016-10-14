@@ -484,8 +484,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						else
 							scale_y = scale_x;
 
-						scaled_width  = roundf((float)disp_width  * scale_x);
-						scaled_height = roundf((float)disp_height * scale_y);
+						scaled_width  = MIN(roundf((float)disp_width  * scale_x), (float)args->width);
+						scaled_height = MIN(roundf((float)disp_height * scale_y), (float)args->height);
 
 						min_x = floorf(((float)args->width  - scaled_width ) / 2.0f);
 						min_y = floorf(((float)args->height - scaled_height) / 2.0f);
