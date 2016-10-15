@@ -222,6 +222,19 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 		goto out;
 	}
 
+	if (((uint32)state->current_frame & 15) != 0 || ((uint32)state->prev_frame & 15) != 0) {
+		IExec->DebugPrintF("frame buffers are not 16-byte aligned!\n");
+		IExec->DebugPrintF("current frame: %p\n", state->current_frame);
+		IExec->DebugPrintF("previous frame: %p\n", state->prev_frame);
+		goto out;
+	}
+
+	if ((state->frame_bpr & 15) != 0) {
+		IExec->DebugPrintF("bytes per row is not a multiple of 16!\n");
+		IExec->DebugPrintF("bytes per row: %lu\n", state->frame_bpr);
+		goto out;
+	}
+
 	bm_size = (state->width * bpp) * state->height;
 
 	num_blk_w = (state->width  + BLKW - 1) / BLKW;

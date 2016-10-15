@@ -67,9 +67,9 @@ static inline vuint8 zmbv_xor_row_altivec_unaligned(const struct zmbv_state *sta
 	vuint8 low;
 	vuint8 x, y, z;
 
+	low = vec_ld(0, out);
 	perm_vector = vec_lvsr(0, out);
 	store_mask = vec_perm(vec_splat_u8(0), vec_splat_u8(-1), perm_vector);
-	low = vec_ld(0, out);
 
 	while (vectors--) {
 		x = vec_ld(0, row1);
