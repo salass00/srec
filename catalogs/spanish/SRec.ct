@@ -1,4 +1,4 @@
-## version $VER: SRec.catalog 2.1 (3.10.2016)
+## version $VER: srec.catalog 2.4 (15.10.2016)
 ## codeset 4
 ## language spanish
 ;
@@ -18,6 +18,14 @@ MSG_ABOUT_WINDOW_TITLE
 Acerca de %s
 ; About - %s
 ;
+MSG_VERSION
+versión
+; version
+;
+MSG_COPYRIGHT
+Copyright
+; Copyright
+;
 MSG_OK_GAD
 _Aceptar
 ; _Ok
@@ -27,7 +35,7 @@ MSG_WINDOW_TITLE
 ; %s: Hot Key = <%s>
 ;
 MSG_KEY_NONE
-tecla_rápida
+sin_asignar
 ; none
 ;
 MSG_PROJECT_MENU
@@ -142,6 +150,10 @@ MSG_AUDIO_CODEC_NONE
 No
 ; None
 ;
+MSG_AUDIO_CODEC_PCM
+PCM
+; PCM
+;
 MSG_AUDIO_SAMPLE_SIZE_GAD
 Cali_dad
 ; Sample Size
@@ -213,4 +225,40 @@ Grabar
 MSG_STOP_GAD
 Parar
 ; Stop
+;
+MSG_DISABLE_ALTIVEC_GAD
+No usar Alti_Vec
+; Disable _Altivec
+;
+MSG_ERROR_WINDOW_TITLE
+%s: ERROR
+; Error - %s
+;
+MSG_CREATE_ICON_GAD
+Crear _icono
+; Create _Icon
+;
+MSG_HOT_KEYS_TAB
+Teclas
+; Hot _Keys
+;
+MSG_POPUP_KEY_GAD
+PopUp
+; Popup Key
+;
+MSG_RECORD_KEY_GAD
+Grabar
+; Record Key
+;
+MSG_STOP_KEY_GAD
+Parar
+; Stop Key
+;
+MSG_RECORDING_STARTED
+Grabación iniciada.
+; Recording started.
+;
+MSG_RECORDING_STOPPED
+Grabación finalizada.
+; Recording stopped.
 ;
