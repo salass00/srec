@@ -23,13 +23,15 @@
 
 #include "xio.h"
 
+#include <proto/dos.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <proto/dos.h>
+#include <stdarg.h>
 
 struct instance {
 	BPTR    fh;
 	int     flags;
+	mode_t  mode;
 	int64_t file_pos;
 };
 
@@ -38,7 +40,9 @@ static struct instance instances[MAX_INSTANCES];
 
 int xio_open(const void *pathname, int flags, ...) {
 	int fd, i;
+	mode_t mode;
 	int open_mode;
+	va_list ap;
 
 	fd = -1;
 	for (i = 0; i < MAX_INSTANCES; i++) {
@@ -51,16 +55,22 @@ int xio_open(const void *pathname, int flags, ...) {
 	if (fd == -1)
 		return -1;
 
-	if (flags & O_CREAT)
+	if (flags & O_CREAT) {
+		va_start(ap, flags);
+		mode = va_arg(ap, mode_t);
+		va_end(ap);
 		open_mode = MODE_NEWFILE;
-	else
+	} else {
+		mode = 0;
 		open_mode = MODE_OLDFILE;
+	}
 
 	instances[fd].fh = IDOS->FOpen(pathname, open_mode, 0);
 	if (instances[fd].fh == ZERO)
 		return -1;
 
 	instances[fd].flags    = flags;
+	instances[fd].mode     = mode;
 	instances[fd].file_pos = 0;
 
 	return fd;
@@ -177,19 +187,32 @@ int64_t xio_lseek(int fd, int64_t offset, int whence) {
 }
 
 int xio_close(int fd) {
+	char buffer[1024];
 	BPTR fh;
+	int flags;
+	mode_t mode;
+	int32 have_path = FALSE;
 
 	if (fd < 0 || fd >= MAX_INSTANCES || instances[fd].fh == ZERO)
 		return -1;
 
-	fh = instances[fd].fh;
+	fh    = instances[fd].fh;
+	flags = instances[fd].flags;
+	mode  = instances[fd].mode;
 
 	instances[fd].fh       = ZERO;
 	instances[fd].flags    = 0;
+	instances[fd].mode     = 0;
 	instances[fd].file_pos = 0;
+
+	if (flags & O_CREAT)
+		have_path = IDOS->DevNameFromFH(fh, buffer, sizeof(buffer), DN_FULLPATH);
 
 	if (!IDOS->FClose(fh))
 		return -1;
+
+	if ((flags & O_CREAT) && have_path)
+		chmod(buffer, mode);
 
 	return 0;
 }
