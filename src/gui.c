@@ -1037,21 +1037,24 @@ static BOOL gui_create_window(struct srec_gui *gd) {
 		TAG_END);
 
 	gd->obj[OID_POPUP_KEY] = IIntuition->NewObject(gd->buttonclass, NULL,
-		GA_ID,       OID_POPUP_KEY,
-		GA_ReadOnly, TRUE,
-		GA_Text,     gd->popkey ? gd->popkey : GetString(loc, MSG_KEY_NONE),
+		GA_ID,         OID_POPUP_KEY,
+		GA_ReadOnly,   TRUE,
+		GA_Underscore, 0,
+		GA_Text,       gd->popkey ? gd->popkey : GetString(loc, MSG_KEY_NONE),
 		TAG_END);
 
 	gd->obj[OID_RECORD_KEY] = IIntuition->NewObject(gd->buttonclass, NULL,
-		GA_ID,       OID_RECORD_KEY,
-		GA_ReadOnly, TRUE,
-		GA_Text,     gd->recordkey ? gd->recordkey : GetString(loc, MSG_KEY_NONE),
+		GA_ID,         OID_RECORD_KEY,
+		GA_ReadOnly,   TRUE,
+		GA_Underscore, 0,
+		GA_Text,       gd->recordkey ? gd->recordkey : GetString(loc, MSG_KEY_NONE),
 		TAG_END);
 
 	gd->obj[OID_STOP_KEY] = IIntuition->NewObject(gd->buttonclass, NULL,
-		GA_ID,       OID_STOP_KEY,
-		GA_ReadOnly, TRUE,
-		GA_Text,     gd->stopkey ? gd->stopkey : GetString(loc, MSG_KEY_NONE),
+		GA_ID,         OID_STOP_KEY,
+		GA_ReadOnly,   TRUE,
+		GA_Underscore, 0,
+		GA_Text,       gd->stopkey ? gd->stopkey : GetString(loc, MSG_KEY_NONE),
 		TAG_END);
 
 	gd->obj[OID_HOT_KEYS_PAGE] = IIntuition->NewObject(gd->layoutclass, NULL,
