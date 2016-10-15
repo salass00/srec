@@ -41,11 +41,11 @@ struct zmbv_state {
 	uint8                    unaligned_mask_vector[16];
 	zmbv_xor_block_func_t    xor_block_func;
 	zmbv_endian_convert_t    format_convert_func;
+	uint32                   pixfmt;
 	uint32                   width, height, fps;
 	struct GraphicsIFace    *igraphics;
 	struct ZIFace           *iz;
 	z_stream                 zstream;
-	uint32                   pixfmt;
 	BOOL                     convert;
 	uint8                    zmbv_fmt;
 	struct BitMap           *srec_bm;

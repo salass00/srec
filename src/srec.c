@@ -18,6 +18,7 @@
 
 #include "srec_internal.h"
 #include "interfaces.h"
+#include "scale.h"
 #include "pointer.h"
 #include "timer.h"
 #include "avilib.h"
@@ -205,46 +206,64 @@ void get_frame_data(const struct SRecGlobal *gd, struct BitMap *dest_bm, uint32 
 	struct GraphicsIFace *IGraphics = gd->igraphics;
 	struct BitMap *src_bm = gd->bitmap;
 
-	if (MAX_VRAM_TO_RAM_TRANSFER_SIZE == 0 ||
-	    MAX_VRAM_TO_RAM_TRANSFER_SIZE >= (bpr * height))
+	#ifdef ENABLE_CLUT
+	if (gd->pixfmt != PIXF_CLUT)
+	#endif
 	{
-		IGraphics->BltBitMapTags(
-			BLITA_Source, src_bm,
-			BLITA_Dest,   dest_bm,
-			BLITA_Width,  width,
-			BLITA_Height, height,
-			TAG_END);
-	} else {
-		uint32 max_rows  = MAX_VRAM_TO_RAM_TRANSFER_SIZE / bpr;
-		uint32 rows_left = height;
-		uint32 y         = 0;
+		if (MAX_VRAM_TO_RAM_TRANSFER_SIZE == 0 ||
+		    MAX_VRAM_TO_RAM_TRANSFER_SIZE >= (bpr * height))
+		{
+			IGraphics->BltBitMapTags(
+				BLITA_Source, src_bm,
+				BLITA_Dest,   dest_bm,
+				BLITA_Width,  width,
+				BLITA_Height, height,
+				TAG_END);
+		} else {
+			uint32 max_rows  = MAX_VRAM_TO_RAM_TRANSFER_SIZE / bpr;
+			uint32 rows_left = height;
+			uint32 y         = 0;
 
-		if (max_rows == 0)
-			max_rows = 1;
+			if (max_rows == 0)
+				max_rows = 1;
 
-		while (rows_left > max_rows) {
+			while (rows_left > max_rows) {
+				IGraphics->BltBitMapTags(
+					BLITA_Source, src_bm,
+					BLITA_Dest,   dest_bm,
+					BLITA_SrcY,   y,
+					BLITA_DestY,  y,
+					BLITA_Width,  width,
+					BLITA_Height, max_rows,
+					TAG_END);
+
+				y += max_rows;
+				rows_left -= max_rows;
+			}
+
 			IGraphics->BltBitMapTags(
 				BLITA_Source, src_bm,
 				BLITA_Dest,   dest_bm,
 				BLITA_SrcY,   y,
 				BLITA_DestY,  y,
 				BLITA_Width,  width,
-				BLITA_Height, max_rows,
+				BLITA_Height, rows_left,
 				TAG_END);
-
-			y += max_rows;
-			rows_left -= max_rows;
 		}
-
-		IGraphics->BltBitMapTags(
-			BLITA_Source, src_bm,
-			BLITA_Dest,   dest_bm,
-			BLITA_SrcY,   y,
-			BLITA_DestY,  y,
-			BLITA_Width,  width,
-			BLITA_Height, rows_left,
-			TAG_END);
 	}
+	#ifdef ENABLE_CLUT
+	else {
+		uint32 dest_x = gd->dest_rect.MinX;
+		uint32 dest_y = gd->dest_rect.MinY;
+		uint32 dest_w = gd->dest_rect.MaxX - dest_x + 1;
+		uint32 dest_h = gd->dest_rect.MaxY - dest_y + 1;
+
+		scale_bitmap(gd, src_bm, dest_bm,
+			0, 0, gd->disp_width, gd->disp_height,
+			dest_x, dest_y, dest_w, dest_h,
+			gd->scale_x, gd->scale_y);
+	}
+	#endif
 }
 
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
@@ -290,18 +309,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	#define ITimer      gd.itimer
 
 	#define bitmap      gd.bitmap
+	#define pixfmt      gd.pixfmt
 	#define disp_width  gd.disp_width
 	#define disp_height gd.disp_height
 	#define scale_x     gd.scale_x
 	#define scale_y     gd.scale_y
-	#define min_x       gd.scale_rect.min.x
-	#define min_y       gd.scale_rect.min.y
-	#define max_x       gd.scale_rect.max.x
-	#define max_y       gd.scale_rect.max.y
-	#define min_s       gd.scale_rect.min.s
-	#define min_t       gd.scale_rect.min.t
-	#define max_s       gd.scale_rect.max.s
-	#define max_t       gd.scale_rect.max.t
+	#define dest_rect   gd.dest_rect
+	#define scale_rect  gd.scale_rect
 
 	proc = (struct Process *)IExec->FindTask(NULL);
 
@@ -452,18 +466,30 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 				current_screen = first_screen;
 				screen_bitmap  = current_screen->RastPort.BitMap;
-				if (IGraphics->GetBitMapAttr(screen_bitmap, BMA_ISRTG) &&
-				    IGraphics->GetBitMapAttr(screen_bitmap, BMA_BYTESPERPIXEL) > 1)
-				{
-					struct RastPort temp_rp;
+				if (IGraphics->GetBitMapAttr(screen_bitmap, BMA_ISRTG)) {
 					uint32 depth;
 
+					get_screen_dimensions(IGraphics, current_screen, &disp_width, &disp_height);
+
 					depth  = IGraphics->GetBitMapAttr(screen_bitmap, BMA_DEPTH);
-					bitmap = IGraphics->AllocBitMapTags(args->width, args->height, depth,
-						BMATags_Friend, screen_bitmap,
-						TAG_END);
+					pixfmt = IGraphics->GetBitMapAttr(screen_bitmap, BMA_PIXELFORMAT);
+
+					if (pixfmt != PIXF_CLUT) {
+						bitmap = IGraphics->AllocBitMapTags(args->width, args->height, depth,
+							BMATags_Friend, screen_bitmap,
+							TAG_END);
+					} else {
+						#ifdef ENABLE_CLUT
+						bitmap = IGraphics->AllocBitMapTags(disp_width, disp_height, depth,
+							BMATags_Friend, screen_bitmap,
+							TAG_END);
+						#else
+						IExec->DebugPrintF("CLUT screens are not supported!\n");
+						#endif
+					}
 
 					if (bitmap != NULL && zmbv_set_source_bm(encoder, bitmap)) {
+						struct RastPort temp_rp;
 						uint32 width, height;
 						float scaled_width, scaled_height;
 
@@ -472,9 +498,19 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 						width  = IGraphics->GetBitMapAttr(bitmap, BMA_WIDTH);
 						height = IGraphics->GetBitMapAttr(bitmap, BMA_HEIGHT);
-						IGraphics->RectFillColor(&temp_rp, 0, 0, width - 1, height - 1, 0);
 
-						get_screen_dimensions(IGraphics, current_screen, &disp_width, &disp_height);
+						#ifdef ENABLE_CLUT
+						if (pixfmt != PIXF_CLUT)
+						#endif
+						{
+							IGraphics->RectFillColor(&temp_rp, 0, 0, width - 1, height - 1, 0);
+						}
+						#ifdef ENABLE_CLUT
+						else {
+							IGraphics->SetAPen(&temp_rp, 0);
+							IGraphics->RectFill(&temp_rp, 0, 0, width - 1, height - 1);
+						}
+						#endif
 
 						scale_x = (float)args->width  / (float)disp_width;
 						scale_y = (float)args->height / (float)disp_height;
@@ -487,29 +523,42 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						scaled_width  = MIN(roundf((float)disp_width  * scale_x), (float)args->width);
 						scaled_height = MIN(roundf((float)disp_height * scale_y), (float)args->height);
 
-						min_x = floorf(((float)args->width  - scaled_width ) / 2.0f);
-						min_y = floorf(((float)args->height - scaled_height) / 2.0f);
-						max_x = min_x + scaled_width;
-						max_y = min_y + scaled_height;
+						#ifdef ENABLE_CLUT
+						if (pixfmt != PIXF_CLUT)
+						#endif
+						{
+							scale_rect.min.x = floorf(((float)args->width  - scaled_width ) / 2.0f);
+							scale_rect.min.y = floorf(((float)args->height - scaled_height) / 2.0f);
+							scale_rect.max.x = scale_rect.min.x + scaled_width;
+							scale_rect.max.y = scale_rect.min.y + scaled_height;
 
-						min_s = 0.0f;
-						min_t = 0.0f;
-						max_s = (float)disp_width;
-						max_t = (float)disp_height;
+							scale_rect.min.s = 0.0f;
+							scale_rect.min.t = 0.0f;
+							scale_rect.max.s = (float)disp_width;
+							scale_rect.max.t = (float)disp_height;
 
-						init_vertex_array_from_rect(vertex_array, &gd.scale_rect);
+							init_vertex_array_from_rect(vertex_array, &scale_rect);
 
-						if (!args->no_pointer) {
-							scale_pointer(&gd, pointer);
-							scale_pointer(&gd, busy_pointer);
+							if (!args->no_pointer) {
+								scale_pointer(&gd, pointer);
+								scale_pointer(&gd, busy_pointer);
+							}
 						}
+						#ifdef ENABLE_CLUT
+						else {
+							dest_rect.MinX = (int32)(((float)args->width  - scaled_width ) / 2.0f);
+							dest_rect.MinY = (int32)(((float)args->height - scaled_height) / 2.0f);
+							dest_rect.MaxX = dest_rect.MinX + (int32)scaled_width - 1;
+							dest_rect.MaxY = dest_rect.MinY + (int32)scaled_height - 1;
+						}
+						#endif
 					} else {
 						IGraphics->FreeBitMap(bitmap);
 						bitmap = NULL;
 					}
 				} else {
 					screen_bitmap = NULL;
-					IExec->DebugPrintF("non-RTG or CLUT formats are not supported!\n");
+					IExec->DebugPrintF("non-RTG bitmaps are not supported!\n");
 				}
 			}
 
@@ -525,17 +574,32 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 			}
 
 			if (screen_bitmap != NULL && bitmap != NULL) {
-				uint32 comp_flags = COMPFLAG_SrcAlphaOverride | COMPFLAG_HardwareOnly | COMPFLAG_IgnoreDestAlpha;
+				#ifdef ENABLE_CLUT
+				if (pixfmt != PIXF_CLUT)
+				#endif
+				{
+					uint32 comp_flags = COMPFLAG_SrcAlphaOverride | COMPFLAG_HardwareOnly | COMPFLAG_IgnoreDestAlpha;
 
-				if (!args->no_filter)
-					comp_flags |= COMPFLAG_SrcFilter;
+					if (!args->no_filter)
+						comp_flags |= COMPFLAG_SrcFilter;
 
-				comp_err = IGraphics->CompositeTags(COMPOSITE_Src, screen_bitmap, bitmap,
-					COMPTAG_Flags,        comp_flags,
-					COMPTAG_VertexArray,  vertex_array,
-					COMPTAG_VertexFormat, COMPVF_STW0_Present,
-					COMPTAG_NumTriangles, 2,
-					TAG_END);
+					comp_err = IGraphics->CompositeTags(COMPOSITE_Src, screen_bitmap, bitmap,
+						COMPTAG_Flags,        comp_flags,
+						COMPTAG_VertexArray,  vertex_array,
+						COMPTAG_VertexFormat, COMPVF_STW0_Present,
+						COMPTAG_NumTriangles, 2,
+						TAG_END);
+				}
+				#ifdef ENABLE_CLUT
+				else {
+					IGraphics->BltBitMapTags(
+						BLITA_Source, screen_bitmap,
+						BLITA_Dest,   bitmap,
+						BLITA_Width,  disp_width,
+						BLITA_Height, disp_height,
+						TAG_END);
+				}
+				#endif
 			}
 
 			IIntuition->UnlockIBase(ilock);

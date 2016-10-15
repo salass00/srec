@@ -13,7 +13,8 @@ LDFLAGS := -static
 LIBS    := 
 
 SRCS := src/main.c src/locale.c src/cli.c src/gui.c src/srec.c src/pointer.c \
-        src/interfaces.c src/timer.c src/zmbv.c src/zmbv_ppc.c src/zmbv_altivec.c
+        src/scale.c src/interfaces.c src/timer.c src/zmbv.c src/zmbv_ppc.c \
+        src/zmbv_altivec.c
 OBJS := $(SRCS:.c=.o)
 DEPS := $(SRCS:.c=.d)
 

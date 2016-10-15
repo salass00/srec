@@ -24,7 +24,8 @@
 
 #define CLAMP(val,min,max) MAX(MIN(val, max), min)
 
-void scale_bitmap(struct SRecGlobal *gd, struct BitMap *src_bm, struct BitMap *dst_bm,
+#ifdef ENABLE_CLUT
+void scale_bitmap(const struct SRecGlobal *gd, struct BitMap *src_bm, struct BitMap *dst_bm,
 	uint32 src_x, uint32 src_y, uint32 src_w, uint32 src_h,
 	uint32 dst_x, uint32 dst_y, uint32 dst_w, uint32 dst_h,
 	float scale_x, float scale_y)
@@ -85,4 +86,5 @@ void scale_bitmap(struct SRecGlobal *gd, struct BitMap *src_bm, struct BitMap *d
 	if (dst_lock != NULL)
 		IGraphics->UnlockBitMap(dst_lock);
 }
+#endif
 

@@ -49,9 +49,11 @@ struct SRecGlobal {
 	struct IconIFace      *iicon;
 	struct TimerIFace     *itimer;
 	struct BitMap         *bitmap;
+	uint32                 pixfmt;
 	uint32                 disp_width, disp_height;
 	float                  scale_x, scale_y;
 	struct VertexRectangle scale_rect;
+	struct Rect32          dest_rect;
 };
 
 void init_vertex_array_from_rect(vertex_t *vertex_array, const struct VertexRectangle *rect);
