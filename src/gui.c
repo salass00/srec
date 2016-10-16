@@ -671,7 +671,7 @@ static void gui_read_settings(struct srec_gui *gd) {
 	gd->busy_pointer_file = IPrefsObjects->DictGetStringForKey(gd->app_prefs, "BusyPointerFile", DEFAULT_BUSY_POINTER_FILE);
 
 	gd->enable_filter  = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "BilinearFilter", TRUE);
-	gd->enable_altivec = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnableAltivec", TRUE);
+	gd->enable_altivec = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "EnableAltivec", FALSE);
 	gd->create_icon    = IPrefsObjects->DictGetBoolForKey(gd->app_prefs, "CreateIcon", TRUE);
 }
 

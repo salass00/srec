@@ -43,3 +43,8 @@ SRec 2.4 (14.10.2016)
 
 - Added Ringhio notifications for when recording is started and stopped.
 
+
+SRec 2.5 (xx.xx.2016)
+
+- When using GUI altivec now defaults to disabled (enable at your own risk).
+
