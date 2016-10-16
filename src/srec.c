@@ -314,8 +314,9 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	#define disp_height gd.disp_height
 	#define scale_x     gd.scale_x
 	#define scale_y     gd.scale_y
-	#define dest_rect   gd.dest_rect
 	#define scale_rect  gd.scale_rect
+	#define dest_rect   gd.dest_rect
+	#define palette     gd.palette
 
 	proc = (struct Process *)IExec->FindTask(NULL);
 
@@ -344,6 +345,12 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	IIcon      = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1);
 	if (IIntuition == NULL || IGraphics == NULL || IIcon == NULL)
 		goto out;
+
+	#ifdef ENABLE_CLUT
+	palette = IExec->AllocVecTags(sizeof(uint32) * 3 * 256, TAG_END);
+	if (palette == NULL)
+		goto out;
+	#endif
 
 	tr = OpenTimerDevice(UNIT_MICROHZ);
 	if (tr == NULL)
@@ -556,6 +563,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 							dest_rect.MinY = (int32)(((float)args->height - scaled_height) / 2.0f);
 							dest_rect.MaxX = dest_rect.MinX + (int32)scaled_width - 1;
 							dest_rect.MaxY = dest_rect.MinY + (int32)scaled_height - 1;
+
+							IUtility->ClearMem(palette, sizeof(uint32) * 3 * 256);
 						}
 						#endif
 					} else {
@@ -598,6 +607,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				}
 				#ifdef ENABLE_CLUT
 				else {
+					IGraphics->GetRGB32(current_screen->ViewPort.ColorMap, 0, 256, palette);
+
 					IGraphics->BltBitMapTags(
 						BLITA_Source, screen_bitmap,
 						BLITA_Dest,   bitmap,
@@ -728,6 +739,11 @@ out:
 		}
 		CloseTimerDevice(tr);
 	}
+
+	#ifdef ENABLE_CLUT
+	if (palette != NULL)
+		IExec->FreeVec(palette);
+	#endif
 
 	if (IIcon != NULL)
 		CloseInterface((struct Interface *)IIcon);

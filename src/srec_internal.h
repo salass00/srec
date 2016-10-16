@@ -53,7 +53,10 @@ struct SRecGlobal {
 	uint32                 disp_width, disp_height;
 	float                  scale_x, scale_y;
 	struct VertexRectangle scale_rect;
+	#ifdef ENABLE_CLUT
 	struct Rect32          dest_rect;
+	uint32                *palette;
+	#endif
 };
 
 void init_vertex_array_from_rect(vertex_t *vertex_array, const struct VertexRectangle *rect);
