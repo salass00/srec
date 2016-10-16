@@ -254,7 +254,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	}
 
 	block_data_offset = (state->block_info_size + 15) & ~15;
-	frame_buffer_offset = block_data_offset + ((state->max_block_data_size + 15) & ~15);
+	frame_buffer_offset = block_data_offset + ((state->max_block_data_size + 16 + 15) & ~15);
 	state->block_info_buffer = IExec->AllocVecTags(frame_buffer_offset + state->max_frame_size,
 		AVT_Type,      MEMF_SHARED,
 		AVT_Lock,      TRUE,
