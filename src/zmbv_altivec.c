@@ -135,7 +135,7 @@ uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 	#endif
 
 	for (i = 0; i != blk_h; i++) {
-		if (((uint32)out & 16) == 0)
+		if (((uint32)out & 15) == 0)
 			x = zmbv_xor_row_altivec(state, out, ras1, ras2, blk_w);
 		else
 			x = zmbv_xor_row_altivec_unaligned(state, out, ras1, ras2, blk_w);
