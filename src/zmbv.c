@@ -66,6 +66,9 @@ struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs 
 
 	state->vector_unit = VECTORTYPE_NONE;
 
+	#ifdef ENABLE_CLUT
+	state->xor_palette_func    = zmbv_xor_palette_ppc;
+	#endif
 	state->xor_block_func      = zmbv_xor_block_ppc;
 	state->format_convert_func = zmbv_format_convert_ppc;
 
@@ -128,6 +131,18 @@ static void zmbv_free_frame_data(struct zmbv_state *state) {
 		state->current_frame    = NULL;
 	}
 
+	#ifdef ENABLE_CLUT
+	if (state->prev_palette != NULL) {
+		IExec->FreeVec(state->prev_palette);
+		state->prev_palette = NULL;
+	}
+
+	if (state->current_palette != NULL) {
+		IExec->FreeVec(state->current_palette);
+		state->current_palette = NULL;
+	}
+	#endif
+
 	state->srec_bm = NULL;
 }
 
@@ -139,6 +154,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	uint32 num_blk_w, num_blk_h, num_blk;
 	uint32 compare_bpr;
 	uint32 block_data_offset, frame_buffer_offset;
+	uint32 palette_size = 0;
 	APTR   lock;
 
 	zmbv_free_frame_data(state);
@@ -170,6 +186,11 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 		case PIXF_R5G5B5PC: // RGB15PC
 			state->zmbv_fmt = 5;
 			break;
+		#ifdef ENABLE_CLUT
+		case PIXF_CLUT:     // CLUT
+			state->zmbv_fmt = 4;
+			break;
+		#endif
 		default:            // Unsupported
 			IExec->DebugPrintF("unsupported pixel format: %lu!\n", pixfmt);
 			state->zmbv_fmt = (uint8)-1;
@@ -180,7 +201,12 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	padded_width = IGraphics->GetBitMapAttr(bm, BMA_WIDTH);
 	depth        = IGraphics->GetBitMapAttr(bm, BMA_DEPTH);
 
-	if (bpp != 2 && bpp != 4) {
+	#ifdef ENABLE_CLUT
+	if (pixfmt == PIXF_CLUT)
+		padded_width = state->width;
+	#endif
+
+	if (bpp != 1 && bpp != 2 && bpp != 4) {
 		IExec->DebugPrintF("unsupported bytes per pixel: %lu!\n", bpp);
 		return FALSE;
 	}
@@ -232,6 +258,23 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 		goto out;
 	}
 
+	#ifdef ENABLE_CLUT
+	if (pixfmt == PIXF_CLUT) {
+		palette_size = 3 * 256;
+
+		state->current_palette = IExec->AllocVecTags(palette_size,
+			AVT_Type,      MEMF_SHARED,
+			AVT_Alignment, 16,
+			TAG_END);
+		state->prev_palette = IExec->AllocVecTags(palette_size,
+			AVT_Type,      MEMF_SHARED,
+			AVT_Alignment, 16,
+			TAG_END);
+		if (state->current_palette == NULL || state->prev_palette == NULL)
+			goto out;
+	}
+	#endif
+
 	bm_size = (state->width * bpp) * state->height;
 
 	num_blk_w = (state->width  + BLKW - 1) / BLKW;
@@ -240,7 +283,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 
 	state->block_info_size = (num_blk * 2 + 3) & ~3;
 	state->max_block_data_size = bm_size;
-	state->max_frame_size = 1 + state->iz->DeflateBound(&state->zstream, state->block_info_size + state->max_block_data_size);
+	state->max_frame_size = 1 + state->iz->DeflateBound(&state->zstream, palette_size + state->block_info_size + state->max_block_data_size);
 
 	if (state->vector_unit == VECTORTYPE_ALTIVEC) {
 		uint32 last_bytes = (state->width * bpp) & 15;
@@ -289,6 +332,17 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 
 	get_frame_data(state->global_data, state->current_frame_bm, state->width, state->height, state->frame_bpr);
 
+	#ifdef ENABLE_CLUT
+	if (state->pixfmt == PIXF_CLUT) {
+		const uint32 *src = state->global_data->palette;
+		uint8        *dst = state->current_palette;
+		uint32        i;
+
+		for (i = 0; i != (3 * 256); i++)
+			*dst++ = *src++ >> 24;
+	}
+	#endif
+
 	if (state->keyframe_cnt == 0) {
 		uint8  *ras        = state->prev_frame;
 		uint32  packed_bpr = state->width * state->frame_bpp;
@@ -309,6 +363,18 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		state->zstream.next_out = out + 7;
 		state->zstream.avail_out = out_space - 7;
 		state->zstream.total_out = 0;
+
+		#ifdef ENABLE_CLUT
+		if (state->pixfmt == PIXF_CLUT) {
+			state->zstream.next_in  = state->current_palette;
+			state->zstream.avail_in = 3 * 256;
+
+			if (IZ->Deflate(&state->zstream, Z_NO_FLUSH) != Z_OK) {
+				IExec->DebugPrintF("deflate failed!\n");
+				return FALSE;
+			}
+		}
+		#endif
 
 		if (state->convert) {
 			state->format_convert_func(state, state->current_frame, ras,
@@ -371,6 +437,30 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 
 		state->keyframe_cnt--;
 
+		out[0] = 0; // interframe
+
+		state->zstream.next_out  = out + 1;
+		state->zstream.avail_out = out_space - 1;
+		state->zstream.total_out = 0;
+
+		#ifdef ENABLE_CLUT
+		if (state->pixfmt == PIXF_CLUT) {
+			zmbv_xor_palette_func_t xor_palette_func = state->xor_palette_func;
+
+			if (xor_palette_func(state, state->current_palette, state->prev_palette)) {
+				out[0] |= 2; // palette change
+
+				state->zstream.next_in  = state->prev_palette;
+				state->zstream.avail_in = 3 * 256;
+
+				if (IZ->Deflate(&state->zstream, Z_NO_FLUSH) != Z_OK) {
+					IExec->DebugPrintF("deflate failed!\n");
+					return FALSE;
+				}
+			}
+		}
+		#endif
+
 		IUtility->ClearMem(info, state->block_info_size);
 
 		for (i = 0; i != num_blk_h; i++) {
@@ -402,12 +492,6 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 				info += 2;
 			}
 		}
-
-		out[0] = 0; // interframe
-
-		state->zstream.next_out  = out + 1;
-		state->zstream.avail_out = out_space - 1;
-		state->zstream.total_out = 0;
 
 		block_data_len = data - block_data;
 
@@ -454,6 +538,13 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		temp_frame = state->current_frame;
 		state->current_frame = state->prev_frame;
 		state->prev_frame = temp_frame;
+
+		#ifdef ENABLE_CLUT
+		uint8 *temp_palette;
+		temp_palette = state->current_palette;
+		state->current_palette = state->prev_palette;
+		state->prev_palette = temp_palette;
+		#endif
 	}
 
 	return TRUE;

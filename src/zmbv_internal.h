@@ -30,6 +30,10 @@
 #include <interfaces/z.h>
 #endif
 
+#ifdef ENABLE_CLUT
+typedef uint8 (*zmbv_xor_palette_func_t)(const struct zmbv_state *state,
+	const uint8 *src, uint8 *dst);
+#endif
 typedef uint8 (*zmbv_xor_block_func_t)(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp);
@@ -39,6 +43,9 @@ typedef void (*zmbv_endian_convert_t)(const struct zmbv_state *state,
 
 struct zmbv_state {
 	uint8                    unaligned_mask_vector[16];
+	#ifdef ENABLE_CLUT
+	zmbv_xor_palette_func_t  xor_palette_func;
+	#endif
 	zmbv_xor_block_func_t    xor_block_func;
 	zmbv_endian_convert_t    format_convert_func;
 	uint32                   pixfmt;
@@ -53,6 +60,10 @@ struct zmbv_state {
 	struct BitMap           *current_frame_bm;
 	void                    *prev_frame;
 	void                    *current_frame;
+	#ifdef ENABLE_CLUT
+	uint8                   *prev_palette;
+	uint8                   *current_palette;
+	#endif
 	uint32                   frame_bpr;
 	uint32                   frame_bpp;
 	uint32                   block_info_size;
@@ -66,6 +77,10 @@ struct zmbv_state {
 	const struct SRecGlobal *global_data;
 };
 
+#ifdef ENABLE_CLUT
+uint8 zmbv_xor_palette_ppc(const struct zmbv_state *state,
+	const uint8 *src, uint8 *dst);
+#endif
 uint8 zmbv_xor_block_ppc(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp);

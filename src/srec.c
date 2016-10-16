@@ -347,7 +347,10 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 		goto out;
 
 	#ifdef ENABLE_CLUT
-	palette = IExec->AllocVecTags(sizeof(uint32) * 3 * 256, TAG_END);
+	palette = IExec->AllocVecTags(sizeof(uint32) * 3 * 256,
+		AVT_Type,      MEMF_PRIVATE,
+		AVT_Alignment, 16,
+		TAG_END);
 	if (palette == NULL)
 		goto out;
 	#endif
