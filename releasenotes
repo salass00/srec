@@ -48,3 +48,6 @@ SRec 2.5 (xx.xx.2016)
 
 - When using GUI altivec now defaults to disabled (enable at your own risk).
 
+- Fixed a couple of bugs related to the unaligned pointer handling in the
+  altivec code.
+
