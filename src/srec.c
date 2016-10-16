@@ -337,6 +337,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	if (args->video_codec != VIDEO_CODEC_ZMBV || args->audio_codec != AUDIO_CODEC_NONE)
 		goto out;
 
+	IExec->DebugPrintF("recording %lux%lu at %lu FPS\n", args->width, args->height, args->fps);
+
 	IIntuition = (struct IntuitionIFace *)OpenInterface("intuition.library", 53, "main", 1);
 	IGraphics  = (struct GraphicsIFace *)OpenInterface("graphics.library", 54, "main", 1);
 	IIcon      = (struct IconIFace *)OpenInterface("icon.library", 53, "main", 1);
@@ -464,6 +466,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 					bitmap = NULL;
 				}
 
+				IExec->DebugPrintF("new screen: %p\n", first_screen);
+
 				current_screen = first_screen;
 				screen_bitmap  = current_screen->RastPort.BitMap;
 				if (IGraphics->GetBitMapAttr(screen_bitmap, BMA_ISRTG)) {
@@ -473,6 +477,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 					depth  = IGraphics->GetBitMapAttr(screen_bitmap, BMA_DEPTH);
 					pixfmt = IGraphics->GetBitMapAttr(screen_bitmap, BMA_PIXELFORMAT);
+
+					IExec->DebugPrintF("dimensions: %lux%lux%lu pixfmt: %lu\n", disp_width, disp_height, depth, pixfmt);
 
 					if (pixfmt != PIXF_CLUT) {
 						bitmap = IGraphics->AllocBitMapTags(args->width, args->height, depth,
