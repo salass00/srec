@@ -59,3 +59,9 @@ SRec 2.5 (17.10.2016)
 
 - Recording of CLUT screens is now supported.
 
+
+SRec 2.6 (xx.xx.2016)
+
+- Removed the altivec prefetching as it not only was extra work to maintain
+  but actually made the code slower.
+
