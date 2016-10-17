@@ -520,12 +520,6 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 						{
 							IGraphics->RectFillColor(&temp_rp, 0, 0, width - 1, height - 1, 0);
 						}
-						#ifdef ENABLE_CLUT
-						else {
-							IGraphics->SetAPen(&temp_rp, 0);
-							IGraphics->RectFill(&temp_rp, 0, 0, width - 1, height - 1);
-						}
-						#endif
 
 						scale_x = (float)args->width  / (float)disp_width;
 						scale_y = (float)args->height / (float)disp_height;
