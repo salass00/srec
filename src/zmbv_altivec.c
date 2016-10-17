@@ -116,6 +116,32 @@ static inline uint32 get_prefetch_constant(uint32 block_size_in_vectors, uint32 
 }
 #endif
 
+#ifdef ENABLE_CLUT
+uint8 zmbv_xor_palette_altivec(const struct zmbv_state *state,
+	const uint8 *src, uint8 *dst)
+{
+	vuint8  result = vec_splat_u8(0);
+	#ifdef PREFETCH
+	uint32  prefetch;
+	#endif
+
+	#ifdef PREFETCH
+	prefetch = get_prefetch_constant(1, (3 * 256) / 16, 16);
+	vec_dst(src, prefetch, 0);
+	vec_dstst(dst, prefetch, 1);
+	#endif
+
+	result = zmbv_xor_row_altivec(state, dst, src, dst, 3 * 256);
+
+	#ifdef PREFETCH
+	vec_dss(0);
+	vec_dss(1);
+	#endif
+
+	return vec_all_eq(result, vec_splat_u8(0)) ? 0 : 1;
+}
+#endif
+
 uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp)

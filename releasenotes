@@ -54,3 +54,8 @@ SRec 2.5 (xx.xx.2016)
 - Fixed a bug introduced by the key frame optimisation in version 2.3. When no
   conversion was needed the wrong frame buffer was used.
 
+- Recording of CLUT screens is now supported.
+
+- Enabled altivec based format conversion code which had been completely
+  unused until now.
+

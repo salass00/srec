@@ -79,7 +79,11 @@ struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs 
 
 		if (state->vector_unit == VECTORTYPE_ALTIVEC) {
 			IExec->DebugPrintF("altivec unit detected\n");
-			state->xor_block_func = zmbv_xor_block_altivec;
+			#ifdef ENABLE_CLUT
+			state->xor_palette_func    = zmbv_xor_palette_altivec;
+			#endif
+			state->xor_block_func      = zmbv_xor_block_altivec;
+			state->format_convert_func = zmbv_format_convert_altivec;
 		}
 	}
 

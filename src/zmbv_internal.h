@@ -88,6 +88,10 @@ void zmbv_format_convert_ppc(const struct zmbv_state *state,
 	const uint8 *src, uint8 *dst, uint32 packed_bpr, uint32 height,
 	uint32 padded_bpr);
 
+#ifdef ENABLE_CLUT
+uint8 zmbv_xor_palette_altivec(const struct zmbv_state *state,
+	const uint8 *src, uint8 *dst);
+#endif
 uint8 zmbv_xor_block_altivec(const struct zmbv_state *state,
 	const uint8 *ras1, const uint8 *ras2, uint32 blk_w, uint32 blk_h,
 	uint32 bpr, uint8 **outp);
