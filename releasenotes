@@ -51,3 +51,6 @@ SRec 2.5 (xx.xx.2016)
 - Fixed a couple of bugs related to the unaligned pointer handling in the
   altivec code.
 
+- Fixed a bug introduced by the key frame optimisation in version 2.3. When no
+  conversion was needed the wrong frame buffer was used.
+

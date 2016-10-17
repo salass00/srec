@@ -202,11 +202,11 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	depth        = IGraphics->GetBitMapAttr(bm, BMA_DEPTH);
 
 	#ifdef ENABLE_CLUT
-	if (pixfmt == PIXF_CLUT)
+	if (pixfmt == PIXF_CLUT && bpp == 1)
 		padded_width = state->width;
+	else
 	#endif
-
-	if (bpp != 1 && bpp != 2 && bpp != 4) {
+	if (bpp != 2 && bpp != 4) {
 		IExec->DebugPrintF("unsupported bytes per pixel: %lu!\n", bpp);
 		return FALSE;
 	}
@@ -344,7 +344,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	#endif
 
 	if (state->keyframe_cnt == 0) {
-		uint8  *ras        = state->prev_frame;
+		uint8  *ras        = state->current_frame;
 		uint32  packed_bpr = state->width * state->frame_bpp;
 		uint32  padded_bpr = state->frame_bpr;
 
@@ -377,6 +377,7 @@ BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 		#endif
 
 		if (state->convert) {
+			ras = state->prev_frame;
 			state->format_convert_func(state, state->current_frame, ras,
 				packed_bpr, state->height, padded_bpr);
 		}
