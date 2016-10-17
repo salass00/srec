@@ -261,6 +261,7 @@ BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm) {
 	#ifdef ENABLE_CLUT
 	if (pixfmt == PIXF_CLUT) {
 		IUtility->ClearMem(state->current_frame, state->frame_bpr * state->height);
+		IUtility->ClearMem(state->prev_frame,    state->frame_bpr * state->height);
 
 		palette_size = 3 * 256;
 
