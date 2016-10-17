@@ -1,9 +1,7 @@
-Short:        Screen Recorder
-Author:       Fredrik Wikstrom
-Uploader:     Fredrik Wikstrom <fredrik@a500.org>
-Type:         gfx/misc
-Version:      xx.xx
-Architecture: ppc-amigaos >= 4.1.7
+SRec is a program for recording videos from whatever is happening on your
+computer screen (useful for making tutorials, showing off games/programs,
+etc.). This is a pure software solution so no extra hardware is needed in
+order to use it.
 
 Requirements:
 

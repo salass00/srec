@@ -14,7 +14,6 @@ makedir all force ${destdir}/SRec-$numvers/catalogs/spanish
 
 copy clone AutoInstall ${destdir}
 copy clone Install ${destdir}/SRec-$numvers
-copy clone srec.readme ${destdir}/SRec-$numvers
 copy clone COPYING ${destdir}/SRec-$numvers
 copy clone releasenotes ${destdir}/SRec-$numvers
 copy clone SRec ${destdir}/SRec-$numvers
@@ -24,8 +23,14 @@ copy clone catalogs/german/SRec.catalog ${destdir}/SRec-$numvers/catalogs/german
 copy clone catalogs/italian/SRec.catalog ${destdir}/SRec-$numvers/catalogs/italian
 copy clone catalogs/spanish/SRec.catalog ${destdir}/SRec-$numvers/catalogs/spanish
 
-sed -i "s/SRec-xx.xx/SRec-$numvers/" ${destdir}/AutoInstall
-sed -i "s/^Version:      xx.xx/Version:      $numvers/" ${destdir}/SRec-$numvers/srec.readme
+echo "Short:        Screen Recorder" > ${destdir}/SRec-$numvers/srec.readme
+echo "Author:       Fredrik Wikstrom" >> ${destdir}/SRec-$numvers/srec.readme
+echo "Uploader:     Fredrik Wikstrom <fredrik@a500.org>" >> ${destdir}/SRec-$numvers/srec.readme
+echo "Type:         gfx/misc" >> ${destdir}/SRec-$numvers/srec.readme
+echo "Version:      $numvers" >> ${destdir}/SRec-$numvers/srec.readme
+echo "Architecture: ppc-amigaos >= 4.1.7" >> ${destdir}/SRec-$numvers/srec.readme
+echo "" >> ${destdir}/SRec-$numvers/srec.readme
+type README >> ${destdir}/SRec-$numvers/srec.readme
 
 copy clone icons/SRec_drawer.info ${destdir}/SRec-$numvers.info
 copy clone ENV:Sys/def_install.info ${destdir}/SRec-$numvers/Install.info
