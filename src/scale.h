@@ -27,8 +27,7 @@ struct SRecGlobal;
 
 void scale_bitmap(const struct SRecGlobal *gd, struct BitMap *src_bm, struct BitMap *dst_bm,
 	uint32 src_x, uint32 src_y, uint32 src_w, uint32 src_h,
-	uint32 dst_x, uint32 dst_y, uint32 dst_w, uint32 dst_h,
-	float scale_x, float scale_y);
+	uint32 dst_x, uint32 dst_y, uint32 dst_w, uint32 dst_h);
 
 #endif
 

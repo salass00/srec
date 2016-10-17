@@ -27,16 +27,19 @@
 #ifdef ENABLE_CLUT
 void scale_bitmap(const struct SRecGlobal *gd, struct BitMap *src_bm, struct BitMap *dst_bm,
 	uint32 src_x, uint32 src_y, uint32 src_w, uint32 src_h,
-	uint32 dst_x, uint32 dst_y, uint32 dst_w, uint32 dst_h,
-	float scale_x, float scale_y)
+	uint32 dst_x, uint32 dst_y, uint32 dst_w, uint32 dst_h)
 {
 	struct GraphicsIFace *IGraphics = gd->igraphics;
+	float scale_x, scale_y;
 	APTR src_lock, dst_lock;
 	uint32 src_bpr, dst_bpr;
 	uint32 bpp;
 	const uint8 *src, *src_row;
 	uint8 *dst;
 	uint32 dst_mod;
+
+	scale_x = (float)src_w / (float)dst_w;
+	scale_y = (float)src_h / (float)dst_h;
 
 	bpp = IGraphics->GetBitMapAttr(src_bm, BMA_BYTESPERPIXEL);
 

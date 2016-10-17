@@ -260,8 +260,7 @@ void get_frame_data(const struct SRecGlobal *gd, struct BitMap *dest_bm, uint32 
 
 		scale_bitmap(gd, src_bm, dest_bm,
 			0, 0, gd->disp_width, gd->disp_height,
-			dest_x, dest_y, dest_w, dest_h,
-			gd->scale_x, gd->scale_y);
+			dest_x, dest_y, dest_w, dest_h);
 	}
 	#endif
 }
