@@ -69,6 +69,10 @@ int xio_open(const void *pathname, int flags, ...) {
 	if (instances[fd].fh == ZERO)
 		return -1;
 
+	IDOS->SetFileHandleAttrTags(instances[fd].fh,
+		FH_Locking, DOSFALSE,
+		TAG_END);
+
 	instances[fd].flags    = flags;
 	instances[fd].mode     = mode;
 	instances[fd].file_pos = 0;
