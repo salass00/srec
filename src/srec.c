@@ -58,16 +58,16 @@ BOOL safe_signal_proc(uint32 pid, uint32 sigmask) {
 	return IDOS->ProcessScan(&hook, (void *)pid, 0) ? TRUE : FALSE;
 }
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	uint32_t biSize;
-	int32_t  biWidth;
-	int32_t  biHeight;
+	uint32_t biWidth;
+	uint32_t biHeight;
 	uint16_t biPlanes;
 	uint16_t biBitCount;
 	uint32_t biCompression;
 	uint32_t biSizeImage;
-	int32_t  biXPelsPerMeter;
-	int32_t  biYPelsPerMeter;
+	uint32_t biXPelsPerMeter;
+	uint32_t biYPelsPerMeter;
 	uint32_t biClrUsed;
 	uint32_t biClrImportant;
 } BITMAPINFOHEADER;
