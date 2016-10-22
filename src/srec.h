@@ -45,7 +45,8 @@ enum {
 };
 
 enum {
-	AUDIO_CODEC_NONE = 0
+	AUDIO_CODEC_NONE = 0,
+	AUDIO_CODEC_PCM
 };
 
 enum {

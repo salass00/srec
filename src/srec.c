@@ -295,8 +295,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	/* MKV output */
 	mk_Writer *writer = NULL;
 	BITMAPINFOHEADER bmih;
-	mk_TrackConfig video_conf;
 	mk_Track *video_track = NULL;
+	mk_Track *audio_track = NULL;
 
 	IUtility->ClearMem(&gd, sizeof(gd));
 
@@ -382,7 +382,13 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 			goto out;
 
 		AVI_set_video(AVI, args->width, args->height, 24, args->fps, "ZMBV");
+
+		if (args->audio_codec != AUDIO_CODEC_NONE) {
+			AVI_set_audio(AVI, args->channels, args->sample_rate, args->sample_size, WAVE_FORMAT_PCM, 0);
+		}
 	} else {
+		mk_TrackConfig track_conf;
+
 		writer = mk_createWriter(args->output_file, 1000000LL, VLC_COMPAT);
 		if (writer == NULL)
 			goto out;
@@ -398,29 +404,49 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 		IExec->CopyMem("ZMBV", &bmih.biCompression, 4);
 
-		IUtility->ClearMem(&video_conf, sizeof(video_conf));
+		IUtility->ClearMem(&track_conf, sizeof(track_conf));
 
-		video_conf.trackType        = MK_TRACK_VIDEO;
-		video_conf.flagEnabled      = 1;
-		video_conf.flagDefault      = 1;
-		video_conf.flagForced       = 1;
-		video_conf.flagLacing       = 0; // Is this correct?
-		video_conf.defaultDuration  = duration_ns;
-		video_conf.codecID          = MK_VCODEC_MSVCM; // "V_MS/VFW/FOURCC"
-		video_conf.codecPrivate     = &bmih;
-		video_conf.codecPrivateSize = sizeof(bmih);
+		track_conf.trackType        = MK_TRACK_VIDEO;
+		track_conf.flagEnabled      = 1;
+		track_conf.flagDefault      = 1;
+		track_conf.flagForced       = 1;
+		track_conf.flagLacing       = 0;
+		track_conf.defaultDuration  = duration_ns;
+		track_conf.codecID          = MK_VCODEC_MSVCM; // "V_MS/VFW/FOURCC"
+		track_conf.codecPrivate     = &bmih;
+		track_conf.codecPrivateSize = sizeof(bmih);
 
-		video_conf.extra.video.flagInterlaced  = 0;
-		video_conf.extra.video.pixelWidth      = args->width;
-		video_conf.extra.video.pixelHeight     = args->height;
-		video_conf.extra.video.displayWidth    = args->width;
-		video_conf.extra.video.displayHeight   = args->height;
-		video_conf.extra.video.displayUnit     = 0; // 0 = pixels
-		video_conf.extra.video.aspectRatioType = MK_ASPECTRATIO_KEEP;
+		track_conf.extra.video.flagInterlaced  = 0;
+		track_conf.extra.video.pixelWidth      = args->width;
+		track_conf.extra.video.pixelHeight     = args->height;
+		track_conf.extra.video.displayWidth    = args->width;
+		track_conf.extra.video.displayHeight   = args->height;
+		track_conf.extra.video.displayUnit     = 0; // 0 = pixels
+		track_conf.extra.video.aspectRatioType = MK_ASPECTRATIO_KEEP;
 
-		video_track = mk_createTrack(writer, &video_conf);
+		video_track = mk_createTrack(writer, &track_conf);
 		if (video_track == NULL)
 			goto out;
+
+		if (args->audio_codec != AUDIO_CODEC_NONE) {
+			IUtility->ClearMem(&track_conf, sizeof(track_conf));
+
+			track_conf.trackType       = MK_TRACK_AUDIO;
+			track_conf.flagEnabled     = 1;
+			track_conf.flagDefault     = 1;
+			track_conf.flagForced      = 1;
+			track_conf.flagLacing      = 0;
+			track_conf.defaultDuration = duration_ns;
+			track_conf.codecID         = MK_ACODEC_PCMINTBE; // "A_PCM/INT/BIG"
+
+			track_conf.extra.audio.samplingFreq = (float)args->sample_rate;
+			track_conf.extra.audio.channels     = args->channels;
+			track_conf.extra.audio.bitDepth     = args->sample_size;
+
+			audio_track = mk_createTrack(writer, &track_conf);
+			if (audio_track == NULL)
+				goto out;
+		}
 
 		if (mk_writeHeader(writer, VERS) != 0)
 			goto out;
