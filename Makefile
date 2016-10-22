@@ -1,5 +1,7 @@
 CROSS  := ppc-amigaos
 CC     := $(CROSS)-gcc
+AR     := $(CROSS)-ar
+RANLIB := $(CROSS)-ranlib
 STRIP  := $(CROSS)-strip
 RM     := rm -f
 
@@ -8,18 +10,20 @@ VERSION := 2
 
 SYSTEM := $(shell uname -s)
 
-CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -I. -Iinclude -DENABLE_CLUT
+CFLAGS  := -O2 -g -Wall -Wwrite-strings -Werror -Iinclude
 LDFLAGS := -static
 LIBS    := 
 
-SRCS := src/main.c src/locale.c src/cli.c src/gui.c src/srec.c src/pointer.c \
+SREC_CFLAGS := -I. -DENABLE_CLUT
+
+SREC_SRCS := src/main.c src/locale.c src/cli.c src/gui.c src/srec.c src/pointer.c \
         src/scale.c src/interfaces.c src/timer.c src/zmbv.c src/zmbv_ppc.c \
         src/zmbv_altivec.c
-OBJS := $(SRCS:.c=.o)
-DEPS := $(SRCS:.c=.d)
+SREC_OBJS := $(SREC_SRCS:.c=.o)
+SREC_DEPS := $(SREC_SRCS:.c=.d)
 
-AVILIB := avilib-0.6.10/libavi.a
-LIBMKV := libmkv/libmkv.a
+include libmkv/libmkv.make
+include avilib-0.6.10/avilib.make
 
 CTFILES  := $(wildcard catalogs/*/SRec.ct)
 CATALOGS := $(CTFILES:.ct=.catalog)
@@ -32,9 +36,11 @@ all: $(TARGET) catalogs
 	$(CC) -MM -MP -MT $*.d -MT $@ -MF $*.d $(CFLAGS) $<
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(TARGET): $(OBJS) $(AVILIB) $(LIBMKV)
+$(TARGET): $(SREC_OBJS) $(LIBMKV) $(AVILIB)
 	$(CC) $(LDFLAGS) -o $@.debug $^ $(LIBS)
 	$(STRIP) -R.comment -o $@ $@.debug
+
+$(SREC_OBJS): CFLAGS += $(SREC_CFLAGS)
 
 src/zmbv_altivec.o: CFLAGS += -maltivec
 
@@ -47,13 +53,19 @@ else
 	catcomp --cfile $@ $<
 endif
 
--include $(DEPS)
+-include $(SREC_DEPS)
 
-$(LIBMKV):
-	make -C $(dir $@)
+$(LIBMKV): $(LIBMKV_OBJS)
+	$(AR) -crv $@ $^
+	$(RANLIB) $@
 
-$(AVILIB):
-	make -C $(dir $@)
+$(LIBMKV_OBJS): CFLAGS += $(LIBMKV_CFLAGS)
+
+$(AVILIB): $(AVILIB_OBJS)
+	$(AR) -crv $@ $^
+	$(RANLIB) $@
+
+$(AVILIB_OBJS): CFLAGS += $(AVILIB_CFLAGS)
 
 %.catalog: %.ct catalogs/SRec.cd
 	-flexcat CATALOG $@ catalogs/SRec.cd $<
@@ -64,7 +76,7 @@ revision:
 	bumprev $(VERSION) $(TARGET)
 
 clean:
-	make -C libmkv clean
-	make -C avilib-0.6.10 clean
+	$(RM) $(LIBMKV) $(LIBMKVDIR)/*.o
+	$(RM) $(AVILIB) $(AVILIBDIR)/*.o
 	$(RM) src/*.[od] $(TARGET).debug $(TARGET)
 
