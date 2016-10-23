@@ -25,6 +25,8 @@ SREC_DEPS := $(SREC_SRCS:.c=.d)
 include libmkv/libmkv.make
 include avilib-0.6.10/avilib.make
 
+DEPS := $(SREC_DEPS) $(LIBMKV_DEPS) $(AVILIB_DEPS)
+
 CTFILES  := $(wildcard catalogs/*/SRec.ct)
 CATALOGS := $(CTFILES:.ct=.catalog)
 
@@ -53,7 +55,7 @@ else
 	catcomp --cfile $@ $<
 endif
 
--include $(SREC_DEPS)
+-include $(DEPS)
 
 $(LIBMKV): $(LIBMKV_OBJS)
 	$(AR) -crv $@ $^
