@@ -571,8 +571,8 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 							init_vertex_array_from_rect(vertex_array, &scale_rect);
 
 							if (!args->no_pointer) {
-								scale_pointer(&gd, pointer);
-								scale_pointer(&gd, busy_pointer);
+								scale_pointer(pointer);
+								scale_pointer(busy_pointer);
 							}
 						}
 						#ifdef ENABLE_CLUT
@@ -652,7 +652,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 
 				if (!args->no_pointer) {
 					struct srec_pointer *sp = use_busy_pointer ? busy_pointer : pointer;
-					render_pointer(&gd, sp, mouse_x, mouse_y);
+					render_pointer(sp, mouse_x, mouse_y);
 				}
 
 				before = get_uptime_micros(&gd);
@@ -740,10 +740,10 @@ out:
 
 	if (!args->no_pointer) {
 		if (pointer != NULL)
-			free_pointer(&gd, pointer);
+			free_pointer(pointer);
 
 		if (busy_pointer != NULL)
-			free_pointer(&gd, busy_pointer);
+			free_pointer(busy_pointer);
 	}
 
 	if (ITimer != NULL)

@@ -27,13 +27,14 @@
 #include <math.h>
 
 struct srec_pointer {
-	int32          xoffs, yoffs;
-	uint32         width, height;
-	struct BitMap *user_bm;
-	uint8         *buffer;
-	uint32         bpr;
-	struct BitMap *vram_bm;
-	float          scaled_width, scaled_height;
+	const struct SRecGlobal *global_data;
+	int32                    xoffs, yoffs;
+	uint32                   width, height;
+	struct BitMap           *user_bm;
+	uint8                   *buffer;
+	uint32                   bpr;
+	struct BitMap           *vram_bm;
+	float                    scaled_width, scaled_height;
 };
 
 void strip_info_extension(STRPTR name) {
@@ -91,6 +92,8 @@ struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name
 		TAG_END);
 	if (sp == NULL)
 		goto out;
+
+	sp->global_data = gd;
 
 	tt = IIcon->FindToolType(icon->do_ToolTypes, "XOFFSET");
 	if (tt != NULL)
@@ -171,7 +174,7 @@ struct srec_pointer *load_pointer(const struct SRecGlobal *gd, CONST_STRPTR name
 out:
 
 	if (sp != NULL)
-		free_pointer(gd, sp);
+		free_pointer(sp);
 
 	if (icon != NULL)
 		IIcon->FreeDiskObject(icon);
@@ -179,7 +182,9 @@ out:
 	return NULL;
 }
 
-void scale_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp) {
+void scale_pointer(struct srec_pointer *sp) {
+	const struct SRecGlobal *gd = sp->global_data;
+
 	sp->scaled_width  = roundf((float)sp->width  * gd->scale_x);
 	sp->scaled_height = roundf((float)sp->height * gd->scale_y);
 	if (sp->scaled_width < 1.0f)
@@ -188,7 +193,8 @@ void scale_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp) {
 		sp->scaled_height = 1.0f;
 }
 
-void render_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp, int32 mouse_x, int32 mouse_y) {
+void render_pointer(struct srec_pointer *sp, int32 mouse_x, int32 mouse_y) {
+	const struct SRecGlobal *gd = sp->global_data;
 	struct GraphicsIFace *IGraphics = gd->igraphics;
 	const struct SRecArgs *args = gd->args;
 	int32 pointer_x, pointer_y;
@@ -242,10 +248,11 @@ void render_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp, int32 
 		TAG_END);
 }
 
-void free_pointer(const struct SRecGlobal *gd, struct srec_pointer *sp) {
-	struct GraphicsIFace *IGraphics = gd->igraphics;
-
+void free_pointer(struct srec_pointer *sp) {
 	if (sp != NULL) {
+		const struct SRecGlobal *gd = sp->global_data;
+		struct GraphicsIFace *IGraphics = gd->igraphics;
+
 		if (sp->vram_bm != NULL)
 			IGraphics->FreeBitMap(sp->vram_bm);
 
