@@ -175,7 +175,7 @@ struct srec_gui {
 
 	uint32                    srec_pid;
 	struct MsgPort           *srec_mp;
-	struct SRecArgs          *startup_msg;
+	struct SRecArgs          *srec_args;
 	struct DeathMessage      *death_msg;
 
 	CONST_STRPTR              output_file;
@@ -1361,7 +1361,7 @@ static void gui_notify(const struct srec_gui *gd, int32 msg_id) {
 
 static void gui_start_recording(struct srec_gui *gd) {
 	struct IntuitionIFace *IIntuition = gd->iintuition;
-	struct SRecArgs *sm = gd->startup_msg;
+	struct SRecArgs *srec_args = gd->srec_args;
 	CONST_STRPTR output_file;
 	CONST_STRPTR pointer_file;
 	CONST_STRPTR busy_pointer_file;
@@ -1382,31 +1382,31 @@ static void gui_start_recording(struct srec_gui *gd) {
 	IIntuition->GetAttr(GETFILE_FullFile, gd->obj[OID_BUSY_POINTER_FILE], &temp);
 	busy_pointer_file = (CONST_STRPTR)temp;
 
-	IUtility->Strlcpy(sm->output_file, output_file, sizeof(sm->output_file));
+	IUtility->Strlcpy(srec_args->output_file, output_file, sizeof(srec_args->output_file));
 
-	IUtility->Strlcpy(sm->pointer_file, pointer_file, sizeof(sm->pointer_file));
-	IUtility->Strlcpy(sm->busy_pointer_file, busy_pointer_file, sizeof(sm->busy_pointer_file));
+	IUtility->Strlcpy(srec_args->pointer_file, pointer_file, sizeof(srec_args->pointer_file));
+	IUtility->Strlcpy(srec_args->busy_pointer_file, busy_pointer_file, sizeof(srec_args->busy_pointer_file));
 
 	IIntuition->SetAttrs(gd->obj[OID_WINDOW],
 		WA_BusyPointer, FALSE,
 		TAG_END);
 
-	strip_info_extension(sm->pointer_file);
-	strip_info_extension(sm->busy_pointer_file);
+	strip_info_extension(srec_args->pointer_file);
+	strip_info_extension(srec_args->busy_pointer_file);
 
-	sm->container   = gd->container;
-	sm->video_codec = gd->video_codec;
-	sm->width       = gd->width;
-	sm->height      = gd->height;
-	sm->fps         = gd->fps;
-	sm->audio_codec = gd->audio_codec;
-	sm->sample_size = gd->sample_size;
-	sm->channels    = gd->channels;
-	sm->sample_rate = gd->sample_rate;
-	sm->no_filter   = !gd->enable_filter;
-	sm->no_pointer  = !gd->enable_pointer;
-	sm->no_altivec  = !gd->enable_altivec;
-	sm->create_icon = gd->create_icon;
+	srec_args->container   = gd->container;
+	srec_args->video_codec = gd->video_codec;
+	srec_args->width       = gd->width;
+	srec_args->height      = gd->height;
+	srec_args->fps         = gd->fps;
+	srec_args->audio_codec = gd->audio_codec;
+	srec_args->sample_size = gd->sample_size;
+	srec_args->channels    = gd->channels;
+	srec_args->sample_rate = gd->sample_rate;
+	srec_args->no_filter   = !gd->enable_filter;
+	srec_args->no_pointer  = !gd->enable_pointer;
+	srec_args->no_altivec  = !gd->enable_altivec;
+	srec_args->create_icon = gd->create_icon;
 
 	proc = IDOS->CreateNewProcTags(
 		NP_Name,                 SREC_PROCNAME,
@@ -1415,6 +1415,7 @@ static void gui_start_recording(struct srec_gui *gd) {
 		NP_Entry,                srec_entry,
 		NP_StackSize,            SREC_STACKSIZE,
 		NP_LockStack,            TRUE,
+		NP_UserData,             gd->srec_args,
 		NP_NotifyOnDeathMessage, gd->death_msg,
 		TAG_END);
 	if (proc == NULL) {
@@ -1422,8 +1423,8 @@ static void gui_start_recording(struct srec_gui *gd) {
 		return;
 	}
 
-	gd->srec_pid = IDOS->GetPID(proc, GPID_PROCESS);
-	IExec->PutMsg(&proc->pr_MsgPort, &sm->message);
+	/* On success IoErr() returns the PID */
+	gd->srec_pid = IDOS->IoErr();
 
 	gui_notify(gd, MSG_RECORDING_STARTED);
 
@@ -1653,11 +1654,10 @@ int gui_main(struct LocaleInfo *loc, struct WBStartup *wbs) {
 	if (gd->srec_mp == NULL)
 		goto out;
 
-	gd->startup_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
-		ASOMSG_Name, PROGNAME " startup message",
-		ASOMSG_Size, sizeof(*gd->startup_msg),
+	gd->srec_args = IExec->AllocVecTags(sizeof(*gd->srec_args),
+		AVT_Type, MEMF_SHARED,
 		TAG_END);
-	if (gd->startup_msg == NULL)
+	if (gd->srec_args == NULL)
 		goto out;
 
 	gd->death_msg = IExec->AllocSysObjectTags(ASOT_MESSAGE,
@@ -1935,8 +1935,8 @@ out:
 		if (gd->death_msg != NULL)
 			IExec->FreeSysObject(ASOT_PORT, gd->death_msg);
 
-		if (gd->startup_msg != NULL)
-			IExec->FreeSysObject(ASOT_PORT, gd->startup_msg);
+		if (gd->srec_args != NULL)
+			IExec->FreeVec(gd->srec_args);
 
 		if (gd->srec_mp != NULL)
 			IExec->FreeSysObject(ASOT_PORT, gd->srec_mp);

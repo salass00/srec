@@ -267,7 +267,6 @@ void get_frame_data(const struct SRecGlobal *gd, struct BitMap *dest_bm, uint32 
 
 int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	struct ExecIFace *IExec = (struct ExecIFace *)sysbase->MainInterface;
-	struct Process *proc;
 	struct SRecGlobal gd;
 	struct zmbv_state *encoder = NULL;
 	struct TimeRequest *tr = NULL;
@@ -317,10 +316,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	#define dest_rect   gd.dest_rect
 	#define palette     gd.palette
 
-	proc = (struct Process *)IExec->FindTask(NULL);
-
-	IExec->WaitPort(&proc->pr_MsgPort);
-	args = (const struct SRecArgs *)IExec->GetMsg(&proc->pr_MsgPort);
+	args = (const struct SRecArgs *)IExec->FindTask(NULL)->tc_UserData;
 
 	if (args->width < MIN_WIDTH || args->width > MAX_WIDTH)
 		goto out;

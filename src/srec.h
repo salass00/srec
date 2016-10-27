@@ -31,7 +31,7 @@
 
 #define PROGNAME "SRec"
 
-#define SREC_PROCNAME  "SRec: Screen Recorder"
+#define SREC_PROCNAME  PROGNAME ": Screen Recorder"
 #define SREC_PRIORITY  (0)
 #define SREC_STACKSIZE (64UL << 10)
 
@@ -79,7 +79,6 @@ enum {
 #define MAX_FPS    100
 
 struct SRecArgs {
-	struct Message message;
 	uint32         container;
 	uint32         video_codec;
 	uint32         width, height;
