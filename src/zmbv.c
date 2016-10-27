@@ -45,7 +45,8 @@ static void zfree(void *opaque, void *address) {
 	_free_r(opaque, address);
 }
 
-struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs *args) {
+struct zmbv_state *zmbv_init(const struct SRecGlobal *gd) {
+	const struct SRecArgs *args = gd->args;
 	struct zmbv_state *state;
 
 	state = IExec->AllocVecTags(sizeof(*state),

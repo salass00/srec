@@ -368,7 +368,7 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 	duration_us = (uint32)lroundf(1000.0f / (float)args->fps) * 1000UL;
 	duration_ns = duration_us * 1000UL;
 
-	encoder = zmbv_init(&gd, args);
+	encoder = zmbv_init(&gd);
 	if (encoder == NULL)
 		goto out;
 

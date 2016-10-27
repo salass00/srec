@@ -25,7 +25,7 @@
 
 struct zmbv_state;
 
-struct zmbv_state *zmbv_init(const struct SRecGlobal *gd, const struct SRecArgs *args);
+struct zmbv_state *zmbv_init(const struct SRecGlobal *gd);
 BOOL zmbv_set_source_bm(struct zmbv_state *state, struct BitMap *bm);
 BOOL zmbv_encode(struct zmbv_state *state, void **framep, uint32 *framesizep,
 	BOOL *keyframep);
