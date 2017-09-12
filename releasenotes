@@ -70,3 +70,8 @@ SRec 2.6 (16.11.2016)
 - Now uses NP_UserData to pass arguments to the recording process instead of
   a startup message.
 
+
+SRec 2.7 (xx.xx.2017)
+
+- Only call zmbv_encode_dup() once when skipping more than one frame in a row.
+

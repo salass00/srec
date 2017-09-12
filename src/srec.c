@@ -681,30 +681,32 @@ int srec_entry(STRPTR argstring, int32 arglen, struct ExecBase *sysbase) {
 				frames++;
 
 				/* Skip frames if time difference is too large */
-				while (total_diff >= (int64)duration_us) {
-					total_diff -= (int64)duration_us;
-
+				if (total_diff >= (int64)duration_us) {
 					if (!zmbv_encode_dup(encoder, &frame, &framesize))
 						goto out;
 
-					if (args->container == CONTAINER_AVI) {
-						if (AVI_write_frame(AVI, frame, framesize, FALSE) != 0) {
-							IExec->DebugPrintF("error outputting frame #%lu\n", frames);
-							goto out;
-						}
-					} else {
-						if (mk_startFrame(writer, video_track) != 0 ||
-							mk_addFrameData(writer, video_track, frame, framesize) != 0 ||
-							mk_setFrameFlags(writer, video_track, timestamp, FALSE, duration_ns) != 0)
-						{
-							IExec->DebugPrintF("error outputting frame #%lu\n", frames);
-							goto out;
-						}
-					}
+					do {
+						total_diff -= (int64)duration_us;
 
-					timestamp += duration_ns;
-					frames++;
-					skipped++;
+						if (args->container == CONTAINER_AVI) {
+							if (AVI_write_frame(AVI, frame, framesize, FALSE) != 0) {
+								IExec->DebugPrintF("error outputting frame #%lu\n", frames);
+								goto out;
+							}
+						} else {
+							if (mk_startFrame(writer, video_track) != 0 ||
+								mk_addFrameData(writer, video_track, frame, framesize) != 0 ||
+								mk_setFrameFlags(writer, video_track, timestamp, FALSE, duration_ns) != 0)
+							{
+								IExec->DebugPrintF("error outputting frame #%lu\n", frames);
+								goto out;
+							}
+						}
+
+						timestamp += duration_ns;
+						frames++;
+						skipped++;
+					} while (total_diff >= (int64)duration_us);
 				}
 			} else {
 				/* If there's nothing to output don't worry about skipping frames */
