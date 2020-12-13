@@ -55,7 +55,11 @@ else
 	catcomp --cfile $@ $<
 endif
 
--include $(DEPS)
+src/rgb2yuv.vert.spv: src/rgb2yuv.vert
+	glslangValidator -G -o $@ $<
+
+src/rgb2yuv.frag.spv: src/rgb2yuv.frag
+	glslangValidator -G -o $@ $<
 
 $(LIBMKV): $(LIBMKV_OBJS)
 	$(AR) -crv $@ $^
@@ -68,6 +72,8 @@ $(AVILIB): $(AVILIB_OBJS)
 	$(RANLIB) $@
 
 $(AVILIB_OBJS): CFLAGS += $(AVILIB_CFLAGS)
+
+-include $(DEPS)
 
 %.catalog: %.ct catalogs/SRec.cd
 	-flexcat CATALOG $@ catalogs/SRec.cd $<

@@ -9,3 +9,5 @@ SRec.debug
 *.catalog
 # Ignore release archives
 *.lha
+# Ignore compiled shaders
+*.spv
