@@ -1,9 +1,10 @@
-CROSS  := ppc-amigaos
-CC     := $(CROSS)-gcc
-AR     := $(CROSS)-ar
-RANLIB := $(CROSS)-ranlib
-STRIP  := $(CROSS)-strip
-RM     := rm -f
+CROSS   := ppc-amigaos
+CC      := $(CROSS)-gcc
+AR      := $(CROSS)-ar
+RANLIB  := $(CROSS)-ranlib
+STRIP   := $(CROSS)-strip
+OBJCOPY := $(CROSS)-objcopy
+RM      := rm -f
 
 TARGET  := SRec
 VERSION := 2
@@ -55,11 +56,17 @@ else
 	catcomp --cfile $@ $<
 endif
 
-src/rgb2yuv.vert.spv: src/rgb2yuv.vert
+src/rgb2yuv_vert.spv: src/rgb2yuv.vert
 	glslangValidator -G -o $@ $<
 
-src/rgb2yuv.frag.spv: src/rgb2yuv.frag
+src/rgb2yuv_frag.spv: src/rgb2yuv.frag
 	glslangValidator -G -o $@ $<
+
+src/rgb2yuv_vert.o: src/rgb2yuv_vert.spv
+	$(OBJCOPY) -I binary -O elf32-amigaos -B powerpc --redefine-sym _binary_src_rgb2yuv_vert_spv_start=rgb2yuv_vert_start --redefine-sym _binary_src_rgb2yuv_vert_spv_end=rgb2yuv_vert_end --redefine-sym _binary_src_rgb2yuv_vert_spv_size=rgb2yuv_vert_size  $< $@
+
+src/rgb2yuv_frag.o: src/rgb2yuv_frag.spv
+	$(OBJCOPY) -I binary -O elf32-amigaos -B powerpc --redefine-sym _binary_src_rgb2yuv_frag_spv_start=rgb2yuv_frag_start --redefine-sym _binary_src_rgb2yuv_frag_spv_end=rgb2yuv_frag_end --redefine-sym _binary_src_rgb2yuv_frag_spv_size=rgb2yuv_frag_size $< $@
 
 $(LIBMKV): $(LIBMKV_OBJS)
 	$(AR) -crv $@ $^
