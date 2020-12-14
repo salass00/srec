@@ -1,0 +1,3 @@
+_binary_src_rgb2yuv_frag_spv_start rgb2yuv_frag_start
+_binary_src_rgb2yuv_frag_spv_end   rgb2yuv_frag_end
+_binary_src_rgb2yuv_frag_spv_size  rgb2yuv_frag_size

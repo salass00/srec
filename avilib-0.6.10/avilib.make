@@ -1,10 +1,10 @@
-AVILIBDIR := avilib-0.6.10
+AVILIBDIR = avilib-0.6.10
 
-AVILIB := $(AVILIBDIR)/libavi.a
+AVILIB = $(AVILIBDIR)/libavi.a
 
-AVILIB_CFLAGS := -I$(AVILIBDIR) -DWORDS_BIGENDIAN -Wno-format-overflow
+AVILIB_CFLAGS = -I$(AVILIBDIR) -DWORDS_BIGENDIAN -Wno-format-overflow
 
-AVILIB_SRCS := $(AVILIBDIR)/avilib.c $(AVILIBDIR)/xio.c
-AVILIB_OBJS := $(AVILIB_SRCS:.c=.o)
-AVILIB_DEPS := $(AVILIB_SRCS:.c=.d)
+AVILIB_SRCS = $(AVILIBDIR)/avilib.c $(AVILIBDIR)/xio.c
+AVILIB_OBJS = $(AVILIB_SRCS:.c=.o)
+AVILIB_DEPS = $(AVILIB_SRCS:.c=.d)
 

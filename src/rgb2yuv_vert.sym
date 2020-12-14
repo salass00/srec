@@ -1,0 +1,3 @@
+_binary_src_rgb2yuv_vert_spv_start rgb2yuv_vert_start
+_binary_src_rgb2yuv_vert_spv_end   rgb2yuv_vert_end
+_binary_src_rgb2yuv_vert_spv_size  rgb2yuv_vert_size
