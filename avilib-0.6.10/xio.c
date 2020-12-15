@@ -122,7 +122,7 @@ int xio_ftruncate(int fd, int64_t length) {
 }
 
 static int extend_file(BPTR fh, int64_t num_bytes) {
-	char buffer[1024];
+	static const char buffer[1024];
 	size_t size;
 	ssize_t nbytes;
 
